@@ -1,0 +1,33 @@
+/* BackArrow.css */
+.back-arrow {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    color: #00d1b2;
+    height: fit-content;
+    background-color: rgba(223, 205, 205, 0.308);
+    border-radius: 50%;
+    transition: background-color 0.3s;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .back-arrow:hover {
+    background-color: rgba(141, 123, 123, 0.685);
+  }
+  
+  .back-arrow p {
+    font-size: 1.25rem;
+    font-weight: 1000;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    width: 0.5rem;
+    align-items: center;
+  }
+
+  

@@ -1,0 +1,87 @@
+.slider-container-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+.slider-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px auto;
+    text-align: center;
+    background: white;
+  }
+  
+  .labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  
+  .label {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .label.train {
+    color: purple;
+  }
+  
+  .label.valid {
+    color: blue;
+  }
+  
+  .slider {
+    width: 100%;
+    appearance: none;
+    height: 10px;
+    background: transparent;
+    position: relative;
+    z-index: 2;
+    outline: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .slider-bar {
+    display: flex;
+    height: 10px;
+    position: relative;
+    margin-top: -10px;
+    z-index: 1;
+  }
+  
+  .train-bar {
+    height: 100%;
+  }
+  
+  .valid-bar {
+    height: 100%;
+  }
+  
+
+.slider-container button {
+    background-color: #4caf50; /* Success green color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  
+.slider-container button:hover {
+    background-color: #45a049; /* Slightly darker green */
+  }

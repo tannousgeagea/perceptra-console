@@ -1,0 +1,22 @@
+.create-btn {
+    padding: 0.75rem 0.75rem;
+    background-color: rgba(103, 30, 152, 0.611);
+    color: #fff;
+    border: 1px solid #6b4291a0;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: background-color 0.3s ease;
+  }
+  
+.create-btn img {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+.create-btn:hover {
+  background-color: rgba(103, 30, 152, 0.864);
+  }

@@ -1,0 +1,31 @@
+.add-to-dataset-btn-container {
+    display: flex;
+}
+
+.add-to-dataset-btn {
+    background-color: rgb(179, 73, 201);
+    color: #fff;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.add-to-dataset-btn img {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+.add-to-dataset-btn:hover {
+    background-color: rgb(132, 34, 151);;
+}
+
+.add-to-dataset-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

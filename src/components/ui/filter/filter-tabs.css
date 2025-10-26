@@ -1,0 +1,46 @@
+.filter-tabs {
+    display: flex;
+    gap: 20px;
+  }
+  
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 14px;
+    align-items: center;
+    align-content: center;
+    color: black;
+  }
+  
+.tab.active {
+    border-bottom: 3px solid #6a0dad;
+  }
+  
+.tab:hover {
+    background-color: #e0e0e0;
+  }
+  
+.tab span {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+  }
+  
+.tab span p {
+    background-color: #6a0dad;
+    color: white;
+    /* border: 1px solid #ccc; */
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0.5rem;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    font-weight: 500;
+  }
+  

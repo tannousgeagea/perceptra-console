@@ -1,0 +1,50 @@
+.submit-button {
+    background-image: linear-gradient(92.88deg, #455EB5 9.16%, #5643CC 43.89%, #673FD7 64.72%);
+    border-radius: 8px;
+    border-color: #455EB5;
+    box-sizing: border-box;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    flex-direction: row;
+    margin: auto;
+    font-family: "Inter UI","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;
+    height: 4rem;
+    width: auto;
+    text-shadow: rgba(0, 0, 0, 0.25) 0 3px 8px;
+    transition: all 2s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  
+.submit-button:hover {
+    box-shadow: rgba(80, 63, 205, 0.5) 0 1px 30px;
+    transition-duration: .3s;
+    transform: scale(1.05);
+}
+
+.submit-button-content {
+    font-size: 24px;
+    font-weight: 100;
+    line-height: 1rem;
+    padding: 0px 20px;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    flex-direction: row;
+    margin: auto;
+    gap: 1rem;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  
+  
+.button-icon {
+    margin-right: 5px;
+    max-width: 24px;
+    height: 24px; /* Fixed height for images */
+  }

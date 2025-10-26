@@ -1,0 +1,33 @@
+.split-btn-container {
+    display: flex;
+    height: 100%;
+    position: relative;
+}
+
+.split-dataset-btn {
+    background-color: white;
+    color: #333;
+    border: 1px solid #cccccca0;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.split-dataset-btn img {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+.split-dataset-btn:hover {
+    background-color: #ccccccb8;
+}
+
+.split-dataset-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

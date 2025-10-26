@@ -1,0 +1,61 @@
+.augmentation-panel {
+    background-color: #fff;
+    border-radius: 8px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+.augmentation-panel h2 {
+    font-size: 1rem;
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    padding-bottom: 0.25rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .augmentation-list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .augmentation-item {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 6px;
+    transition: 0.3s;
+  }
+  
+  .augmentation-item.active {
+    background: #e6f7ff;
+  }
+  
+  .augmentation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .augmentation-description {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .augmentation-parameters {
+    margin-top: 10px;
+  }
+  
+  .parameter-control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+  

@@ -1,0 +1,34 @@
+.image-preview-container {
+    margin: 1rem auto;
+    width: 100%;
+    text-align: center;
+  }
+
+.image-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 2rem;
+  width: 100%;
+}
+
+.header-icon {
+  width: 42px;
+  height: auto;
+}
+
+.thumbnail-preview {
+  display: flex;
+    width: 8rem;
+    height: 8rem;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    transition: all 0.5s ease;
+    justify-content: center;
+    filter: brightness(40%);
+    cursor: pointer;
+}
+  
+.thumbnail-preview:hover {
+    transform: scale(1.05);
+    filter: brightness(90%);
+}

@@ -1,0 +1,26 @@
+.text-label {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+
+.text-label label {
+    font-size: 24px;
+    color: #000;
+}
+
+.text-label input {
+    height: 40px;
+    width: auto;
+    filter: brightness(60%);
+    transition: transform 0.5s ease;
+}
+
+.text-label input:hover {
+    transform: scale(1.1);
+    filter: brightness(100%);
+}

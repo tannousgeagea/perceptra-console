@@ -1,0 +1,37 @@
+.request-feedback-container {
+    display: flex;
+}
+
+.request-feedback-btn {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    background-color: #fff
+    ;
+    border: 1px solid #cccccca0;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-items: center;
+    align-content: center;
+    color: #333;
+  }
+  
+.request-feedback-btn:hover {
+    background-color: #ccc;
+  }
+  
+.request-feedback-btn img {
+    width: 1.5rem;
+  }
+  
+.request-feedback-btn span {
+    font-size: 1rem;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }

@@ -1,0 +1,57 @@
+.dataset {
+    padding: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 2rem;
+  }
+
+.dataset h1 {
+    font-size: 2rem;
+    color: rgba(128, 0, 255, 0.7);
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
+}
+ 
+.tabs {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1 rem;
+    overflow: scroll;
+    padding: 2rem 1rem;
+    width: 100%;
+    border-radius: 0.25rem;
+    /* height: 1200px; */
+  }
+
+.no-results {
+  display: flex;
+  align-items: center;
+  /* justify-content: center; */
+  margin-top: 20px;
+  padding: 10px 20px;
+  border: 1px solid #cce5ff;
+  border-radius: 8px;
+  background-color: #f0f8ff; /* Light blue background */
+  color: #004085; /* Dark blue text */
+  font-size: 14px;
+  font-weight: 500;
+  gap: 0.25rem;
+}
+
+.no-results .info-icon {
+  margin-right: 4px;
+  font-size: 24px;
+  color: #004085; /* Same color as text */
+}

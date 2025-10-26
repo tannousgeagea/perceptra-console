@@ -1,0 +1,109 @@
+.select-filter-container {
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    height: 100%;
+    width: max-content;
+}
+
+.select-filter-content {
+    border-radius: 0.5rem;
+    border: 1px solid #ddd;
+    width: fit-content;
+    background-color: white;
+    font-size: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    color: rgb(169, 169, 169);
+    height: 100%;
+    align-items: center;
+}
+
+.select-filter-container button {
+    display: flex;
+    padding: 0.25rem 0.5rem;
+}
+
+.select-filter-button:hover {
+    background-color: #f0f0f0;
+}
+
+.select-filter-content img {
+    width: 1rem;
+    height: 1rem;
+}
+
+.select-filter-dropdown {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    z-index: 100;
+    width: fit-content;
+    overflow: hidden;
+    gap: 0.25rem;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    padding: 0.5rem 1rem;
+}
+
+.select-filter-option {
+    margin: auto;
+    padding: 5px 10px;
+    display: flex;
+    justify-content: flex-start;
+    font-size: 0.75rem;
+    font-style: italic;
+    width: 100%;
+    cursor: pointer;
+    border-radius: 6px;
+    background-color: white;
+    color: #ada8a8;
+    transition: background-color 0.3s;
+}
+
+.select-filter-option:hover {
+    background-color: rgba(128, 128, 128, 0.341);
+}
+
+.select-filter-clear {
+    color: red;
+    display: flex;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    width: 100%
+}
+
+.select-filter-clear span {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: flex;
+    justify-content: flex-end;
+
+}
+
+.select-filter-button:focus {
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.678);
+}
+
+.select-filter-name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap:0.5rem;
+}
+
+.select-filter-name span {
+    font-weight: bold;
+    font-size: 0.875rem;
+    color: #0000008e;
+}
