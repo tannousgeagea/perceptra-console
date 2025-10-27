@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LogOut, Settings } from "lucide-react";
 import { UserAvatar } from "@/components/users/UserAvatar";
-import { User as UserType } from "@/types/membership";
+import { User as UserType } from "@/types/auth";
 import {
   Popover,
   PopoverContent,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/ui/popover";
 import { Button } from "@/components/ui/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthHelpers, useCurrentOrganization } from '@/hooks/useAuthHelpers';
 
 
 interface UserProfileMenuProps {
@@ -19,6 +20,7 @@ interface UserProfileMenuProps {
 export function UserProfileMenu({ user, isCollapsed }: UserProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const { logout } = useAuth();
+  const helpers = useAuthHelpers();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -38,7 +40,7 @@ export function UserProfileMenu({ user, isCollapsed }: UserProfileMenuProps) {
             <UserAvatar user={user} className="h-8 w-8 text-black" />
             <div className="flex flex-col items-start text-left overflow-hidden w-full">
               <span className="text-sm font-medium group-hover:text-sidebar-accent-foreground truncate w-full">
-                {user.username}
+                {user.first_name} {user.last_name}
               </span>
               <span className="text-xs text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground/70 truncate w-full">
                 {user.email}
@@ -52,7 +54,7 @@ export function UserProfileMenu({ user, isCollapsed }: UserProfileMenuProps) {
           <div className="flex items-center gap-3">
             <UserAvatar user={user} className="h-10 w-10" />
             <div className="flex flex-col">
-              <span className="font-medium">{user.username}</span>
+              <span className="font-medium">{user.first_name} {user.last_name}</span>
               <span className="text-xs text-muted-foreground">{user.email}</span>
             </div>
           </div>

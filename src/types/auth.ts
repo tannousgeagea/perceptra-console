@@ -18,14 +18,28 @@ export interface Organization {
 /**
  * User interface matching your API response
  */
+export type UserRole = 'owner' | 'admin' | 'annotator' | 'viewer';
+export type UserStatus = 'active' | 'inactive' | 'pending';
+
+export interface InviteUserData {
+  email: string;
+  role: UserRole;
+}
+
 export interface User {
   id: string;
   username: string | null;
   email: string;
   first_name: string;
   last_name: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  last_active: string;
+  avatar: string;
   organizations: Organization[];
 }
+
 
 /**
  * Token information
