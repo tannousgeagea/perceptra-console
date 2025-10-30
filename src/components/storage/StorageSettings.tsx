@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/ui/select';
 import { Textarea } from '@/components/ui/ui/textarea';
 import { toast } from 'sonner';
-import { api } from './api';
-import { StorageBackend, StorageProfile } from '@/types/storage';
+import { Checkbox } from '@/components/ui/ui/checkbox';
+import { useTestStorageConnection, useCreateStorageProfile, useStorageProfiles } from '@/hooks/useStorage';
+import { StorageBackend, Credentials } from '@/types/storage';
 import { Database, Cloud, Server, HardDrive, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { StorageProfileCard } from './StorageProfileCard';
 
@@ -20,57 +21,120 @@ const storageOptions = [
 
 export function StorageSettings() {
   const [selectedBackend, setSelectedBackend] = useState<StorageBackend>('azure');
-  const [profiles, setProfiles] = useState<StorageProfile[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [testing, setTesting] = useState(false);
+  
+  // ✅ Use hooks
+  const { mutate: testConnection, isPending: isTesting } = useTestStorageConnection();
+  const { mutate: createProfile, isPending: isCreating } = useCreateStorageProfile();
+  const { data, isLoading } = useStorageProfiles();
+  const profiles = data?.profiles || [];
+
   const [formData, setFormData] = useState<any>({});
+  
+  // ✅ Build credentials based on backend
+  const buildCredentials = (): Credentials => {
+    switch (selectedBackend) {
+      case 'azure':
+        if (formData.connectionString) {
+          return {
+            type: 'connection_string',
+            connection_string: formData.connectionString,
+          };
+        }
+        return {
+          type: 'account_key',
+          account_key: formData.accountKey,
+        };
 
-  // Load profiles on mount
-  useState(() => {
-    api.getStorageProfiles().then(setProfiles);
-  });
+      case 's3':
+      case 'minio':
+        return {
+          type: 'access_key',
+          access_key_id: formData.accessKey,
+          secret_access_key: formData.secretKey,
+        };
 
-  const handleInputChange = (field: string, value: string) => {
+      case 'local':
+        return { type: 'connection_string', connection_string: '' }; // Local doesn't need credentials
+
+      default:
+        throw new Error('Unsupported backend');
+    }
+  };
+
+  // ✅ Build config based on backend
+  const buildConfig = () => {
+    const config: any = {};
+
+    switch (selectedBackend) {
+      case 'azure':
+        config.container_name = formData.containerName;
+        config.account_name = formData.accountName;
+        break;
+
+      case 's3':
+        config.bucket_name = formData.bucketName;
+        if (formData.kmsKeyId) config.kms_key_id = formData.kmsKeyId;
+        break;
+
+      case 'minio':
+        config.bucket_name = formData.bucketName;
+        config.endpoint_url = formData.endpointUrl;
+        break;
+
+      case 'local':
+        config.base_path = formData.basePath;
+        break;
+    }
+
+    if (formData.basePath) config.base_path_prefix = formData.basePath;
+    return config;
+  };
+
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleTestConnection = async () => {
-    setTesting(true);
-    try {
-      const result = await api.testConnection(selectedBackend, formData);
-      if (result.success) {
-        toast.success(result.message, {
-          icon: <CheckCircle2 className="h-4 w-4" />,
-        });
-      } else {
-        toast.error(result.message, {
-          icon: <XCircle className="h-4 w-4" />,
-        });
-      }
-    } catch (error) {
-      toast.error('Connection test failed');
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const handleSaveConfiguration = async () => {
-    setLoading(true);
-    try {
-      const newProfile = await api.createStorageProfile({
+  // ✅ Test connection handler
+  const handleTestConnection = () => {
+    testConnection({
+      profile: {
         name: formData.name || `${selectedBackend} Storage`,
         backend: selectedBackend,
         region: formData.region,
-        config: formData,
-      });
-      setProfiles([...profiles, newProfile]);
-      toast.success('Storage configuration saved successfully');
-      setFormData({});
-    } catch (error) {
-      toast.error('Failed to save configuration');
-    } finally {
-      setLoading(false);
-    }
+        config: buildConfig(),
+      },
+      credentials: buildCredentials(),
+    }, {
+      onSuccess: (result) => {
+        if (result.success) {
+          toast.success(result.message, { icon: <CheckCircle2 className="h-4 w-4" /> });
+        } else {
+          toast.error(result.error || result.message, { icon: <XCircle className="h-4 w-4" /> });
+        }
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+  };
+
+  // ✅ Create profile handler
+  const handleSaveConfiguration = () => {
+    createProfile({
+      profile: {
+        name: formData.name || `${selectedBackend} Storage`,
+        backend: selectedBackend,
+        region: formData.region,
+        is_default: formData.is_default || false,
+        config: buildConfig(),
+      },
+      credentials: buildCredentials(),
+      test_before_save: true,
+    }, {
+      onSuccess: () => {
+        setFormData({}); // Clear form
+      },
+    });
   };
 
   const renderBackendFields = () => {
@@ -85,6 +149,15 @@ export function StorageSettings() {
                 placeholder="my-container"
                 value={formData.containerName || ''}
                 onChange={(e) => handleInputChange('containerName', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accountName">Account Name *</Label> 
+              <Input
+                id="accountName"
+                placeholder="mystorageaccount"
+                value={formData.accountName || ''}
+                onChange={(e) => handleInputChange('accountName', e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -266,6 +339,16 @@ export function StorageSettings() {
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="name">Profile Name *</Label>
+            <Input
+              id="name"
+              placeholder="Production Storage"
+              value={formData.name || ''}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+            />
+          </div>
+
           {renderBackendFields()}
 
           <div className="space-y-2">
@@ -289,13 +372,24 @@ export function StorageSettings() {
             />
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is_default"
+              checked={formData.is_default || false}
+              onCheckedChange={(checked) => handleInputChange('is_default', checked)}
+            />
+            <Label htmlFor="is_default" className="cursor-pointer">
+              Set as default storage
+            </Label>
+          </div>
+
           <div className="flex gap-3 pt-4">
             <Button
               variant="outline"
               onClick={handleTestConnection}
-              disabled={testing}
+              disabled={isTesting}
             >
-              {testing ? (
+              {isTesting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Testing...
@@ -304,8 +398,8 @@ export function StorageSettings() {
                 'Test Connection'
               )}
             </Button>
-            <Button onClick={handleSaveConfiguration} disabled={loading}>
-              {loading ? (
+            <Button onClick={handleSaveConfiguration} disabled={isCreating}>
+              {isCreating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
@@ -329,7 +423,7 @@ export function StorageSettings() {
         ) : (
           <div className="grid gap-4">
             {profiles.map((profile) => (
-              <StorageProfileCard key={profile.id} profile={profile} />
+              <StorageProfileCard key={profile.storage_profile_id} profile={profile} />
             ))}
           </div>
         )}

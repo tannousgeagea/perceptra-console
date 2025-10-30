@@ -29,7 +29,7 @@ export function StorageProfileCard({ profile }: StorageProfileCardProps) {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h4 className="font-semibold">{profile.name}</h4>
-                {profile.isDefault && (
+                {profile.is_default && (
                   <Badge variant="default" className="gap-1">
                     <Star className="h-3 w-3 fill-current" />
                     Default
@@ -45,12 +45,12 @@ export function StorageProfileCard({ profile }: StorageProfileCardProps) {
                   </>
                 )}
                 <span>•</span>
-                <span>Created {new Date(profile.createdAt).toLocaleDateString()}</span>
+                <span>Created {new Date(profile.created_at ?? "").toLocaleDateString()}</span>
               </div>
             </div>
           </div>
           <div className="flex gap-2">
-            {!profile.isDefault && (
+            {!profile.is_default && (
               <Button variant="outline" size="sm">
                 <Star className="h-4 w-4" />
               </Button>

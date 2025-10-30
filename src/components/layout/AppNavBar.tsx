@@ -16,9 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { UserProfileMenu } from '../users/UserProfileMenu';
 import { getCurrentUser } from '@/utils/user';
-import { useQuery } from "@tanstack/react-query";
 import { OrganizationSection } from '@/components/organization/OrganizationSection';
-import { getUserOrganization } from '../users/api';
 import { useAuthHelpers } from '@/hooks/useAuthHelpers';
 
 
@@ -39,18 +37,8 @@ const Navbar: FC = () => {
     }
   }, [location.pathname]);
 
-  // const { data: organizations } = useQuery({
-  //   queryKey: ['organization'],
-  //   queryFn: async () => {
-  //     const org = await getUserOrganization();
-  //     return org; // ✅ return only the first organization
-  //   },
-  //   staleTime: 1000 * 60 * 5,
-  // });
-
   const organization = helpers.getPrimaryOrganization()
   const currentUser = getCurrentUser();
-  console.log(currentUser)
 
   const items: NavbarItem[] = [
     { item: "Projects", ref: "/projects", icon: <Folder size={20} /> },

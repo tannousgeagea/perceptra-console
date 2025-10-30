@@ -78,8 +78,6 @@ export const useCurrentOrganization = () => {
   const { getCurrentOrganization, switchOrganization, hasPermission } = useAuth();
 
   const currentOrg = getCurrentOrganization();
-
-  console.log(currentOrg)
   return {
     currentOrganization: currentOrg,
     switchOrganization,
