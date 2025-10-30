@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Loader2, Moon, Sun, User as UserIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/hooks/useUser';
 import { useAuthHelpers, useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { useUpdateProfile, UpdateProfilePayload } from '@/hooks/useUpdateProfile';
