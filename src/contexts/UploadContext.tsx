@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { baseURL } from '@/components/api/base';
 import { useProject } from './ProjectContext';
+import {v4 as uuidv4} from 'uuid';
 
 export type TaskType = 'segmentation' | 'detection' | 'classification';
 export type ProjectSection = 'upload' | 'annotate' | 'dataset' | 'versions' | 'analytics';
@@ -58,14 +59,6 @@ export const useUploadContext = () => {
     throw new Error('useUploadContext must be used within an UploadProvider');
   }
   return context;
-};
-
-// Mock project data - in a real app, this would come from an API
-const MOCK_PROJECT: Project = {
-  id: 'project-1',
-  name: 'Wildlife Classification',
-  description: 'Image classification project for wildlife species',
-  createdAt: new Date()
 };
 
 export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -155,11 +148,28 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     []
   );
 
-  const uploadImageToAPI = async (image: UploadedImage, progress: (percent: number) => void): Promise<boolean> => {
+  const uploadImageToAPI = async (
+    image: UploadedImage, 
+    progress: (percent: number) => void,
+    options?: {
+      projectId?: string;
+      tags?: string[];
+      source_of_origin?: string;
+      storage_profile_id?: string;
+    }
+  ): Promise<boolean> => {
     try {
       const formData = new FormData();
       formData.append('files', image.file);
     
+      if (image.id) formData.append('image_id', image.id);
+      if (image.file.name) formData.append('name', image.file.name);
+      if (options?.projectId) formData.append('project_id', options.projectId);
+      if (options?.tags?.length) formData.append('tags', options.tags.join(','));
+      if (options?.source_of_origin) formData.append('source_of_origin', options.source_of_origin);
+      if (options?.storage_profile_id) formData.append('storage_profile_id', options.storage_profile_id);
+
+
       console.log(image)
       const url = `${baseURL}/api/v1/images?image_id=${image.id}&project_id=${image.projectId}&batch_id=${image.batchId}`;  
       const xhr = new XMLHttpRequest();

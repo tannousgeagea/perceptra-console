@@ -32,6 +32,26 @@ export interface ImageCardGridProps {
     };
   }
 
+export type ViewMode = 'grid' | 'table';
+
+export interface ParsedQuery {
+  text: string;
+  tags: string[];
+  classes?: string[];
+  split?: 'train' | 'val' | 'test';
+  minHeight?: number;
+  maxHeight?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  backend?: string;
+  filename?: string;
+  sort?: string;
+  minAnnotations?: number;
+  maxAnnotations?: number;
+  job?: string;
+  likeImage?: string;
+}
+
 export interface PaginationParams {
   skip?: number;
   limit?: number;
@@ -81,5 +101,8 @@ export interface ImagesResponse {
 export interface ImagesParams extends PaginationParams {
   from_date?: string;
   to_date?: string;
-  tags?: string;
+  project_id?: string;
+  q?: string;
+  tag?: string;
+  search?: string;
 }
