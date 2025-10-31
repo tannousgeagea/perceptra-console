@@ -18,12 +18,12 @@ import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { formatDistance } from "date-fns";
 import TagBadge from "@/components/common/TagBadge";
-import { ImageItem } from "@/hooks/useImages"
+import { ImageRecord } from "@/types/image"
 
 interface ImageTableProps {
-  images: ImageItem[];
+  images: ImageRecord[];
   selectedImages: string[];
-  onImageClick: (image: ImageItem) => void;
+  onImageClick: (image: ImageRecord) => void;
   toggleImageSelection: (id: string) => void;
   sortOrder: "asc" | "desc";
   setSortOrder: (value: "asc" | "desc") => void;
@@ -74,14 +74,14 @@ const ImageTable: React.FC<ImageTableProps> = ({
             </TableHead>
             <TableHead>Tags</TableHead>
             <TableHead>Source</TableHead>
-            <TableHead>Project</TableHead>
+            <TableHead>Uploaded by</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {images.map((image) => {
             const isSelected = selectedImages.includes(image.image_id);
-            const relativeDate = formatDistance(new Date(image.date), new Date(), { addSuffix: true });
+            const relativeDate = formatDistance(new Date(image.created_at), new Date(), { addSuffix: true });
 
             return (
               <TableRow key={image.id} className={isSelected ? "bg-muted" : ""}>
@@ -97,7 +97,7 @@ const ImageTable: React.FC<ImageTableProps> = ({
                       <TooltipTrigger asChild>
                         <div className="h-16 w-16 overflow-hidden rounded-md bg-muted">
                           <img
-                            src={image.src}
+                            src={image.download_url}
                             alt={image.name}
                             className="h-full w-full object-cover"
                             loading="lazy"
@@ -107,7 +107,7 @@ const ImageTable: React.FC<ImageTableProps> = ({
                       <TooltipContent side="right">
                         <div className="max-h-[300px] max-w-[300px]">
                           <img
-                            src={image.src}
+                            src={image.download_url}
                             alt={image.name}
                             className="h-full w-full object-contain"
                           />
@@ -128,9 +128,9 @@ const ImageTable: React.FC<ImageTableProps> = ({
                     )}
                   </div>
                 </TableCell>
-                <TableCell>{image.source}</TableCell>
+                <TableCell>{image.source_of_origin}</TableCell>
                 <TableCell>
-                  {image.projectId ? "Assigned" : "—"}
+                  {image.uploaded_by ? image.uploaded_by : "—"}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
