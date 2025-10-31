@@ -15,7 +15,7 @@ declare module 'react' {
 }
 
 export const FileUploader: React.FC = () => {
-  const { uploadedImages, addImages, currentProject, uploadProgress, isUploading, clearAllImages } = useUploadContext();
+  const { uploadedImages, addImages, uploadProgress, isUploading, clearAllImages } = useUploadContext();
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -23,15 +23,6 @@ export const FileUploader: React.FC = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
-    
-    if (!currentProject) {
-      toast({
-        title: 'Project required',
-        description: 'Please select a project before uploading files',
-        variant: 'destructive'
-      });
-      return;
-    }
     
     // Convert FileList to Array
     const fileArray = Array.from(files);
@@ -74,15 +65,6 @@ export const FileUploader: React.FC = () => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragActive(false);
-    
-    if (!currentProject) {
-      toast({
-        title: 'Project required',
-        description: 'Please select a project before uploading files',
-        variant: 'destructive'
-      });
-      return;
-    }
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const fileArray = Array.from(e.dataTransfer.files);

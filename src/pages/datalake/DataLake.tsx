@@ -5,13 +5,13 @@ import { useImages, buildImageQuery } from "@/hooks/useImages";
 import { ImageGrid } from "@/components/datalake/ImageGrid";
 import { ImageTable } from "@/components/datalake/ImageTable";
 import { Loader2 } from "lucide-react";
-import useFetchData from "@/hooks/use-fetch-data";
 import { ViewMode, ImagesParams } from "@/types/image";
 import { useAddImagesToProject } from '@/hooks/useAddImagesToProject';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { DataLakeHeader } from '@/components/datalake/DataLakeHeader';
 import { DataLakeFilters } from '@/components/datalake/DataLakeFilters';
 import { DataLakeSelectionHeader } from '@/components/datalake/DataLakeSelectionHeader';
+import { useUserProjects } from '@/hooks/useUserProjects';
 
 const DataLake: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -35,9 +35,7 @@ const DataLake: React.FC = () => {
   };
 
   const { data, isLoading, error } = useImages(apiParams);
-
-  const { data: projectsData, loading: loadingProjects, error: errorProjects } = useFetchData('/api/v1/projects');;
-  const projects = projectsData?.data || []
+  const { data: projects, isLoading: isLoadingProjects, error: errorProjects } = useUserProjects();
 
   const handleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -120,7 +118,7 @@ const DataLake: React.FC = () => {
         selectedCount={selectedIds.size}
         onClearSelection={handleClearSelection}
         onAddToProject={handleAddToProject}
-        projects={projects}
+        projects={projects ?? []}
         isLoadingProjects={false}
       />
 

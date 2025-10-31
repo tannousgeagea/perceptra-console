@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/ui/button';
+import { Project } from "@/types/project";
 import { X, FolderPlus, Download, Trash2 } from 'lucide-react';
 import {
   Select,
@@ -12,7 +13,7 @@ interface DataLakeSelectionHeaderProps {
   selectedCount: number;
   onClearSelection: () => void;
   onAddToProject: (projectId: string) => void;
-  projects: Array<{ id: string; name: string }>;
+  projects:Project[];
   isLoadingProjects: boolean;
 }
 
@@ -25,6 +26,8 @@ export function DataLakeSelectionHeader({
 }: DataLakeSelectionHeaderProps) {
   if (selectedCount === 0) return null;
 
+
+  console.log(projects)
   return (
     <div className="bg-primary text-primary-foreground px-4 py-3 rounded-lg flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-4">
@@ -60,7 +63,7 @@ export function DataLakeSelectionHeader({
               </SelectItem>
             ) : (
               projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
+                <SelectItem key={project.id} value={project.project_id}>
                   {project.name}
                 </SelectItem>
               ))

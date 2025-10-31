@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { UploadProvider } from '@/contexts/UploadContext';
 import { UploadPage } from './upload'
 

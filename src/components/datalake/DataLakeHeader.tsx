@@ -1,6 +1,7 @@
 import { ViewMode } from '@/types/image';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/ui/button';
-import { Grid3x3, Table2, Database } from 'lucide-react';
+import { Grid3x3, Table2, Database, Upload } from 'lucide-react';
 
 interface DataLakeHeaderProps {
   viewMode: ViewMode;
@@ -9,6 +10,8 @@ interface DataLakeHeaderProps {
 }
 
 export function DataLakeHeader({ viewMode, onViewModeChange, totalImages }: DataLakeHeaderProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -22,6 +25,15 @@ export function DataLakeHeader({ viewMode, onViewModeChange, totalImages }: Data
       </div>
 
       <div className="flex items-center gap-2">
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => navigate("/upload")}
+          className="gap-2"
+        >
+          <Upload className="w-4 h-4" />
+          Upload
+        </Button>
         <Button
           variant={viewMode === 'grid' ? 'default' : 'outline'}
           size="sm"

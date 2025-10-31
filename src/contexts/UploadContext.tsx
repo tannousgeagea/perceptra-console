@@ -1,7 +1,9 @@
 
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { baseURL } from '@/components/api/base';
-import { useProject } from './ProjectContext';
+import { baseURL } from "@/components/api/base";
+import { authStorage } from "@/services/authService";
+import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import {v4 as uuidv4} from 'uuid';
 
 export type TaskType = 'segmentation' | 'detection' | 'classification';
@@ -11,7 +13,6 @@ export interface UploadedImage {
   id: string;
   file: File;
   previewUrl: string;
-  projectId: string;
   tasks: TaskType[];
   uploadedAt: Date;
   progress: number;
@@ -24,7 +25,7 @@ export interface AnnotationFile {
   id: string;
   file: File;
   taskType: TaskType;
-  projectId: string;
+  projectId?: string;
 }
 
 export interface Project {
@@ -35,7 +36,6 @@ export interface Project {
 }
 
 interface UploadContextType {
-  currentProject: Project | null;
   currentSection: ProjectSection;
   uploadedImages: UploadedImage[];
   annotationFiles: AnnotationFile[];
@@ -45,10 +45,18 @@ interface UploadContextType {
   removeImage: (id: string) => void;
   addAnnotationFile: (file: File, taskType: TaskType) => void;
   removeAnnotationFile: (id: string) => void;
-  setCurrentProject: (project: Project) => void;
   setCurrentSection: (section: ProjectSection) => void;
   clearAllImages: () => void;
-  submitUpload: (projectId: string, navigate: (path: string) => void) => Promise<void>;
+  submitUpload: (
+    navigate: (path: string) => void,
+    options?: {
+      projectId?: string;
+      tags?: string[];
+      source_of_origin?: string;
+      storage_profile_id?: string;
+      redirect?: boolean;
+    }
+  ) => Promise<void>;
 }
 
 const UploadContext = createContext<UploadContextType | undefined>(undefined);
@@ -63,13 +71,7 @@ export const useUploadContext = () => {
 
 export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // State for project context
-  const { projectId } = useProject();
-  const [currentProject, setCurrentProject] = useState<Project | null>({
-    id: projectId,
-    name: projectId,
-    description: '',
-    createdAt: new Date(), // or new Date(0)
-  });
+  const { currentOrganization } = useCurrentOrganization();
   const [currentSection, setCurrentSection] = useState<ProjectSection>('upload');
   
   // State for uploaded files
@@ -79,14 +81,12 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const addImages = (files: File[]) => {
-    if (!currentProject) return;
     
     const batchId = `batch-${Date.now()}`;
     const newImages = files.map(file => ({
-      id: Math.random().toString(36).substring(2, 9),
+      id: uuidv4(),
       file,
       previewUrl: URL.createObjectURL(file),
-      projectId: currentProject.id,
       tasks: [] as TaskType[],
       uploadedAt: new Date(),
       progress: 0,
@@ -108,13 +108,10 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const addAnnotationFile = (file: File, taskType: TaskType) => {
-    if (!currentProject) return;
-    
     const newAnnotation = {
       id: Math.random().toString(36).substring(2, 9),
       file,
       taskType,
-      projectId: currentProject.id,
     };
 
     setAnnotationFiles(prev => [...prev, newAnnotation]);
@@ -160,23 +157,31 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   ): Promise<boolean> => {
     try {
       const formData = new FormData();
-      formData.append('files', image.file);
+      formData.append('file', image.file);
     
       if (image.id) formData.append('image_id', image.id);
-      if (image.file.name) formData.append('name', image.file.name);
       if (options?.projectId) formData.append('project_id', options.projectId);
       if (options?.tags?.length) formData.append('tags', options.tags.join(','));
       if (options?.source_of_origin) formData.append('source_of_origin', options.source_of_origin);
       if (options?.storage_profile_id) formData.append('storage_profile_id', options.storage_profile_id);
 
 
-      console.log(image)
-      const url = `${baseURL}/api/v1/images?image_id=${image.id}&project_id=${image.projectId}&batch_id=${image.batchId}`;  
+      // Authentication
+      const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+      const organizationId = currentOrganization?.id;
+
+      if (!token || !organizationId) {
+        throw new Error("Missing authentication or organization context");
+      }
+
       const xhr = new XMLHttpRequest();
+      const url = `${baseURL}/api/v1/images/upload`;
       
       xhr.open('POST', url, true);
       xhr.setRequestHeader('accept', 'application/json');
-      
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.setRequestHeader("X-Organization-ID", currentOrganization.id);
+
       // Track upload progress
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
@@ -208,7 +213,16 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  const submitUpload = async (projectId: string, navigate: (path: string) => void) => {
+  const submitUpload = async ( 
+    navigate: (path: string) => void,
+    options?: {
+      projectId?: string,
+      tags?: string[];
+      source_of_origin?: string;
+      storage_profile_id?: string;
+      redirect?: boolean;
+    }
+  ) => {
     if (uploadedImages.length === 0) return;
   
     setIsUploading(true);
@@ -234,9 +248,18 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           }, 150);
         });
   
-        const success = await uploadImageToAPI(image, (percentForCurrentImage) => {
-          updateFileStatus(image.id, 'uploading', percentForCurrentImage);
-        });
+        const success = await uploadImageToAPI(
+          image,
+          (percentForCurrentImage) => {
+            updateFileStatus(image.id, 'uploading', percentForCurrentImage);
+          },
+          {
+            projectId: options?.projectId,
+            tags: options?.tags,
+            source_of_origin: options?.source_of_origin,
+            storage_profile_id: options?.storage_profile_id,
+          }
+        );
   
         if (success) {
           updateFileStatus(image.id, 'success', 100);
@@ -249,10 +272,9 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       };
   
       await Promise.all(uploadedImages.map((image) => uploadImageAsync(image)));
-      console.log('All images uploaded successfully for project:', currentProject?.name);
       
-      if (projectId) {
-        setTimeout(() => navigate(`/projects/${projectId}/annotate`), 2000);
+      if (options?.redirect !== false && options?.projectId) {
+        setTimeout(() => navigate(`/projects/${options.projectId}/annotate`), 2000);
       }
 
     } catch (error) {
@@ -270,7 +292,6 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const value = {
-    currentProject,
     currentSection,
     uploadedImages,
     annotationFiles,
@@ -280,7 +301,6 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     removeImage,
     addAnnotationFile,
     removeAnnotationFile,
-    setCurrentProject,
     setCurrentSection,
     clearAllImages,
     submitUpload

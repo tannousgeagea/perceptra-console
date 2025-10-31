@@ -106,3 +106,55 @@ export interface ImagesParams extends PaginationParams {
   tag?: string;
   search?: string;
 }
+
+
+export interface Annotation {
+  id: string;
+  annotation_uid: string;
+  type: string | null;
+  class_id: string;
+  class_name: string;
+  color: string;
+  data: Record<string, any>;
+  source: string;
+  confidence?: number;
+  reviewed?: boolean;
+  is_active: boolean;
+}
+
+export interface JobImage {
+  id: string;
+  image_id: string;
+  name: string;
+  width: number;
+  height: number;
+  storage_key: string;
+  download_url: string;
+  status: string;
+  annotated: boolean;
+  reviewed: boolean;
+  priority: number;
+  added_at: string;
+  annotations: Annotation[];
+}
+
+export interface JobInfo {
+  id: string;
+  name: string;
+  status: string;
+  assignee: string | null;
+}
+
+export interface JobImagesResponse {
+  total: number;
+  unannotated: number;
+  reviewed: number;
+  annotated: number;
+  job: JobInfo;
+  images: JobImage[];
+}
+
+export interface ProjectImageResponse {
+  total: number;
+  images: JobImage[];
+}

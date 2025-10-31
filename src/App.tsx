@@ -52,6 +52,7 @@ const App = () => {
                   <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
                   <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
                   <Route path='/datalake' element={<DataLake />} />
+                  <Route path='/upload' element={<UploadIndex />} />
                   <Route path='/projects' element={<Projects />} />
                   <Route path='/projects/add' element={<CreateProject />} />
                   <Route path='/inference' element={<Inference />} />
