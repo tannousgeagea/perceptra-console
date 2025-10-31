@@ -7,17 +7,7 @@ import DatasetActions from "@/components/ui/actions/dataset-actions";
 import FiltersDataset from "@/components/ui/filter/filter-dataset";
 import Header from "@/components/ui/header/Header";
 import { useProjectImages } from "@/hooks/useProjectImages";
-import useFetchData from "@/hooks/use-fetch-data";
 import { Info } from "lucide-react";
-
-interface DataResponse {
-  unannotated?: number;
-  annotated?: number;
-  reviewed?: number;
-  total_record?: number;
-  data?: Array<{ image_id: string, image_url: string, image_name: string }>;
-  pages?: number;
-}
 
 const Dataset: FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -28,8 +18,6 @@ const Dataset: FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(parseInt(query.get("page") || "1", 10));
   const itemsPerPage: number = 50;
 
-
-  console.log(selectedFilter)
   const updateURL = (filter: string, page: number) => {
     console.log(filter)
     navigate({
@@ -42,18 +30,12 @@ const Dataset: FC = () => {
     setCurrentPage(newPage);
     updateURL(selectedFilter, newPage);
   };
-  
-  // const { data, loading, error, refetch }: 
-  //   { data?: DataResponse; loading: boolean; error?: Error | null; refetch: () => void } = useFetchData(
-  //   `/api/v1/projects/${projectId}/images?status=dataset&user_filters=${selectedFilter}&items_per_page=${itemsPerPage}&page=${currentPage}`
-  // );
 
-  const { data, isLoading: loading, error } = useProjectImages(
-    projectId!,
-    "dataset",
-    selectedFilter,
-    currentPage,
-    itemsPerPage
+  const { data, isLoading, isError } = useProjectImages(projectId!, {
+    status: 'dataset',
+    skip: (currentPage - 1) * itemsPerPage,
+    limit: itemsPerPage,
+  }
   );
 
   const handleImageClick = (index:number): void => {
@@ -62,11 +44,16 @@ const Dataset: FC = () => {
       { state: { images: data, currentIndex: index } });
   };
 
-  const totalRecord: number = data?.total_record || 0;
-  const pages = data?.pages || 0
-  const imageData = data?.data || [];
-  if (error) return <p>Error loading images: {error.message}</p>;
+  const total: number = data?.total || 0;
+  const imageData = data?.images || [];
 
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-red-600">
+        <p>Failed to load dataset images.</p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6 p-6 w-full">
       <div className="flex flex-col justify-between h-full">
@@ -87,22 +74,25 @@ const Dataset: FC = () => {
             />
           </div>
 
-          {loading ? (
-            <div className="grid gap-4">
+          {isLoading ? (
+            <div className="grid place-items-center gap-4 w-full rounded py-8">
               <Spinner />
             </div>
-          ) : totalRecord === 0 ? (
-            <div className="flex items-center px-[20px] py-[10px] border-[1px] border-[solid] border-[#cce5ff] text-[#004085] rounded-[8px] bg-[#f0f8ff] font-medium gap-1">
-              <i className="mr-1 text-2xl text-[#004085]"><Info /></i>
-              <span>The search returned 0 results.</span>
+          ) : total === 0 ? (
+            <div className="flex items-center mt-5 px-5 py-2.5 border border-[#cce5ff] rounded-lg bg-[#f0f8ff] text-[#004085] text-sm font-medium gap-1">
+              <Info className="text-2xl text-[#004085]" />
+              <span>No images found for this dataset.</span>
             </div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-4 w-full rounded">
               {imageData.map((image, index) => (
-                // <ImageCard2 key={index} image={image} index={index} onClick={handleImageClick} />
                 <ImageCard
                   key={image.image_id}
-                  image={image}
+                  image={{
+                    image_id: image.image_id,
+                    image_url: image.download_url,
+                    image_name: image.name,
+                  }}
                   index={index}
                   onClick={handleImageClick}
               />
@@ -110,12 +100,12 @@ const Dataset: FC = () => {
             </div>
           )}
         </div>
-        {totalRecord > 0 && (
+        {total > 0 && (
           <PaginationControls
             currentPage={currentPage}
-            totalPages={pages}
+            totalPages={Math.ceil(total / itemsPerPage)}
             onNext={() => handlePageChange(currentPage + 1)}
-            onPrevious={() => setCurrentPage((prev) => prev - 1)}
+            onPrevious={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           />
         )}
       </div>

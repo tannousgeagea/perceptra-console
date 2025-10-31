@@ -6,13 +6,31 @@ import { Button } from '@/components/ui/ui/button';
 import { Upload, AlertTriangle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-export const ImageGrid: React.FC = () => {
+interface ImageGridProps {
+  tags?: string[];
+}
+
+export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [] }) => {
   const { removeImage } = useUploadContext();
   const { uploadedImages, submitUpload, isUploading } = useUploadContext();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string | '' }>();
+  const isInProject = Boolean(projectId);
+  const imageCount = uploadedImages.length;
 
-  if (uploadedImages.length === 0) {
+  // Handle upload
+  const handleUpload = async () => {
+    if (imageCount === 0) return;
+
+    await submitUpload(navigate, {
+      projectId: projectId || undefined,
+      source_of_origin: "upload",
+      tags: tags,
+      redirect: isInProject,
+    });
+  };
+
+  if (imageCount === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center">
         <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -38,14 +56,8 @@ export const ImageGrid: React.FC = () => {
         </div>
         
         <Button
-          onClick={() => {
-            if (!projectId) {
-              console.error("Project ID is missing!"); // Handle the error gracefully
-              return;
-            }
-            submitUpload(projectId, navigate);
-          }}
-          disabled={isUploading || uploadedImages.length === 0}
+          onClick={handleUpload}
+          disabled={isUploading || imageCount === 0}
           className="relative overflow-hidden"
         >
           {isUploading ? 'Uploading...' : 'Upload to Project'}

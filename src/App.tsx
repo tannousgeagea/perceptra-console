@@ -21,7 +21,7 @@ import OrganizationMembersPage from './pages/organiation/OrganizationMembersPage
 import ProjectMembersPage from './pages/organiation/ProjectMembersPage';
 import JobPage from './pages/jobs/JobsPage';
 import NoPermissionPage from './pages/NoPermissionPage';
-import DataLake from './pages/datalake/DataLakeNew';
+import DataLake from './pages/datalake/DataLake';
 import Login from './pages/Login';
 import { AuthProviderMock } from './hooks/useAuthMock';
 import { AuthProvider } from './contexts/AuthContext';
@@ -52,6 +52,7 @@ const App = () => {
                   <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
                   <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
                   <Route path='/datalake' element={<DataLake />} />
+                  <Route path='/upload' element={<UploadIndex />} />
                   <Route path='/projects' element={<Projects />} />
                   <Route path='/projects/add' element={<CreateProject />} />
                   <Route path='/inference' element={<Inference />} />

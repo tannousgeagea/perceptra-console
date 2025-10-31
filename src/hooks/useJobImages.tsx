@@ -1,53 +1,67 @@
-// hooks/useProjectImages.ts
-import { useQuery, UseQueryOptions } from "@tanstack/react-query";
+
+import { useQuery } from "@tanstack/react-query";
 import { baseURL } from "@/components/api/base";
+import { authStorage } from "@/services/authService";
+import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
+import type { JobImagesResponse } from "@/types/image";
 
-interface ImageData {
-  image_id: string;
-  image_url: string;
-  image_name: string;
+interface JobImagesParams {
+  skip?: number;
+  limit?: number;
+  status?: string;
+  annotated?: boolean;
 }
-
-interface DataResponse {
-  unannotated?: number;
-  annotated?: number;
-  reviewed?: number;
-  total_record?: number;
-  data?: ImageData[];
-  pages?: number;
-}
-
 
 export const fetchJobImages = async (
-    jobId: string,
-    status: string,
-    userFilter: string,
-    page: number,
-    itemsPerPage: number = 50
-): Promise<DataResponse> => {
-  const url = `${baseURL}/api/v1/jobs/${jobId}/images?status=${status}&user_filters=${userFilter}&items_per_page=${itemsPerPage}&page=${page}`;
+  organizationId: string,
+  projectId: string,
+  jobId: string,
+  params: JobImagesParams = {}
+): Promise<JobImagesResponse> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+  if (!token) throw new Error("No authentication token found");
 
-  const res = await fetch(url);
+  const { skip = 0, limit = 100, status, annotated } = params;
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch project images");
-  }
+  const queryParams = new URLSearchParams({
+    skip: skip.toString(),
+    limit: limit.toString(),
+  });
 
-  return res.json();
+  if (status) queryParams.append("status", status);
+  if (annotated !== undefined) queryParams.append("annotated", annotated.toString());
+
+  const response = await fetch(
+    `${baseURL}/api/v1/projects/${projectId}/jobs/${jobId}/images?${queryParams}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "X-Organization-ID": organizationId,
+        Accept: "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) throw new Error("Failed to fetch job images");
+
+  return response.json();
 };
 
 export const useJobImages = (
+  projectId: string,
   jobId: string,
-  status: string,
-  userFilter: string,
-  page: number,
-  itemsPerPage = 50
+  params: JobImagesParams = {}
 ) => {
+  const { currentOrganization } = useCurrentOrganization();
 
-  return useQuery<DataResponse, Error>({
-    queryKey: ["job-images", jobId, status, userFilter, page],
-    queryFn: () => fetchJobImages(jobId, status, userFilter, page, itemsPerPage),
-    // keepPreviousData : true,
-    // staleTime: 1000 * 60 * 5,
+  return useQuery({
+    queryKey: ["job-images", currentOrganization?.id, projectId, jobId, params],
+    queryFn: () => {
+      if (!currentOrganization) throw new Error("No organization selected");
+      return fetchJobImages(currentOrganization.id, projectId, jobId, params);
+    },
+    enabled: !!currentOrganization && !!projectId && !!jobId,
+    staleTime: 2 * 60 * 1000,
   });
 };

@@ -1,5 +1,4 @@
-import { useState, FC } from "react";
-import useFetchData from "@/hooks/use-fetch-data";
+import { useState, FC, useMemo } from "react";
 import ImageCard from "@/components/image/ImageCard";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import FilterTabs from "@/components/ui/filter/filter-tabs";
@@ -7,9 +6,8 @@ import Spinner from '@/components/ui/animation/spinner';
 import PaginationControls from "@/components/ui/actions/pagination-control";
 import AnnotateActions from "../../components/ui/actions/annotate-actions";
 import Header from "@/components/ui/header/Header";
+import { useJobImages } from "@/hooks/useJobImages";
 import { Info } from "lucide-react";
-import "./annotate.css";
-
 
 interface Filter {
   key: string;
@@ -17,24 +15,28 @@ interface Filter {
   count: number;
 }
 
-interface DataResponse {
-  unannotated?: number;
-  annotated?: number;
-  reviewed?: number;
-  total_record?: number;
-  data?: Array<{ image_id: string, image_url: string, image_name: string }>;
-  pages?: number;
-}
-
 const Annotate: FC = () => {
   const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+
+  if (!projectId || !jobId) {
+    return <p className="text-red-600 p-6">Invalid route: Missing project or job ID.</p>;
+  }
+
   const query = new URLSearchParams(location.search);
   const [selectedFilter, setSelectedFilter] = useState<string>(query.get("filter") || "unannotated");
-  const [currentPage, setCurrentPage] = useState<number>(parseInt(query.get("page") || "1", 10));
+  const [currentPage, setCurrentPage] = useState<number>(
+    parseInt(query.get("page") || "1", 10)
+  );  
   const itemsPerPage: number = 50;
 
+  const { data, isLoading, isError, refetch } = useJobImages(projectId, jobId, {
+    status: selectedFilter || undefined,
+    skip: (currentPage - 1) * itemsPerPage,
+    limit: itemsPerPage,
+  });
+  
   const updateURL = (filter: string, page: number) => {
     navigate({
       pathname: location.pathname,
@@ -53,39 +55,48 @@ const Annotate: FC = () => {
     updateURL(selectedFilter, newPage);
   };
   
-  const { data, loading, error, refetch }: 
-    { data?: DataResponse; loading: boolean; error?: Error | null; refetch: () => void } = useFetchData(
-    `/api/v1/jobs/${jobId}/images?status=${selectedFilter}&items_per_page=${itemsPerPage}&page=${currentPage}`
-  );
-
   const handleImageClick = (index:number): void => {
     navigate(
       `/projects/${projectId}/images/annotate`,
       { state: { images: data, currentIndex: index } });
   };
 
-  const filters: Filter[] = [
-    { key: "unannotated", label: "Unannotated", count: data?.unannotated || 0 },
-    { key: "annotated", label: "Annotated", count: data?.annotated || 0 },
-    { key: "reviewed", label: "Reviewed", count: data?.reviewed || 0 },
-  ];
+  const counts = useMemo(() => {
+    const total = data?.total || 0;
+    const annotated = data?.annotated || 0;
+    const reviewed = data?.reviewed || 0;
+    const unannotated = data?.unannotated || 0;
+    return { total, annotated, reviewed, unannotated };
+  }, [data]);
 
-  const totalRecord: number = data?.total_record || 0;
-  const pages = data?.pages || 0
-  const imageData = data?.data || [];
-  const totalReviewed = data?.reviewed || 0
+  const filters: Filter[] = [
+    { key: "unannotated", label: "Unannotated", count: counts.unannotated || 0 },
+    { key: "annotated", label: "Annotated", count: counts.annotated || 0 },
+    { key: "reviewed", label: "Reviewed", count: counts.reviewed || 0 },
+  ];
   
-  if (error) return <p>Error loading images: {error.message}</p>;
+  if (isError)
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-red-600">
+        <p>Failed to load job images.</p>
+        <button
+          onClick={() => refetch()}
+          className="text-blue-500 underline mt-2"
+        >
+          Retry
+        </button>
+      </div>
+    );
 
   return (
-    <div className="space-y-6 p-6 w-full">
+    <div className="w-full flex flex-col p-6 space-y-6">
       <div className="flex flex-col justify-between h-full">
         <div>
           <Header
             title="Annotate"
             description={`Annotate your images.`}
           />
-          <div className="tabs">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <FilterTabs 
               filters={filters}
               selectedFilter={selectedFilter}
@@ -94,35 +105,46 @@ const Annotate: FC = () => {
 
             <AnnotateActions 
               projectId={projectId || ''}
-              totalRecord={totalReviewed}
+              totalRecord={counts.total}
               onSuccess={refetch}
             />
           </div>
 
-          {loading ? (
-            <div className="image-grid">
+          {isLoading ? (
+            <div className="grid gap-4 w-full rounded px-4 py-8 place-items-center">
               <Spinner />
             </div>
-          ) : totalRecord === 0 ? (
-            <div className="no-results">
-              <i className="info-icon"><Info /></i>
+          ) : counts.total === 0 ? (
+            <div className="flex items-center mt-5 px-5 py-2.5 border border-[#cce5ff] rounded-lg bg-[#f0f8ff] text-[#004085] text-sm font-medium gap-1">
+              <span className="mr-1 text-2xl text-[#004085]">
+                <Info />
+              </span>
               <span>The search returned 0 results.</span>
             </div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-4 w-full rounded">
-              {imageData.map((image, index) => (
-                <ImageCard key={index} image={image} index={index} onClick={handleImageClick} />
+              {data?.images.map((image, index) => (
+                <ImageCard 
+                  key={index} 
+                  image={{
+                    image_id: image.image_id,
+                    image_url: image.download_url,
+                    image_name: image.name,
+                  }} 
+                  index={index} 
+                  onClick={handleImageClick} 
+                />
               ))}
             </div>
           )}
         </div>
 
-      {totalRecord > 0 && (
+      {counts.total > 0 && (
         <PaginationControls
           currentPage={currentPage}
-          totalPages={pages}
+          totalPages={Math.ceil(counts.total / itemsPerPage)}
           onNext={() => handlePageChange(currentPage + 1)}
-          onPrevious={() => setCurrentPage((prev) => prev - 1)}
+          onPrevious={() => handlePageChange(currentPage - 1)}
         />
       )}
       </div>
