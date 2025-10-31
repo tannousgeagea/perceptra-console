@@ -269,3 +269,159 @@ export const useStorageProfiles = (params: StorageProfilesParams = {}) => {
     staleTime: 2 * 60 * 1000,
   });
 };
+
+// ============================================
+// DELETE STORAGE PROFILE
+// ============================================
+
+export const deleteStorageProfile = async (
+  organizationId: string,
+  storageProfileId: string
+): Promise<void> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `${baseURL}/api/v1/storage/profiles/${storageProfileId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete storage profile' }));
+    throw new Error(error.message || 'Failed to delete storage profile');
+  }
+};
+
+export const useDeleteStorageProfile = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+  showToast?: boolean;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, onError, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: (storageProfileId: string) => {
+      if (!currentOrganization) {
+        throw new Error("No organization selected");
+      }
+      return deleteStorageProfile(currentOrganization.id, storageProfileId);
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storageProfiles'] });
+
+      if (showToast) {
+        toast.success('Storage profile deleted successfully');
+      }
+
+      onSuccess?.();
+    },
+
+    onError: (error: Error) => {
+      if (showToast) {
+        toast.error(error.message || 'Failed to delete storage profile');
+      }
+
+      onError?.(error);
+    },
+  });
+};
+
+// ============================================
+// UPDATE STORAGE PROFILE
+// ============================================
+
+export interface UpdateStorageProfilePayload {
+  name?: string;
+  region?: string;
+  is_default?: boolean;
+  is_active?: boolean;
+  config?: Record<string, any>;
+  credential_ref_id?: string;
+}
+
+export const updateStorageProfile = async (
+  organizationId: string,
+  storageProfileId: string,
+  payload: UpdateStorageProfilePayload
+): Promise<StorageProfile> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `${baseURL}/api/v1/storage/profiles/${storageProfileId}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to update storage profile' }));
+    throw new Error(error.message || 'Failed to update storage profile');
+  }
+
+  return response.json();
+};
+
+export const useUpdateStorageProfile = (options?: {
+  onSuccess?: (data: StorageProfile) => void;
+  onError?: (error: Error) => void;
+  showToast?: boolean;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, onError, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: ({ 
+      storageProfileId, 
+      payload 
+    }: { 
+      storageProfileId: string; 
+      payload: UpdateStorageProfilePayload 
+    }) => {
+      if (!currentOrganization) {
+        throw new Error("No organization selected");
+      }
+      return updateStorageProfile(currentOrganization.id, storageProfileId, payload);
+    },
+
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['storageProfiles'] });
+
+      if (showToast) {
+        toast.success('Storage profile updated successfully');
+      }
+
+      onSuccess?.(data);
+    },
+
+    onError: (error: Error) => {
+      if (showToast) {
+        toast.error(error.message || 'Failed to update storage profile');
+      }
+
+      onError?.(error);
+    },
+  });
+};

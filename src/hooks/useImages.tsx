@@ -1,85 +1,53 @@
+
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { baseURL } from "@/components/api/base";
-import { mockImages } from "@/components/datalake/mockImages";
+import { authStorage } from "@/services/authService";
+import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
+import type { ImagesResponse, ImagesParams } from "@/types/image";
 
-export interface ImageItem {
-  id: string;
-  image_id: string;
-  name: string;
-  src: string;
-  tags: string[];
-  source: string;
-  date: string;
-  projectId?: string;
-}
+export const fetchImages = async (
+  organizationId: string,
+  params: ImagesParams = {}
+): Promise<ImagesResponse> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+  if (!token) throw new Error("No authentication token found");
 
-interface UseImagesParams {
-  name?: string;
-  tag?: string;
-  source?: string;
-  limit?: number;
-  offset?: number;
-  parsedQuery?: string[];
-  useMock?: boolean;
-}
+  const { skip = 0, limit = 100, from_date, to_date, tags } = params;
+  const queryParams = new URLSearchParams({
+    skip: skip.toString(),
+    limit: limit.toString(),
+  });
+  if (from_date) queryParams.append("from_date", from_date);
+  if (to_date) queryParams.append("to_date", to_date);
+  if (tags) queryParams.append("tags", tags);
 
-export interface ImageResponse {
-  total: number;
-  limit: number;
-  offset: number;
-  data: ImageItem[];
-}
+  const response = await fetch(`${baseURL}/api/v1/images?${queryParams}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "X-Organization-ID": organizationId,
+      Accept: "application/json",
+    },
+  });
 
-const fetchImages = async (params: UseImagesParams): Promise<ImageResponse> => {
-  const { name, tag, source, limit = 20, offset = 0, parsedQuery = [], useMock } = params;
-
-  if (useMock) {
-    return {
-      data: mockImages,
-      total: mockImages.length,
-      limit,
-      offset,
-    };
+  if (!response.ok) {
+    throw new Error("Failed to fetch images");
   }
 
-  const queryParams: Record<string, any> = { limit, offset };
-  if (name) queryParams.name = name;
-  if (tag) queryParams.tag = tag;
-  if (source) queryParams.source = source;
-
-  if (parsedQuery.length > 0) {
-    queryParams.query = parsedQuery;
-  }
-
-
-  console.log(parsedQuery)
-  try {
-    const response = await axios.get(`${baseURL}/api/v1/images`, { 
-      params: queryParams,
-      paramsSerializer: (params) => {
-        const searchParams = new URLSearchParams();
-        Object.entries(params).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
-            value.forEach((v) => searchParams.append(key, v));
-          } else {
-            searchParams.append(key, value);
-          }
-        });
-        return searchParams.toString();
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(`Fetch failed: ${error.message || error}`);
-  }
+  return response.json();
 };
 
-export const useImages = (params: UseImagesParams = {}) => {
+export const useImages = (params: ImagesParams = {}) => {
+  const { currentOrganization } = useCurrentOrganization();
+
   return useQuery({
-    queryKey: ["images", params],
-    queryFn: () => fetchImages(params),
-    staleTime: 1000 * 60,
-    retry: false,
+    queryKey: ["images", currentOrganization?.id, params],
+    queryFn: () => {
+      if (!currentOrganization) throw new Error("No organization selected");
+      return fetchImages(currentOrganization.id, params);
+    },
+    enabled: !!currentOrganization,
+    staleTime: 2 * 60 * 1000,
   });
 };
+

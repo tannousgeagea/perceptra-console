@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/ui/button";
 import { toast } from "@/components/ui/ui/use-toast";
 import { useImages } from "@/hooks/useImages";
-import { mockImages, sources } from "@/components/datalake/mockImages"
+import { sources } from "@/components/datalake/mockImages"
 import SearchFilter from "@/components/datalake/SearchFilter";
 import SourceFilter from "@/components/datalake/SourceFilter";
 import SortControl from "@/components/datalake/SortControl";
@@ -16,6 +15,7 @@ import ViewToggle from "@/components/datalake/ViewToggle";
 import NoResults from "@/components/datalake/NoResults";
 import { Loader } from "lucide-react";
 import useFetchData from "@/hooks/use-fetch-data";
+import { ImageRecord } from "@/types/image";
 import { useAddImagesToProject } from '@/hooks/useAddImagesToProject';
 import { parseQueryString, formatQueryAsTagParams, ParsedQuery } from "@/utils/queryParse";
 
@@ -24,11 +24,6 @@ interface Project {
     id: string;
     name: string;
 }
-
-// Available tags from all images
-const allTags = Array.from(
-  new Set(mockImages.flatMap(img => img.tags))
-).sort();
 
 const DataLake: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -41,8 +36,6 @@ const DataLake: React.FC = () => {
   const [parsedQuery, setParsedQuery] = useState<ParsedQuery>({});
   const [view, setView] = useState<"grid" | "table">("grid");
   const { mutate: addImagesToProject } = useAddImagesToProject();
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -81,12 +74,11 @@ const DataLake: React.FC = () => {
 
   const isSearching = searchTerm.trim() !== "" || filterTags.length > 0 || Object.keys(parsedQuery).length > 0;
   const dynamicLimit = isSearching ? 500 : 50;
-  const { data: images, isLoading, isError } = useImages({
-    source: filterSource,
-    name: textSearchTerm || undefined,
-    tag: filterTags.length > 0 ? filterTags[0] : undefined,
+  const { data, isLoading, isError } = useImages({
+    // name: textSearchTerm || undefined,
+    tags: filterTags.length > 0 ? filterTags[0] : undefined,
     limit: dynamicLimit,
-    parsedQuery: combinedTagFilters,
+    // parsedQuery: combinedTagFilters,
   });  
 
   const toggleImageSelection = (image_id: string) => {
@@ -98,7 +90,7 @@ const DataLake: React.FC = () => {
   };
 
   const toggleSelectAll = () => {
-    const displayedImages = images?.data || [];
+    const displayedImages = data?.images || [];
     if (selectedImages.length === displayedImages.length) {
       setSelectedImages([]);
     } else {
@@ -120,18 +112,23 @@ const DataLake: React.FC = () => {
     setFilterTags([]);
   };
   
-  const handleImageClick = (image: typeof mockImages[0]) => {
+  const handleImageClick = (image: ImageRecord) => {
     // If the image has a project ID, navigate to the image detail within that project
-    if (image.projectId) {
-      navigate(`/projects/${image.projectId}/images/${image.id}`);
-    } else {
-      // Show a toast notifying that this image isn't in a project yet
-      toast({
-        title: "Image not in a project",
-        description: "Add this image to a project to view and annotate it.",
-        duration: 3000,
-      });
-    }
+    // if (image.projectId) {
+    //   navigate(`/projects/${image.projectId}/images/${image.id}`);
+    // } else {
+    //   // Show a toast notifying that this image isn't in a project yet
+    //   toast({
+    //     title: "Image not in a project",
+    //     description: "Add this image to a project to view and annotate it.",
+    //     duration: 3000,
+    //   });
+    // }
+    toast({
+      title: "Image not in a project",
+      description: "Add this image to a project to view and annotate it.",
+      duration: 3000,
+    })
   };
 
   const handleAddToProject = () => {
@@ -160,13 +157,16 @@ const DataLake: React.FC = () => {
     );
   };
 
-  const displayedImages = images?.data || []
-  
+  const displayedImages = data?.images || []
+  const allTags = Array.from(
+    new Set(displayedImages.flatMap(img => img.tags))
+  ).sort();
+
   // Apply sorting (we still need to sort client-side)
   const sortedImages = [...displayedImages].sort((a, b) => {
     return sortOrder === "asc"
-      ? new Date(a.date).getTime() - new Date(b.date).getTime()
-      : new Date(b.date).getTime() - new Date(a.date).getTime();
+      ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      : new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   // Check if any filters are active

@@ -28,6 +28,7 @@ export interface StorageProfile {
   region?: string;
   is_default?: boolean;
   created_at?: string;
+  updated_at?:string;
   config: AzureConfig | S3Config | MinioConfig | LocalConfig;
 }
 
