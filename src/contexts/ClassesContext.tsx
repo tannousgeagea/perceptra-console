@@ -1,16 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useClassesApi } from '@/hooks/useClassesApi';
+import { useClassesApi } from '@/hooks/useClasses';
 import { toast } from '@/hooks/use-toast';
-import { useParams } from 'react-router-dom';
 import { useProject } from './ProjectContext';
-
-export interface AnnotationClass {
-  id: string;
-  classId?: number;
-  name: string;
-  color: string;
-  count: number;
-}
+import { AnnotationClass } from '@/types/classes';
 
 interface ClassesContextType {
   classes: AnnotationClass[];
@@ -147,10 +139,14 @@ export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
     
     try {
-      const updatedClass = await apiUpdateClass(id, updates);
+      const updatedClass = await apiUpdateClass(
+        projectId,
+        id, 
+        updates
+      );
       if (updatedClass) {
         const updatedClasses = classes.map(c => 
-          c.id === id ? { ...c, ...updatedClass } : c
+          String(c.classId) === id ? { ...c, ...updatedClass } : c
         );
         setClasses(updatedClasses);
         // Update localStorage
@@ -167,7 +163,7 @@ export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
   
   // Delete a class
-  const deleteClass = async (id: string) => {
+  const deleteClass = async (id: string, hard_delete: boolean = false) => {
     if (classesLocked) {
       toast({
         title: "Classes are locked",
@@ -177,12 +173,16 @@ export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     
-    const classToDelete = classes.find(c => c.id === id);
+    const classToDelete = classes.find(c => String(c.classId) === id);
     if (!classToDelete) return;
     
     try {
-      await apiDeleteClass(id);
-      const updatedClasses = classes.filter(c => c.id !== id);
+      await apiDeleteClass(
+        projectId,
+        id,
+        hard_delete
+      );
+      const updatedClasses = classes.filter(c => String(c.classId) !== id);
       setClasses(updatedClasses);
       // Update localStorage
       localStorage.setItem('annotationClasses', JSON.stringify(updatedClasses));

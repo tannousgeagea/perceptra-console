@@ -46,7 +46,16 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
       return;
     }
     
-    onUpdate(cls.id, { name: editingName.trim() });
+    if (!cls.classId) {
+      toast({
+        title: "Class Id cannot be empty",
+        variant: "destructive",
+        duration: 2000
+      });
+      return;
+    }
+
+    onUpdate(String(cls.classId), { name: editingName.trim() });
     setIsEditing(false);
     setEditingName('');
     toast({
@@ -56,14 +65,12 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
   };
 
   const handleColorChange = (color: string) => {
-    onUpdate(cls.id, { color });
+    onUpdate(String(cls.classId), { color });
     toast({
       title: "Color updated",
       duration: 2000
     });
   };
-
-  console.log(isEven)
 
   return (
     <TableRow 
@@ -125,7 +132,7 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction 
                 className="bg-red-500 hover:bg-red-600"
-                onClick={() => onDelete(cls.id)}
+                onClick={() => onDelete(String(cls.classId))}
               >
                 Delete
               </AlertDialogAction>

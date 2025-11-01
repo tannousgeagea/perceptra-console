@@ -5,7 +5,7 @@ import Dataset from './pages/dataset/dataset';
 import Versions from './pages/versions/versions';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProjectLayout from './components/ui/common/project-layout';
-import Index from './pages/annotate-tool/annotate-tool';
+import Index from './pages/annotate-tool/AnnotationTool';
 import { ProtectedRoute, PublicRoute} from './pages/login/ProtectedRoute';
 import AnalysisPage from './pages/analysis/Index';
 import Annotate from './pages/annotate/annotate';
