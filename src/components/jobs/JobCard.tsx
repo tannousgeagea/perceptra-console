@@ -66,11 +66,11 @@ const getStatusBadge = (status: JobStatus) => {
 
 
   return (
-    <Card className="h-full animate-fade-in bg-white hover:shadow-md transition-shadow duration-200">
-      <CardContent className="p-4">
+    <Card className="flex flex-col h-full animate-fade-in bg-white hover:shadow-md transition-shadow duration-200">
+      <CardContent className="flex-1 p-4">
         <div className="flex justify-between items-start gap-3">
-          <div>
-            <h3 className="font-medium text-slate-800">{job.name}</h3>
+          <div className="max-w-[25%]">
+            <h3 className="font-medium text-sm text-slate-00 truncate">{job.name}</h3>
             <p className="text-xs text-slate-500">ID: {job.id}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ const getStatusBadge = (status: JobStatus) => {
                 value={job.status}
                 onValueChange={(value) => onStatusChange(job, value as JobStatus)}
               >
-                <SelectTrigger className="h-8 w-[140px]">
+                <SelectTrigger className="h-8 w-[125px]">
                   <SelectValue placeholder="Change status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -120,7 +120,7 @@ const getStatusBadge = (status: JobStatus) => {
         </div>
       </CardContent>
       
-      <CardFooter className="p-4 pt-2 flex justify-between gap-2 border-t border-slate-100">
+      <CardFooter className="mt-auto p-4 pt-2 flex justify-between gap-2 border-t border-slate-100">
         <TooltipProvider>
           <div className="flex gap-1">
             <Tooltip>

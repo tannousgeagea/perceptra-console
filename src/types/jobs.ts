@@ -46,7 +46,7 @@ export interface Job {
     },
     {
       from: JobStatus.IN_REVIEW,
-      to: [JobStatus.COMPLETED],
+      to: [JobStatus.ASSIGNED, JobStatus.COMPLETED],
     },
   ];
   

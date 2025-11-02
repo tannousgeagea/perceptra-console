@@ -32,7 +32,7 @@ const Annotate: FC = () => {
     parseInt(query.get("page") || "1", 10)
   );  
   const itemsPerPage: number = 50;
-  const [imageSize, setImageSize] = useState<ImageSize>("md");
+  const [imageSize, setImageSize] = useState<ImageSize>("sm");
 
   const { data, isLoading, isError, refetch } = useJobImages(projectId, jobId, {
     status: selectedFilter || undefined,

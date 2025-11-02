@@ -79,7 +79,7 @@ const Navbar: FC = () => {
                 className="transition-opacity duration-300 truncate"
                 style={{ maxWidth: '120px' }}
               >
-                VisionNest
+                Perceptra Vision
               </h2>
             )}
           </div>
