@@ -1,25 +1,3 @@
-// Define types for the image card component
-export interface Annotation {
-    xyxyn: number[]; // Coordinates in normalized [x_min, y_min, x_max, y_max] format
-    label?: string; // Optional label for the annotation
-    confidence?: number; // Optional confidence score
-  }
-  
-export interface ImageData {
-    image_id: string;
-    image_url: string;
-    image_name: string;
-    annotations?: Annotation[];
-  }
-  
-export interface ImageCardProps {
-    image: ImageData;
-    index: number;
-    onClick?: (index: number) => void;
-    className?: string;
-    highlightColor?: string; // Allow customization of highlight color
-    size?: 'sm' | 'md' | 'lg'; // Different size options
-  }
   
 export interface ImageCardGridProps {
     images: ImageData[];
@@ -115,11 +93,13 @@ export interface Annotation {
   class_id: string;
   class_name: string;
   color: string;
-  data: Record<string, any>;
+  data: [number, number, number, number]; 
   source: string;
   confidence?: number;
   reviewed?: boolean;
   is_active: boolean;
+  create_at?: string;
+  created_by?: string;
 }
 
 export interface JobImage {
@@ -158,3 +138,39 @@ export interface ProjectImageResponse {
   total: number;
   images: JobImage[];
 }
+
+export interface ProjectImageOut {
+  id: string;
+  image: ImageRecord;
+  status?: string;
+  annotated: boolean;
+  reviewed: boolean;
+  finalized: boolean;
+  marked_as_null: boolean;
+  priority?: number;
+  job_assignment_status?: string;
+  mode?: {
+    id: string;
+    mode: string;
+  } | null;
+  metadata?: Record<string, any>;
+  added_by?: string;
+  reviewed_by?: string;
+  added_at: string;
+  reviewed_at?: string;
+  updated_at: string;
+  jobs: JobImage[];
+  annotations: Annotation[];
+}
+
+
+export  type ImageSize = 'sm' | 'md' | 'lg' 
+
+export interface ImageCardProps {
+    image: JobImage;
+    index: number;
+    onClick?: (index: number) => void;
+    className?: string;
+    highlightColor?: string; // Allow customization of highlight color
+    size?: ImageSize; // Different size options
+  }

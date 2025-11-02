@@ -1,4 +1,7 @@
 import { AnnotationClass } from "@/contexts/ClassesContext";
+import { baseURL } from "../api/base";
+import { authStorage } from "@/services/authService";
+import { AUTH_STORAGE_KEYS } from "@/types/auth";
 
 // API error class
 export class ApiError extends Error {
@@ -17,11 +20,17 @@ const fetchApi = async <T>(
   options?: RequestInit
 ): Promise<T> => {
   try {
-    const API_URL = import.meta.env.VITE_API_URL || "https://api.example.com";
-    const response = await fetch(`${API_URL}${endpoint}`, {
+
+    const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    const response = await fetch(`${baseURL}${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
         ...options?.headers,
       }
     });
@@ -49,62 +58,58 @@ const fetchApi = async <T>(
 // Classes API
 export const classesApi = {
   // Get all classes
-  getClasses: async (projectId: string): Promise<AnnotationClass[]> => {
-    // Temporary mock response until actual API is connected
-    // return [
-    //   { id: '1', name: 'O', color: '#3B82F6', count: 2 },
-    //   { id: '2', name: 'brewa-ek109', color: '#EC4899', count: 1 },
-    //   { id: '3', name: 'g2-agr', color: '#06B6D4', count: 2 },
-    //   { id: '4', name: 'g3-tirme-bottom', color: '#FACC15', count: 1 },
-    //   { id: '5', name: 'g3-tirme-top', color: '#2DD4BF', count: 1 },
-    //   { id: '6', name: 'g3-top-amk', color: '#F97316', count: 2 },
-    //   { id: '7', name: 'g4-gml', color: '#8B5CF6', count: 1 },
-    //   { id: '8', name: 'g6-gml', color: '#EF4444', count: 1 },
-    //   { id: '9', name: 'roi', color: '#A3E635', count: 0 },
-    // ];
-    // For real API implementation, uncomment below:
-    return fetchApi<AnnotationClass[]>(`/api/v1/classes?project_id=${projectId}`);
+  getClasses: async (organizationId:string, projectId: string): Promise<AnnotationClass[]> => {
+    return fetchApi<AnnotationClass[]>(`/api/v1/projects/${projectId}/classes`, {
+      headers: {
+        "X-Organization-ID": organizationId,
+      }
+    });
   },
   
   // Create a new class
-  createClass: async (projectId: string, classData: Omit<AnnotationClass, "id">): Promise<AnnotationClass> => {
-    // const newClass = {
-    //   ...classData,
-    //   id: Date.now().toString(),
-    // };
-    // return newClass;
-    // For real API implementation, uncomment below:
-    return fetchApi<AnnotationClass>(`/api/v1/classes?project_id=${projectId}`, {
+  createClass: async (
+    organizationId:string,
+    projectId: string, 
+    classData: Omit<AnnotationClass, "id">
+  ): Promise<AnnotationClass> => {
+    return fetchApi<AnnotationClass>(`/api/v1/projects/${projectId}/classes`, {
       method: "POST",
       body: JSON.stringify(classData),
+      headers: {
+        "X-Organization-ID": organizationId,
+      }
     });
   },
   
   // Update an existing class
-  updateClass: async (id: string, updates: Partial<AnnotationClass>): Promise<AnnotationClass> => {
-    // Temp mock response
-    // In a real implementation, this would call the API
-    // const mockClass = {
-    //   id,
-    //   name: updates.name || "Updated Class",
-    //   color: updates.color || "#000000",
-    //   count: 0
-    // };
-    // return mockClass;
-    // For real API implementation, uncomment below:
-    return fetchApi<AnnotationClass>(`/api/v1/classes/${id}`, {
+  updateClass: async (
+    organizationId: string, 
+    projectId: string,  
+    class_id: string, 
+    updates: Partial<AnnotationClass>
+  ): Promise<AnnotationClass> => {
+    return fetchApi<AnnotationClass>(`/api/v1/projects/${projectId}/classes/${class_id}`, {
       method: "PATCH",
       body: JSON.stringify(updates),
+      headers: {
+        "X-Organization-ID": organizationId,
+      }
     });
   },
   
   // Delete a class
-  deleteClass: async (id: string): Promise<void> => {
-    // Mock success response
-    // return Promise.resolve();
-    // For real API implementation, uncomment below:
-    return fetchApi<void>(`/api/v1/classes/${id}`, {
+  deleteClass: async (
+    organizationId: string, 
+    projectId: string,  
+    class_id: string,
+    hard_delete: boolean = false
+  ): Promise<void> => {
+    const queryParam = hard_delete ? "?hard=true" : "";
+    return fetchApi<void>(`/api/v1/projects/${projectId}/classes/${class_id}${queryParam}`, {
       method: "DELETE",
+      headers: {
+        "X-Organization-ID": organizationId,
+      }
     });
   }
 };

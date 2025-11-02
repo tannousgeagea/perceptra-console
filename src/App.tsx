@@ -5,7 +5,7 @@ import Dataset from './pages/dataset/dataset';
 import Versions from './pages/versions/versions';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProjectLayout from './components/ui/common/project-layout';
-import Index from './pages/annotate-tool/annotate-tool';
+import Index from './pages/annotate-tool/AnnotationTool';
 import { ProtectedRoute, PublicRoute} from './pages/login/ProtectedRoute';
 import AnalysisPage from './pages/analysis/Index';
 import Annotate from './pages/annotate/annotate';
@@ -34,6 +34,7 @@ import TeamProgress from './pages/team_progress/TeamProgress';
 import Inference from './pages/inference/Inference';
 import CreateProject from './pages/project/create-project';
 import Settings from './pages/settings/Settings';
+import { TooltipProvider } from './components/ui/ui/tooltip';
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -42,47 +43,49 @@ const App = () => {
       <Router>
         <AuthProvider>
           <AuthProviderMock>
-            <Routes>
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Navigate to="/projects" replace />} />
-                  <Route path="/no-permission" element={<NoPermissionPage />} />
-                  <Route path='/organizations/:orgId' element={<OrganizationPage />} />
-                  <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
-                  <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
-                  <Route path='/datalake' element={<DataLake />} />
-                  <Route path='/upload' element={<UploadIndex />} />
-                  <Route path='/projects' element={<Projects />} />
-                  <Route path='/projects/add' element={<CreateProject />} />
-                  <Route path='/inference' element={<Inference />} />
-                  <Route path='/settings/*' element={<Settings />} />
-                  <Route path='projects/:projectId' element={<ProjectLayout />}>
-                    <Route path='upload' element={<UploadIndex />} />
-                    <Route path='dataset' element={<Dataset />} />
-                    {/* <Route path='annotate' element={<Annotate />} /> */}
-                    <Route path='versions' element={<Versions mode="view" />} />
-                    <Route path='versions/:versionID' element={<Versions mode="view" />} />
-                    <Route path="versions/generate" element={<Versions mode="generate" />} />
-                    <Route path="analysis" element={<AnalysisPage/>} />
-                    <Route path='classes' element={<ClassesManagement/>} />
-                    <Route path='analytics' element={<AnalyticsPage/>} />
-                    <Route path='members' element={<ProjectMembersPage/>} />
-                    <Route path='annotate' element={<JobPage/>} />
-                    <Route path="models" element={<ModelsList />} />
-                    <Route path="models/:modelId" element={<ModelDetail />} />
-                    <Route path="models/:modelId/train" element={<ModelTraining />} />
-                    <Route path="sessions" element={<SessionsPage />} />
-                    <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
-                    <Route path='annotate/job/:jobId' element={<Annotate/>} />
-                    <Route path="no-permission" element={<NoPermissionPage />} />
+            <TooltipProvider delayDuration={100}>
+              <Routes>
+                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Navigate to="/projects" replace />} />
+                    <Route path="/no-permission" element={<NoPermissionPage />} />
+                    <Route path='/organizations/:orgId' element={<OrganizationPage />} />
+                    <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
+                    <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
+                    <Route path='/datalake' element={<DataLake />} />
+                    <Route path='/upload' element={<UploadIndex />} />
+                    <Route path='/projects' element={<Projects />} />
+                    <Route path='/projects/add' element={<CreateProject />} />
+                    <Route path='/inference' element={<Inference />} />
+                    <Route path='/settings/*' element={<Settings />} />
+                    <Route path='projects/:projectId' element={<ProjectLayout />}>
+                      <Route path='upload' element={<UploadIndex />} />
+                      <Route path='dataset' element={<Dataset />} />
+                      {/* <Route path='annotate' element={<Annotate />} /> */}
+                      <Route path='versions' element={<Versions mode="view" />} />
+                      <Route path='versions/:versionID' element={<Versions mode="view" />} />
+                      <Route path="versions/generate" element={<Versions mode="generate" />} />
+                      <Route path="analysis" element={<AnalysisPage/>} />
+                      <Route path='classes' element={<ClassesManagement/>} />
+                      <Route path='analytics' element={<AnalyticsPage/>} />
+                      <Route path='members' element={<ProjectMembersPage/>} />
+                      <Route path='annotate' element={<JobPage/>} />
+                      <Route path="models" element={<ModelsList />} />
+                      <Route path="models/:modelId" element={<ModelDetail />} />
+                      <Route path="models/:modelId/train" element={<ModelTraining />} />
+                      <Route path="sessions" element={<SessionsPage />} />
+                      <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
+                      <Route path='annotate/job/:jobId' element={<Annotate/>} />
+                      <Route path="no-permission" element={<NoPermissionPage />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
                     <Route path="*" element={<NotFound />} />
                   </Route>
-                  <Route path="*" element={<NotFound />} />
+                  <Route path='/projects/:projectId/images/:imageId' element={<Index />} />
                 </Route>
-                <Route path='/projects/:projectId/images/annotate' element={<Index />} />
-              </Route>
-            </Routes>
+              </Routes>
+            </TooltipProvider>
             <Toaster />
             <Sonner />
           </AuthProviderMock>

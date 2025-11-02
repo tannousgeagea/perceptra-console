@@ -3,11 +3,13 @@ import ImageCard from "@/components/image/ImageCard";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import FilterTabs from "@/components/ui/filter/filter-tabs";
 import Spinner from '@/components/ui/animation/spinner';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/ui/toggle-group"; // if using shadcn UI
 import PaginationControls from "@/components/ui/actions/pagination-control";
 import AnnotateActions from "../../components/ui/actions/annotate-actions";
 import Header from "@/components/ui/header/Header";
 import { useJobImages } from "@/hooks/useJobImages";
 import { Info } from "lucide-react";
+import { ImageSize } from "@/types/image";
 
 interface Filter {
   key: string;
@@ -30,6 +32,7 @@ const Annotate: FC = () => {
     parseInt(query.get("page") || "1", 10)
   );  
   const itemsPerPage: number = 50;
+  const [imageSize, setImageSize] = useState<ImageSize>("md");
 
   const { data, isLoading, isError, refetch } = useJobImages(projectId, jobId, {
     status: selectedFilter || undefined,
@@ -55,10 +58,9 @@ const Annotate: FC = () => {
     updateURL(selectedFilter, newPage);
   };
   
-  const handleImageClick = (index:number): void => {
+  const handleImageClick = (index: number, image_id:string): void => {
     navigate(
-      `/projects/${projectId}/images/annotate`,
-      { state: { images: data, currentIndex: index } });
+      `/projects/${projectId}/images/${image_id}?jobId=${jobId}&filter=${selectedFilter}&page=${currentPage}&index=${index}`);
   };
 
   const counts = useMemo(() => {
@@ -94,20 +96,63 @@ const Annotate: FC = () => {
         <div>
           <Header
             title="Annotate"
-            description={`Annotate your images.`}
+            description="Browse and annotate job images efficiently"
           />
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <FilterTabs 
               filters={filters}
               selectedFilter={selectedFilter}
               onSelectFilter={handleFilterChange}
             />
 
-            <AnnotateActions 
-              projectId={projectId || ''}
-              totalRecord={counts.total}
-              onSuccess={refetch}
-            />
+            <div className="flex items-center gap-3">
+              <AnnotateActions
+                projectId={projectId || ""}
+                totalRecord={counts.total}
+                onSuccess={refetch}
+              />
+
+              {/* 🔹 Size toggle (sm, md, lg) */}
+              <ToggleGroup
+                type="single"
+                value={imageSize}
+                onValueChange={(val) => {
+                  if (val) setImageSize(val as "sm" | "md" | "lg");
+                }}
+                className="flex gap-1 border border-border rounded-lg p-0.5 bg-muted/30"
+              >
+                <ToggleGroupItem
+                  value="sm"
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    imageSize === "sm"
+                      ? "bg-primary text-white"
+                      : "hover:bg-muted/50"
+                  }`}
+                >
+                  S
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="md"
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    imageSize === "md"
+                      ? "bg-primary text-white"
+                      : "hover:bg-muted/50"
+                  }`}
+                >
+                  M
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="lg"
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    imageSize === "lg"
+                      ? "bg-primary text-white"
+                      : "hover:bg-muted/50"
+                  }`}
+                >
+                  L
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           </div>
 
           {isLoading ? (
@@ -122,18 +167,28 @@ const Annotate: FC = () => {
               <span>The search returned 0 results.</span>
             </div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-4 w-full rounded">
+            <div
+              className={`flex flex-wrap gap-4 justify-start items-start w-full`}
+              style={{
+                rowGap: "1rem",
+                columnGap: "1rem",
+              }}
+            >
               {data?.images.map((image, index) => (
-                <ImageCard 
-                  key={index} 
-                  image={{
-                    image_id: image.image_id,
-                    image_url: image.download_url,
-                    image_name: image.name,
-                  }} 
-                  index={index} 
-                  onClick={handleImageClick} 
-                />
+                <div
+                  key={image.image_id}
+                  // className={`
+                  //   ${imageSize === "sm" ? "w-28" : imageSize === "md" ? "w-40" : "w-56"}
+                  // `}
+                >
+                  <ImageCard
+                    image={image}
+                    index={index}
+                    size={imageSize}
+                    onClick={() => handleImageClick(index, image.image_id)}
+                    highlightColor=""
+                  />
+                </div>
               ))}
             </div>
           )}
