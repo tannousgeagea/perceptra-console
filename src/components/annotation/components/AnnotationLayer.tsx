@@ -1,20 +1,11 @@
 import React from 'react';
 import BoundingBox from '../BoundingBox';
 import PolygonAnnotation from './PolygonAnnotation';
+import { Box } from '@/contexts/AnnotationContext';
 
 interface Point {
   x: number;
   y: number;
-}
-
-interface Box {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label: string;
-  color: string;
 }
 
 interface Polygon {

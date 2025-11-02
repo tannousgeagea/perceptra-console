@@ -14,9 +14,9 @@ const AnnotateActions: FC<AnnotateActionsProps> = ({ projectId, totalRecord, onS
   return (
     <>
       <div className="annotate-actions">
-        <RequestFeedbackBtn 
+        {/* <RequestFeedbackBtn 
           projectId={projectId}
-        />
+        /> */}
         
         <AddToDatasetButton 
             projectId={projectId  || ''}

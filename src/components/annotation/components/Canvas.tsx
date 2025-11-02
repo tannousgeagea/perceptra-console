@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAnnotation } from '@/contexts/AnnotationContext';
+import { useParams } from 'react-router-dom';
+import { useAnnotation, Box } from '@/contexts/AnnotationContext';
 import { useDraw } from '@/hooks/useDraw';
-import useSaveAnnotation from '@/hooks/annotation/useSaveAnnotation';
-import useDeleteAnnotation from "@/hooks/annotation/useDeleteAnnotation";
-import useFetchAnnotationClasses from "@/hooks/annotation/useFetchAnnotationClasses";
-import { toast } from '@/hooks/use-toast';
+import { useDeleteAnnotation } from '@/hooks/useAnnotations';
+import { toast } from 'sonner';
 import AnnotationEditor from './AnnotationEditor';
 import GuideLines from './GuideLines';
 import CurrentPolygon from './CurrentPolygon';
 import DrawingBox from './DrawingBox';
 import AnnotationLayer from './AnnotationLayer';
-import { baseURL } from '@/components/api/base';
 import { useZoom } from '@/hooks/useZoom';
-
+import { ProjectImageOut } from '@/types/image';
+import { useClasses } from '@/hooks/useClasses';
+import QueryState from '@/components/common/QueryState';
+import { useCreateAnnotation, useAnnotations } from '@/hooks/useAnnotations';
 
 interface Image {
   image_id: string;
@@ -21,18 +22,9 @@ interface Image {
 }
 
 interface CanvasProps {
-  image: Image;
+  image: ProjectImageOut;
 }
 
-interface Box {
-    id: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    label: string;
-    color: string;
-  }
   
 
 const Canvas: React.FC<CanvasProps> = ({ image }) => {
@@ -63,26 +55,33 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
     handleCanvasClick, 
     handleContextMenu 
   } = useDraw();
-  const { classes } = useFetchAnnotationClasses(image.project_id);
-  const { saveAnnotation } = useSaveAnnotation();
-  const { deleteAnnotation } = useDeleteAnnotation();
+  
+  const { projectId } = useParams<{projectId: string}>()
+  const { data: classes, isLoading, isError, refetch } = useClasses(projectId);
+  const { mutate: deleteAnnotation } = useDeleteAnnotation();
+  const { 
+    data: annotationsData, 
+    isLoading: isLoadingAnnotations 
+  } = useAnnotations(
+    projectId!,
+    Number(image.image.id)
+  );
+
+  const { mutate: createAnnotation, isPending } = useCreateAnnotation(
+    projectId!,
+    Number(image.image.id)
+  );
 
   // Track if the control key is pressed
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isAltPressed, setIsAltPressed] = useState(false);
 
   const {
-    scale,
-    offsetX,
-    offsetY,
     isDragging,
     handleWheel,
     handleMouseDown: handleZoomMouseDown,
     handleMouseMove: handleZoomMouseMove,
     handleMouseUp,
-    resetZoom,
-    zoomIn,
-    zoomOut,
     getTransformStyle,
   } = useZoom({
     minScale: 0.25,
@@ -90,15 +89,21 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
     scaleStep: 0.25,
     initialScale: 1,
   });
-
-  const fetchAnnotations = async (imageID: string, projectId: string) => {
-    const response = await fetch(`${baseURL}/api/v1/annotations/${projectId}/${imageID}`);
-    const data = await response.json();
-    if (data) {
-      // Assuming the API returns an array of objects with a "data" property containing the box.
-      setBoxes(data.map((box: any) => box.data));
+  
+  useEffect(() => {
+    if (annotationsData?.annotations) {
+      setBoxes(annotationsData.annotations.map(ann => ({
+        id: ann.annotation_uid,
+        x: ann.data.x,
+        y: ann.data.y,
+        width: ann.data.width,
+        height: ann.data.height,
+        label: ann.class_name,
+        color: ann.color,
+        class_id: ann.class_id,
+      })));
     }
-  };
+  }, [annotationsData, setBoxes]);
 
   const getRandomColor = (): string => {
     const letters = "0123456789ABCDEF";
@@ -117,20 +122,39 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
           const color = getRandomColor();
           annotation.color = color;
         }
-        await saveAnnotation(annotation, image.project_id, image.image_id);
+
+        createAnnotation({
+          annotation_type: 'box',
+          annotation_class_name: annotation.label, // person class
+          data: [
+            annotation.x, 
+            annotation.y, 
+            annotation.x + annotation.width, 
+            annotation.y + annotation.height
+          ],
+          annotation_source: 'manual',
+          confidence: 1.0,
+          annotation_uid: annotation.id,
+        });
+        // await saveAnnotation(annotation, projectId!, image.image.image_id);
       }
     }
   };
 
   const handleDelete = async (id: string) => {
+    if (!projectId) {
+      toast.warning("Project ID is undefined")
+      return;
+    }
+
     if (id) {
-      await deleteAnnotation(id);
+      deleteAnnotation({
+        projectId,
+        annotationId: id,
+        hardDelete: false
+      });
     }
   };
-
-  useEffect(() => {
-    if (image) fetchAnnotations(image.image_id, image.project_id);
-  }, [image]);
 
   const updateBoxPosition = (id: string, updates: Partial<Box>) => {
     setBoxes(boxes.map((box: Box) => 
@@ -140,15 +164,12 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      
       if (e.key === 'Control') {
         setIsCtrlPressed(true);
       } else if (e.key === 'Alt') {
         setIsAltPressed(true);
       } else if (e.key === 'Escape' && tool === 'polygon' && currentPolygon) {
-        toast({
-          title: 'Polygon drawing cancelled'
-        });
+        toast.error('Polygon drawing cancelled');
       }
     };
 
@@ -198,21 +219,23 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
     return 'crosshair';
   };
 
-  // Zoom functionality
-  // const [scale, setScale] = useState(1);
-  // const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-  //   e.preventDefault();
-  //   // Adjust zoom sensitivity and clamp scale between 0.5 and 3
-  //   let newScale = e.deltaY < 0 ? scale * 1.05 : scale / 1.05;
-  //   newScale = Math.min(Math.max(newScale, 0.5), 3);
-  //   setScale(newScale);
-  // };
+  if (isError || isLoading || isLoadingAnnotations) {
+    return (
+      <QueryState
+        isLoading={isLoading || isLoadingAnnotations}
+        isError={isError}
+        onRetry={refetch}
+        loadingMessage="Loading annotations..."
+        errorMessage="Failed to fetch annotations. Please try again."
+      />
+    );
+  }
 
   return (
     <div className="flex relative p-4 flex-1 justify-center items-center w-full h-full">
       {selectedBox && (
         <AnnotationEditor
-          classes={classes}
+          classes={classes || []}
           onSaveClass={handleSave}
           onDeleteClass={handleDelete}
         />
@@ -244,7 +267,7 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
         >
           <div className="annotation-canvas relative bg-[beige] justify-center items-center">
             <img 
-              src={image.image_url}
+              src={image.image.download_url}
               alt="Sample image"
               className="object-contain select-none w-full max-h-[800px]"
               onDragStart={(e) => e.preventDefault()}

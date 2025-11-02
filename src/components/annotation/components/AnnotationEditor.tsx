@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { X, Trash2, Save } from "lucide-react";
 import { useAnnotation } from "@/contexts/AnnotationContext";
+import { AnnotationClass } from "@/types/classes";
 
-interface AnnotationClass {
-  id: string;
-  label: string;
-  color: string;
-  name: string;
-}
+// interface AnnotationClass {
+//   id: string;
+//   label: string;
+//   color: string;
+//   name: string;
+// }
 
 interface AnnotationEditorProps {
   classes: AnnotationClass[];
@@ -38,9 +39,9 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
         setClassName(box.label);
         setSelectedClass({
           id: box.id,
-          label: box.label,
           color: box.color,
           name: box.label,
+          count: 0,
         });
         setVisible(true);
       } else {
@@ -155,7 +156,7 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
           <div
             key={cls.id}
             className={`flex items-center px-2 py-1 rounded cursor-pointer transition-colors duration-150 ${
-              selectedClass?.label === cls.name ? "bg-[#1a324d]" : "hover:bg-[#0d1f34]"
+              selectedClass?.name === cls.name ? "bg-[#1a324d]" : "hover:bg-[#0d1f34]"
             }`}
             onClick={() => updateLabelAndColor(selectedBox, cls.name, cls.color)}
           >

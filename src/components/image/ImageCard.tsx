@@ -1,73 +1,85 @@
-import React, { useState } from 'react';
-import { ImageCardProps } from '@/types/image';
-import BoundingBox from './BoundingBox';
-import ImageLoader from './ImageLoader';
+import React, { useState } from "react";
+import { ImageCardProps } from "@/types/image";
+import BoundingBox from "./BoundingBox";
+import ImageLoader from "./ImageLoader";
+import { cn } from "@/lib/utils"; // if you have a className merge util
 
-const ImageCard: React.FC<ImageCardProps> = ({ 
-  image, 
-  index, 
-  onClick, 
-  className = '',
-  highlightColor = 'rgba(255, 255, 0, 0.9)',
-  size = 'md'
+const ImageCard: React.FC<ImageCardProps> = ({
+  image,
+  index,
+  onClick,
+  className = "",
+  highlightColor = "rgba(255, 255, 0, 0.9)",
+  size = "md",
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  
-  // Size mappings for different card sizes
+
+  // Card size variants
   const sizeClasses = {
-    sm: 'w-24 h-24',
-    md: 'w-32 h-32',
-    lg: 'w-48 h-48',
+    sm: "max-w-[12rem]",
+    md: "max-w-[18rem]",
+    lg: "max-w-[24rem]",
   };
 
   const handleClick = () => {
-    if (onClick) {
-      onClick(index);
-    }
+    if (onClick) onClick(index);
   };
 
   return (
-    <div 
-      className={`relative rounded-md overflow-hidden shadow-sm transition-all duration-300 ${className} 
-        ${sizeClasses[size]} ${isHovered ? 'shadow-md ring-2 ring-indigo-300 bg-indigo-50/30' : ''}`}
+    <div
+      className={cn(
+        `relative rounded-sm overflow-hidden bg-muted/20 border border-border
+         shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer`,
+        sizeClasses[size],
+        className,
+        isHovered && "ring-2 ring-primary/30 scale-[1.02]"
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
     >
-      {/* Image container */}
-      <div 
-        className="relative w-full h-full cursor-pointer"
-        onClick={handleClick}
-      >
-        {/* Image */}
-        <img 
-          src={image.image_url}
-          alt={image.image_name}
-          className={`absolute inset-0 w-full h-full object-fill transition-all duration-300 
-            ${isLoaded ? 'opacity-100' : 'opacity-0'} 
-            ${isHovered ? 'brightness-90' : 'brightness-95'}`}
+      {/* Image container with fixed aspect ratio */}
+      <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+        {/* Main image */}
+        <img
+          src={image.download_url}
+          alt={image.name}
+          className={`object-contain w-full h-full transition-all duration-500 
+            ${isLoaded ? "opacity-100" : "opacity-0"} 
+            ${isHovered ? "scale-[1.03]" : "scale-100"}`}
           loading="lazy"
           onLoad={() => setIsLoaded(true)}
         />
-        
-        {/* Bounding boxes */}
-        {isLoaded && image.annotations?.map((annotation, idx) => (
-          <BoundingBox 
-            key={`${image.image_id}-annotation-${idx}`}
-            annotation={annotation}
-            highlightColor={highlightColor}
-          />
-        ))}
-        
-        {/* Loading state */}
+
+        {/* Bounding boxes overlay */}
+        {isLoaded &&
+          image.annotations?.map((annotation, idx) => (
+            <BoundingBox
+              key={`${image.image_id}-ann-${idx}`}
+              annotation={annotation}
+              highlightColor={highlightColor}
+              compact
+            />
+          ))}
+
+        {/* Image loader while loading */}
         {!isLoaded && <ImageLoader size={size} />}
-        
-        {/* Image name overlay */}
-        <div className={`absolute bottom-0 left-0 right-0 bg-black/50 px-2 py-1 transition-opacity duration-300 
-          ${isHovered || size === 'sm' ? 'opacity-100' : 'opacity-0'}`}>
-          <p className="text-white text-xs truncate font-medium">
-            {image.image_name}
-          </p>
+
+        {/* Hover gradient overlay */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent 
+            opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+        />
+
+        {/* Image name */}
+        <div
+          className={`absolute bottom-0 left-0 right-0 
+            px-2 py-1 text-xs sm:text-sm font-medium truncate text-white
+            bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300
+            ${isHovered ? "opacity-100" : "opacity-90"}`}
+        >
+          {image.name}
         </div>
       </div>
     </div>

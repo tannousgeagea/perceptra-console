@@ -160,6 +160,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       formData.append('file', image.file);
     
       if (image.id) formData.append('image_id', image.id);
+      if (image.batchId) formData.append('batch_id', image.batchId);
       if (options?.projectId) formData.append('project_id', options.projectId);
       if (options?.tags?.length) formData.append('tags', options.tags.join(','));
       if (options?.source_of_origin) formData.append('source_of_origin', options.source_of_origin);

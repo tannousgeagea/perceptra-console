@@ -21,6 +21,7 @@ export interface Box {
   height: number;
   label: string;
   color: string;
+  class_id: number;
 }
 
 interface AnnotationContextType {

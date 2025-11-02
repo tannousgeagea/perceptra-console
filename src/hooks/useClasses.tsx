@@ -1,7 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { classesApi } from '@/components/classes/api';
 import { useCurrentOrganization } from './useAuthHelpers';
-import { AnnotationClass } from '@/contexts/ClassesContext';
+import { AnnotationClass } from '@/types/classes';
 
 export const useClassesApi = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -111,4 +112,21 @@ export const useClassesApi = () => {
     isLoading,
     error
   };
+};
+
+export const useClasses = (projectId?: string) => {
+  const { fetchClasses } = useClassesApi();
+  const { currentOrganization } = useCurrentOrganization();
+
+  return useQuery({
+    queryKey: ["annotationClasses", projectId, currentOrganization?.id],
+    queryFn: () => {
+      if (!currentOrganization || !projectId) {
+        throw new Error("Missing organization or project ID");
+      }
+      return fetchClasses(projectId);
+    },
+    enabled: !!projectId && !!currentOrganization,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 };
