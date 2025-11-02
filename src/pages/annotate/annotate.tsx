@@ -10,6 +10,7 @@ import Header from "@/components/ui/header/Header";
 import { useJobImages } from "@/hooks/useJobImages";
 import { Info } from "lucide-react";
 import { ImageSize } from "@/types/image";
+import QueryState from "@/components/common/QueryState";
 
 interface Filter {
   key: string;
@@ -77,18 +78,16 @@ const Annotate: FC = () => {
     { key: "reviewed", label: "Reviewed", count: counts.reviewed || 0 },
   ];
   
-  if (isError)
+  if (isError || isLoading)
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-red-600">
-        <p>Failed to load job images.</p>
-        <button
-          onClick={() => refetch()}
-          className="text-blue-500 underline mt-2"
-        >
-          Retry
-        </button>
-      </div>
-    );
+      <QueryState
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        loadingMessage="Loading annotations..."
+        errorMessage="Failed to fetch annotations. Please try again."
+      />
+  )
 
   return (
     <div className="w-full flex flex-col p-6 space-y-6">
