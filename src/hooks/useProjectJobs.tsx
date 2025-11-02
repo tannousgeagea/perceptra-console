@@ -49,7 +49,7 @@ export function useProjectJobs(projectId: string) {
   const { currentOrganization } = useCurrentOrganization();
 
   return useQuery({
-    queryKey: ['project-jobs', projectId, currentOrganization?.id],
+    queryKey: ['jobs', projectId, currentOrganization?.id],
     queryFn:() => {
           if (!currentOrganization) {
             throw new Error("No organization selected");

@@ -5,6 +5,7 @@ import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import {v4 as uuidv4} from 'uuid';
+import { useQueryClient } from '@tanstack/react-query';
 
 export type TaskType = 'segmentation' | 'detection' | 'classification';
 export type ProjectSection = 'upload' | 'annotate' | 'dataset' | 'versions' | 'analytics';
@@ -72,6 +73,7 @@ export const useUploadContext = () => {
 export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // State for project context
   const { currentOrganization } = useCurrentOrganization();
+  const  queryClient = useQueryClient();
   const [currentSection, setCurrentSection] = useState<ProjectSection>('upload');
   
   // State for uploaded files
@@ -218,6 +220,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     navigate: (path: string) => void,
     options?: {
       projectId?: string,
+      jobId?: string,
       tags?: string[];
       source_of_origin?: string;
       storage_profile_id?: string;
@@ -274,6 +277,23 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   
       await Promise.all(uploadedImages.map((image) => uploadImageAsync(image)));
       
+        // ✅ Invalidate caches so job/image counts refresh immediately
+        queryClient.invalidateQueries({
+          queryKey: ["jobs", options?.projectId, currentOrganization?.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["images", options?.projectId, currentOrganization?.id],
+        });
+
+        if (options?.jobId) {
+          queryClient.invalidateQueries({
+            queryKey: ["job", options?.jobId, currentOrganization?.id],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["images", options?.projectId, options?.jobId, currentOrganization?.id],
+          });
+        }
+
       if (options?.redirect !== false && options?.projectId) {
         setTimeout(() => navigate(`/projects/${options.projectId}/annotate`), 2000);
       }

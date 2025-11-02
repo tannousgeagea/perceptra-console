@@ -9,15 +9,12 @@ import AssignUserModal from "@/components/jobs/AssignUserModel";
 import { Job, JobStatus } from "@/types/jobs";
 import { useProjectJobs } from "@/hooks/useProjectJobs";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
-import { useAssignUserToJob } from "@/hooks/useAssignUserToJob";
-import { useJobStatusUpdate } from "@/hooks/useJobStatusUpdate";
+import { useAssignJob, useUnassignJob, useUpdateJob, useSplitJob, useDeleteJob } from '@/hooks/useJobs';
 import SplitJobModal from "@/components/jobs/SplitJobModal";
 import EditJobModal from "@/components/jobs/EditJobodal";
 import DeleteJobModal from "@/components/jobs/DeleteJobModal";
-import { useSplitJob } from '@/hooks/useSplitJob';
-import { useEditJob } from "@/hooks/useEditJob";
-import { useDeleteJob } from "@/hooks/useDeleteJob";
-import { toast } from '@/hooks/use-toast';
+// import { useDeleteJob } from "@/hooks/useDeleteJob";
+import { toast } from 'sonner';
 
 const JobPage = () => {
   const { projectId } = useParams<{ projectId: string }>()
@@ -31,12 +28,11 @@ const JobPage = () => {
 
   const { data: users } = useProjectMembers(projectId || '')
   const { data: jobs, isLoading, error } = useProjectJobs(projectId || '');
-  const assignUserToJob = useAssignUserToJob(projectId || '');
-  const { mutate: updateStatus } = useJobStatusUpdate(projectId || '');
-  const { mutateAsync: splitJob } = useSplitJob(projectId || '');
-  const { mutate: editJob, isPending: editJobPending, error: errorEditjob } = useEditJob(projectId || '');
-  const { mutate: deleteJob, isPending: deleteJobPending } = useDeleteJob(projectId || '');
-
+  const { mutate: assignJob } = useAssignJob(projectId!);
+  const { mutate: unassignJob } = useUnassignJob(projectId!);
+  const { mutate: updateJob, isPending } = useUpdateJob(projectId!);
+  const { mutate: splitJob, isPending: splitPending } = useSplitJob(projectId!);
+  const { mutate: deleteJob, isPending: deletePending } = useDeleteJob(projectId!);
 
   if (isLoading || !jobs) {
     return (
@@ -89,132 +85,77 @@ const JobPage = () => {
     setIsDeleteModalOpen(true);
   }
 
-
   const handleViewJob = (job: Job) => {
-    toast({
-      title: "Redirecting",
-      description: "This would redirect to annotation page.",
-    });
+    toast.info("This would redirect to annotation page.");
     navigate(`/projects/${projectId}/annotate/job/${job.id}`)
   }
 
   const handleAssignUser = async (job: Job, userId: string | null) => {
+    if (!job.id) return;
+    if (!userId) {
+      unassignJob(job.id)
+      return
+    }
+
     try {
-      await assignUserToJob(job.id, userId);
-      toast({
-        title: "User assignment updated!",
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Failed to assign user.")
-      toast({
-        title: "Failed to assign user.",
-        variant: "destructive",
-      });
+      await assignJob({ jobId: job.id, assigneeId: userId});
+      setIsAssignModalOpen(false);
+      
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong.");
     }
   };
 
+
   const handleStatusChange = (job: Job, newStatus: JobStatus) => {
-    updateStatus(
-      { jobId: job.id, newStatus },
-      {
-        onSuccess: () => {
-          toast({
-            title: "Status Updated",
-            description:
-              newStatus === JobStatus.IN_REVIEW
-                ? "Job moved to review"
-                : newStatus === JobStatus.COMPLETED
-                ? "Job marked as completed"
-                : `Job status updated to ${newStatus}`,
-          });
-        },
-        onError: (error: Error) => {
-          toast({
-            title: "Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        },
-      }
-    );
+      updateJob({
+      jobId: job.id,
+      payload: { status: newStatus },
+    });
   };
   
 
   // Split a job into multiple slices
   const handleSplitJob = (job: Job, numberOfSlices: number, userAssignments: (string | null)[]) => {
     try {
+      if (!job.id) {
+        toast.error('Job Id is undefined');
+        return;
+      };
       if (job.imageCount < numberOfSlices) {
-        toast({
-          title: "Error splitting job",
-          description: "Cannot split a job into more slices than it has images",
-          variant: "destructive",
-        });
+        toast.error("Cannot split a job into more slices than it has images");
         return;
       }
     
-      const newJobs = splitJob({
+      splitJob({
         jobId: job.id,
-        numberOfSlices,
-        userAssignments,
+        payload: {
+          number_of_slices: numberOfSlices,
+          user_assignments: userAssignments,
+        },
       });
       
-      toast({
-        title: "Job split successfully",
-        description: `${job.name} has been split into ${numberOfSlices} slices.`,
-      });
     } catch (error: any) {
-      toast({
-        title: 'Split failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(error.message || "Failed to split Job");
     }
   };
 
   const handleEditJob = (job: Job, newName: string, newDescription?: string) => {
-    editJob(
-      {
-        jobId: job.id,
+    updateJob({
+      jobId: job.id,
+      payload: {
         name: newName,
         description: newDescription,
       },
-      {
-        onSuccess: (updatedJob) => {
-          toast({
-            title: "Job updated",
-            description: `"${updatedJob.name}" has been updated successfully.`,
-          });
-          setIsEditModalOpen(false);
-        },
-        onError: (err: any) => {
-          toast({
-            title: "Update failed",
-            description: err.message || "Something went wrong.",
-            variant: "destructive",
-          });
-        },
-      }
-    );
+    });
   };
 
   const handleDeleteJob = (job: Job) => {
-    deleteJob(job.id, {
-      onSuccess: () => {
-        toast({
-          title: "Job deleted",
-          description: `"${job.name}" has been deleted successfully.`,
-        });
-        setIsDeleteModalOpen(false);
-      },
-      onError: (err: any) => {
-        toast({
-          title: "Delete failed",
-          description: err.message || "Something went wrong.",
-          variant: "destructive",
-        });
-      },
-    });
+    if (!job.id) {
+      toast.error('Job Id is undefined');
+      return;
+    };
+    deleteJob({ jobId: job.id, hardDelete: false });
   };
 
   return (
@@ -327,7 +268,7 @@ const JobPage = () => {
           onClose={() => setIsEditModalOpen(false)}
           job={selectedJob}
           onSave={handleEditJob}
-          isLoading={editJobPending}
+          isLoading={isPending}
         />
       )}
 
@@ -338,7 +279,7 @@ const JobPage = () => {
           onClose={() => setIsDeleteModalOpen(false)}
           job={selectedJob}
           onDelete={handleDeleteJob}
-          isLoading={deleteJobPending}
+          isLoading={deletePending}
         />
       )}
   
