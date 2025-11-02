@@ -61,7 +61,10 @@ export const useJobImages = (
       if (!currentOrganization) throw new Error("No organization selected");
       return fetchJobImages(currentOrganization.id, projectId, jobId, params);
     },
+    refetchOnWindowFocus: true,   // auto-refresh when user switches back to tab
+    refetchOnReconnect: true, 
     enabled: !!currentOrganization && !!projectId && !!jobId,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,                 // treat data as stale immediately when revisiting
+    gcTime: 5 * 60 * 1000 
   });
 };
