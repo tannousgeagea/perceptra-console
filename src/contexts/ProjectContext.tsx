@@ -2,14 +2,7 @@
 import React, { createContext, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { useProjectDetails } from '@/hooks/useProjectDetails';
-
-interface Project {
-  id: number;
-  name: string;
-  description?: string;
-  thumbnail_url?: string;
-  // Add other fields as needed
-}
+import { Project } from '@/types/project';
 
 interface ProjectContextValue {
   projectId: string;

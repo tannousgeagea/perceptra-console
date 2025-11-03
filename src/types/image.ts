@@ -28,6 +28,8 @@ export interface ParsedQuery {
   maxAnnotations?: number;
   job?: string;
   likeImage?: string;
+  status?: string;
+  job_status?: 'assigned' | 'waiting' | 'excluded'; 
 }
 
 export interface PaginationParams {
@@ -95,7 +97,7 @@ export interface Annotation {
   color: string;
   data: [number, number, number, number]; 
   source: string;
-  confidence?: number;
+  confidence?: number | null;
   reviewed?: boolean;
   is_active: boolean;
   create_at?: string;

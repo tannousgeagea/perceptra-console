@@ -23,6 +23,11 @@ export function useSearchParser(searchText: string): ParsedQuery {
         if (splitValue === 'train' || splitValue === 'val' || splitValue === 'test') {
           parsed.split = splitValue;
         }
+      } else if (part.startsWith('job-status:')) {
+        const jobStatus = part.substring(11);
+        if (jobStatus === 'assigned' || jobStatus === 'waiting' || jobStatus === 'excluded') {
+          parsed.job_status = jobStatus;
+        }
       } else if (part.startsWith('filename:')) {
         parsed.filename = part.substring(9);
       } else if (part.startsWith('sort:')) {
@@ -45,6 +50,8 @@ export function useSearchParser(searchText: string): ParsedQuery {
         parsed.likeImage = part.substring(11);
       } else if (part.startsWith('backend:')) {
         parsed.backend = part.substring(8);
+      } else if (part.startsWith('status:')) {
+        parsed.status = part.substring(7);
       } else {
         parsed.text += (parsed.text ? ' ' : '') + part;
       }

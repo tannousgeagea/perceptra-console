@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import SideBar from './sidebar';
+import ProjectSideBar from '@/components/layout/ProjectSidebar';
 import { Outlet } from 'react-router-dom';
 import './project-layout.css';
 import { ProjectProvider } from '@/contexts/ProjectContext';
@@ -11,7 +12,7 @@ const ProjectLayout: FC = () => {
       <ClassesProvider>
         <div className="project-layout">
           <div className='project-layout-sidebar'>
-            <SideBar />
+            <ProjectSideBar />
           </div>
           <div className="project-layout-main">          
               <div className='project-layout-content'>
