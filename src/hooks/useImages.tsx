@@ -167,6 +167,9 @@ export const buildImageQuery = (filters: ParsedQuery): string => {
 
   // Sort
   if (filters.sort) parts.push(`sort:${filters.sort}`);
+  if (filters.status) parts.push(`status:${filters.status}`);
+  if (filters.backend) parts.push(`backend:${filters.status}`);
+  if (filters.job_status) parts.push(`job_status:${filters.job_status}`);
 
   return parts.join(' ');
 };

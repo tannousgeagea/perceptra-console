@@ -107,9 +107,9 @@ export function DataLakeFilters({ searchText, onSearchChange }: DataLakeFiltersP
                 setLocalSearch('');
                 onSearchChange('');
               }}
-              className="h-7 px-2"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
             >
-              <X className="w-3 h-3" />
+              <X className="w-4 h-4" />
             </Button>
           )}
           <Popover>

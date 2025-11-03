@@ -1,7 +1,7 @@
 import './App.css';
 import Projects from './pages/project/projects';
 import Layout from './components/ui/common/layout';
-import Dataset from './pages/dataset/dataset';
+import ProjectDataset from './pages/dataset/Dataset';
 import Versions from './pages/versions/versions';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProjectLayout from './components/ui/common/project-layout';
@@ -61,7 +61,7 @@ const App = () => {
                     <Route path='/settings/*' element={<Settings />} />
                     <Route path='projects/:projectId' element={<ProjectLayout />}>
                       <Route path='upload' element={<UploadIndex />} />
-                      <Route path='dataset' element={<Dataset />} />
+                      <Route path='dataset' element={<ProjectDataset />} />
                       {/* <Route path='annotate' element={<Annotate />} /> */}
                       <Route path='versions' element={<Versions mode="view" />} />
                       <Route path='versions/:versionID' element={<Versions mode="view" />} />

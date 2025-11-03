@@ -4,30 +4,36 @@ import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
-import type { ProjectImageResponse } from "@/types/image";
+import type { ProjectImagesResponse } from "@/types/dataset";
 
 interface ProjectImagesParams {
   skip?: number;
   limit?: number;
+  q?: string;
   status?: string;
 }
 
-export const fetchJobImages = async (
+export const fetchProjectImages = async (
   organizationId: string,
   projectId: string,
   params: ProjectImagesParams = {}
-): Promise<ProjectImageResponse> => {
+): Promise<ProjectImagesResponse> => {
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const { skip = 0, limit = 100, status } = params;
+  const { skip = 0, limit = 100, q, status } = params;
 
   const queryParams = new URLSearchParams({
     skip: skip.toString(),
     limit: limit.toString(),
   });
 
-  if (status) queryParams.append("status", status);
+  console.log(q)
+  if (q) {
+    queryParams.append("q", q);
+  } else {
+    if (status) queryParams.append("status", status);
+  }
 
   const response = await fetch(
     `${baseURL}/api/v1/projects/${projectId}/images?${queryParams}`,
@@ -55,7 +61,7 @@ export const useProjectImages = (
     queryKey: ["job-images", currentOrganization?.id, projectId, params],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchJobImages(currentOrganization.id, projectId, params);
+      return fetchProjectImages(currentOrganization.id, projectId, params);
     },
     enabled: !!currentOrganization && !!projectId,
     staleTime: 2 * 60 * 1000,
