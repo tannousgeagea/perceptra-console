@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/ui/button';
 import { Badge } from '@/components/ui/ui/badge';
-import { Download, Upload, RefreshCw } from 'lucide-react';
+import { Download, Upload, RefreshCw, GitBranch } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ProjectDatasetHeaderProps {
+  projectId:string;
   total: number;
   annotated: number;
   unannotated: number;
@@ -13,6 +15,7 @@ interface ProjectDatasetHeaderProps {
 }
 
 export function ProjectDatasetHeader({
+  projectId,
   total,
   annotated,
   unannotated,
@@ -22,6 +25,7 @@ export function ProjectDatasetHeader({
   onUpload,
 }: ProjectDatasetHeaderProps) {
 
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-4 pb-6 border-b">
       <div className="flex items-center justify-between">
@@ -42,6 +46,10 @@ export function ProjectDatasetHeader({
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${projectId}/versions`)}>
+            <GitBranch className="w-4 h-4 mr-2" />
+            Versions
+          </Button>
           <Button variant="outline" size="sm" onClick={onRefresh}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh

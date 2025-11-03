@@ -153,40 +153,37 @@ export function ProjectDatasetFilters({
             size="sm"
             onClick={() => onViewModeChange('grid')}
           >
-            <Grid3x3 className="w-4 h-4 mr-2" />
-            Grid
+            <Grid3x3 className="w-4 h-4" />
           </Button>
           <Button
             variant={viewMode === 'table' ? 'default' : 'outline'}
             size="sm"
             onClick={() => onViewModeChange('table')}
           >
-            <Table2 className="w-4 h-4 mr-2" />
-            Table
+            <Table2 className="w-4 h-4" />
           </Button>
         </div>
 
-        {viewMode === 'grid' && (
-          <div className="flex items-center gap-2 border-l pl-4">
-            <Toggle
-              pressed={showAnnotations}
-              onPressedChange={onShowAnnotationsChange}
-              aria-label="Toggle annotations"
-            >
-              {showAnnotations ? (
-                <>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Annotations
-                </>
-              ) : (
-                <>
-                  <EyeOff className="w-4 h-4 mr-2" />
-                  Annotations
-                </>
-              )}
-            </Toggle>
-          </div>
-        )}
+        <div className="flex items-center gap-2 border-l pl-4">
+          <Toggle
+            pressed={showAnnotations}
+            onPressedChange={onShowAnnotationsChange}
+            aria-label="Toggle annotations"
+            disabled={viewMode === 'table'}
+          >
+            {showAnnotations ? (
+              <>
+                <Eye className="w-4 h-4 mr-2" />
+                Annotations
+              </>
+            ) : (
+              <>
+                <EyeOff className="w-4 h-4 mr-2" />
+                Annotations
+              </>
+            )}
+          </Toggle>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
