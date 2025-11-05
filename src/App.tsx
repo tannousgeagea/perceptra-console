@@ -2,7 +2,7 @@ import './App.css';
 import Projects from './pages/project/projects';
 import Layout from './components/ui/common/layout';
 import ProjectDataset from './pages/dataset/Dataset';
-import Versions from './pages/versions/versions';
+import DatasetVersions from './pages/versions/DatasetVersions';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProjectLayout from './components/ui/common/project-layout';
 import Index from './pages/annotate-tool/AnnotationTool';
@@ -63,9 +63,7 @@ const App = () => {
                       <Route path='upload' element={<UploadIndex />} />
                       <Route path='dataset' element={<ProjectDataset />} />
                       {/* <Route path='annotate' element={<Annotate />} /> */}
-                      <Route path='versions' element={<Versions mode="view" />} />
-                      <Route path='versions/:versionID' element={<Versions mode="view" />} />
-                      <Route path="versions/generate" element={<Versions mode="generate" />} />
+                      <Route path='versions' element={<DatasetVersions />} />
                       <Route path="analysis" element={<AnalysisPage/>} />
                       <Route path='classes' element={<ClassesManagement/>} />
                       <Route path='analytics' element={<AnalyticsPage/>} />

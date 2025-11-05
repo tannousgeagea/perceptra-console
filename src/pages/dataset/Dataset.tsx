@@ -49,6 +49,7 @@ export default function ProjectDataset() {
     <div className="min-h-screen w-full bg-background">
       <div className="p-6 space-y-6">
         <ProjectDatasetHeader
+          projectId={projectId!}
           total={data?.total || 0}
           annotated={data?.annotated || 0}
           unannotated={data?.unannotated || 0}
