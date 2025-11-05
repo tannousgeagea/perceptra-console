@@ -45,6 +45,37 @@ export interface DatasetVersion {
   created_by: string | null;
 }
 
+/**
+ * Version image response type
+ */
+export interface VersionImage {
+  id: string;
+  project_image_id: string;
+  image_id: string;
+  name: string;
+  split: 'train' | 'val' | 'test';
+  annotation_count: number;
+  added_at: string;
+  download_url: string;
+}
+
+/**
+ * List version images response type
+ */
+export interface ListVersionImagesResponse {
+  total: number;
+  images: VersionImage[];
+}
+
+/**
+ * Add images to version response type
+ */
+export interface AddVersionImagesResponse {
+  message: string;
+  added_count: number;
+  split: string;
+}
+
 export interface VersionStatistics {
   total_images: number;
   total_annotations: number;
@@ -60,4 +91,14 @@ export interface VersionStatistics {
 export interface DatasetVersionsResponse {
   total: number;
   versions: DatasetVersion[];
+}
+
+/**
+ * Query parameters for listing version images
+ */
+export interface ListVersionImagesParams {
+  skip?: number;
+  limit?: number;
+  split?: 'train' | 'val' | 'test';
+  q?: string;
 }

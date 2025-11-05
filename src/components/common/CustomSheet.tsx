@@ -1,13 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CustomSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  className?: string;
   children: React.ReactNode;
 }
 
-export function CustomSheet({ open, onOpenChange, children }: CustomSheetProps) {
+export function CustomSheet({ 
+  open, 
+  onOpenChange,
+  className, 
+  children 
+}: CustomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,7 +48,10 @@ export function CustomSheet({ open, onOpenChange, children }: CustomSheetProps) 
       {/* Sheet Content */}
       <div
         ref={sheetRef}
-        className="fixed right-0 top-0 h-full w-full sm:max-w-lg bg-background border-l shadow-lg animate-in slide-in-from-right duration-300 overflow-y-auto"
+        className={cn(
+          className,
+          "fixed right-0 top-0 h-full w-full sm:max-w-4xl bg-background border-l shadow-lg animate-in slide-in-from-right duration-300 overflow-y-auto"
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -64,14 +74,15 @@ export function CustomSheetContent({
   onClose 
 }: SheetContentProps) {
   return (
-    <div className={`p-6 ${className}`}>
+    <div className={cn("p-6",
+       className)}>
       {showClose && onClose && (
         <button
           type="button"
           onClick={onClose}
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" />className="w-full sm:max-w-4xl overflow-y-auto"
           <span className="sr-only">Close</span>
         </button>
       )}

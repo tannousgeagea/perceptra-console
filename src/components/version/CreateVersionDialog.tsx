@@ -125,7 +125,6 @@ export function CreateVersionDialog({ projectId, open, onOpenChange, editVersion
   }
 
   const isLoading = isCreating || isUpdating;
-  console.log(isLoading)
 
   return (
     <CustomDialog open={open} onOpenChange={onOpenChange}>

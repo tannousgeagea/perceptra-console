@@ -28,7 +28,6 @@ export const fetchProjectImages = async (
     limit: limit.toString(),
   });
 
-  console.log(q)
   if (q) {
     queryParams.append("q", q);
   } else {

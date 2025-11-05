@@ -14,6 +14,7 @@ import SplitJobModal from "@/components/jobs/SplitJobModal";
 import EditJobModal from "@/components/jobs/EditJobodal";
 import DeleteJobModal from "@/components/jobs/DeleteJobModal";
 // import { useDeleteJob } from "@/hooks/useDeleteJob";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { toast } from 'sonner';
 
 const JobPage = () => {
@@ -27,7 +28,7 @@ const JobPage = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   const { data: users } = useProjectMembers(projectId || '')
-  const { data: jobs, isLoading, error } = useProjectJobs(projectId || '');
+  const { data: jobs, isLoading, error, refetch } = useProjectJobs(projectId || '');
   const { mutate: assignJob } = useAssignJob(projectId!);
   const { mutate: unassignJob } = useUnassignJob(projectId!);
   const { mutate: updateJob, isPending } = useUpdateJob(projectId!);
@@ -160,28 +161,15 @@ const JobPage = () => {
 
   return (
     <div className="space-y-6 p-6 w-full">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">Pre-Annotation Management</h1>
-              <p className="text-slate-500">Manage and assign jobs before annotation</p>
-            </div>
-            
-            {/* Search bar */}
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-              <Input
-                placeholder="Search jobs, users..."
-                className="pl-9 bg-slate-100 border-slate-200 focus:bg-white"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      </header>
+      <JobsHeader 
+        projectId={projectId!}
+        totalJobs={jobs?.length || 0}
+        reviewedJobs={jobsByStatus.inReview.length}
+        processingJobs={jobsByStatus.assigned.length}
+        onRefresh={refetch}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
 
       {/* Main content */}
       <main className="container mx-auto px-4 py-6">

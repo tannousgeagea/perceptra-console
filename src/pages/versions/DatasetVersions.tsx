@@ -4,7 +4,7 @@ import { VersionCard } from "@/components/version/VersionCard";
 import { VersionTable } from "@/components/version/VersionTable";
 import { CreateVersionDialog } from "@/components/version/CreateVersionDialog";
 import { VersionDetailSheet } from "@/components/version/VersionDetailSheet";
-import { useProjectVersions } from "@/hooks/useProjectVersions";
+import { useProjectVersions, useDeleteProjectVersion } from "@/hooks/useProjectVersions";
 import { DatasetVersion } from "@/types/version";
 import { Input } from "@/components/ui/ui/input";
 import { Button } from "@/components/ui/ui/button";
@@ -22,6 +22,7 @@ export default function DatasetVersions() {
   const [detailVersion, setDetailVersion] = useState<DatasetVersion | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const { data, isLoading, refetch } = useProjectVersions(projectId!);
+  const { mutateAsync: deleteVersion, isPending: isDeleting } = useDeleteProjectVersion(projectId!)
 
   const query = searchText.toLowerCase();
   const filtered_data = data?.versions.filter(v => 
@@ -40,6 +41,7 @@ export default function DatasetVersions() {
   };
 
   const handleDelete = (version: DatasetVersion) => {
+    deleteVersion(version.version_id)
     toast.info(`${version.version_name} has been deleted.`);
   };
 
@@ -118,6 +120,7 @@ export default function DatasetVersions() {
                 onViewDetails={handleViewDetails}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                isDeleting={isDeleting}
                 onDownload={handleDownload}
               />
             ))}
@@ -147,8 +150,11 @@ export default function DatasetVersions() {
         open={detailSheetOpen}
         onOpenChange={setDetailSheetOpen}
         version={detailVersion}
+        projectId={projectId!}
         onDownload={handleDownload}
       />
+
+
     </div>
   );
 }

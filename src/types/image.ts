@@ -1,4 +1,5 @@
-  
+import { ProjectImage } from "./dataset";  
+
 export interface ImageCardGridProps {
     images: ImageData[];
     onImageClick?: (index: number) => void;
@@ -125,6 +126,7 @@ export interface JobInfo {
   name: string;
   status: string;
   assignee: string | null;
+  created_at: string;
 }
 
 export interface JobImagesResponse {
@@ -133,7 +135,7 @@ export interface JobImagesResponse {
   reviewed: number;
   annotated: number;
   job: JobInfo;
-  images: JobImage[];
+  images: ProjectImage[];
 }
 
 export interface ProjectImageResponse {

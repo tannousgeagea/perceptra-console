@@ -6,11 +6,13 @@ import Spinner from '@/components/ui/animation/spinner';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/ui/toggle-group"; // if using shadcn UI
 import PaginationControls from "@/components/ui/actions/pagination-control";
 import AnnotateActions from "../../components/ui/actions/annotate-actions";
-import Header from "@/components/ui/header/Header";
+import { Button } from "@/components/ui/ui/button";
 import { useJobImages } from "@/hooks/useJobImages";
-import { Info } from "lucide-react";
+import { Info, Database } from "lucide-react";
 import { ImageSize } from "@/types/image";
 import QueryState from "@/components/common/QueryState";
+import { DatasetBuilder } from "@/components/annotate/DatasetBuilder";
+import { AnnotateHeader } from "@/components/annotate/AnnotateHeader";
 
 interface Filter {
   key: string;
@@ -22,6 +24,8 @@ const Annotate: FC = () => {
   const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("")
+  const [datasetBuilderOpen, setDatasetBuilderOpen] = useState(false);
 
   if (!projectId || !jobId) {
     return <p className="text-red-600 p-6">Invalid route: Missing project or job ID.</p>;
@@ -41,6 +45,11 @@ const Annotate: FC = () => {
     limit: itemsPerPage,
   });
   
+  const filteredImages = data?.images.filter(
+    (image) => 
+      image.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const updateURL = (filter: string, page: number) => {
     navigate({
       pathname: location.pathname,
@@ -93,9 +102,13 @@ const Annotate: FC = () => {
     <div className="w-full flex flex-col p-6 space-y-6">
       <div className="flex flex-col justify-between h-full">
         <div>
-          <Header
-            title="Annotate"
-            description="Browse and annotate job images efficiently"
+          <AnnotateHeader 
+            projectId={projectId}
+            job={data?.job!}
+            onRefresh={refetch}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+
           />
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <FilterTabs 
@@ -105,11 +118,10 @@ const Annotate: FC = () => {
             />
 
             <div className="flex items-center gap-3">
-              <AnnotateActions
-                projectId={projectId || ""}
-                totalRecord={counts.total}
-                onSuccess={refetch}
-              />
+              <Button variant="outline" onClick={() => setDatasetBuilderOpen(true)}>
+                <Database className="h-4 w-4" />
+                Build Dataset
+              </Button>
 
               {/* 🔹 Size toggle (sm, md, lg) */}
               <ToggleGroup
@@ -173,7 +185,7 @@ const Annotate: FC = () => {
                 columnGap: "1rem",
               }}
             >
-              {data?.images.map((image, index) => (
+              {filteredImages?.map((image, index) => (
                 <div
                   key={image.image_id}
                   // className={`
@@ -193,15 +205,21 @@ const Annotate: FC = () => {
           )}
         </div>
 
-      {counts.total > 0 && (
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={Math.ceil(counts.total / itemsPerPage)}
-          onNext={() => handlePageChange(currentPage + 1)}
-          onPrevious={() => handlePageChange(currentPage - 1)}
-        />
-      )}
+        {counts.total > 0 && (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={Math.ceil(counts.total / itemsPerPage)}
+            onNext={() => handlePageChange(currentPage + 1)}
+            onPrevious={() => handlePageChange(currentPage - 1)}
+          />
+        )}
       </div>
+
+      <DatasetBuilder
+        images={data?.images || []}
+        open={datasetBuilderOpen}
+        onOpenChange={setDatasetBuilderOpen}
+      />
     </div>
    );
 };
