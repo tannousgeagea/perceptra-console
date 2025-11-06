@@ -8,6 +8,7 @@ import { useJobImages } from '@/hooks/useJobImages';
 import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { PaginationControls } from '@/components/ui/ui/pagination-control';
 
 export default function JobAnnotation() {
   const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
@@ -18,6 +19,9 @@ export default function JobAnnotation() {
 
   const [activeStatus, setActiveStatus] = useState<'unannotated' | 'annotated' | 'reviewed'>(initialStatus);
   const [searchText, setSearchText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
   const [imageSize, setImageSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [datasetBuilderOpen, setDatasetBuilderOpen] = useState(false);
   const navigate = useNavigate();
@@ -26,7 +30,10 @@ export default function JobAnnotation() {
     return <p className="text-red-600 p-6">Invalid route: Missing project or job ID.</p>;
   }
 
-  const { data, isLoading, isError: error, refetch } = useJobImages(projectId, jobId);
+  const { data, isLoading, isError: error, refetch } = useJobImages(projectId, jobId, {
+    skip: (currentPage - 1) * itemsPerPage,
+    limit: itemsPerPage,
+  });
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -96,11 +103,29 @@ export default function JobAnnotation() {
             </p>
           </div>
         ) : (
-          <JobImageGrid
-            images={filteredImages}
-            imageSize={imageSize}
-            onImageClick={(index: number, image_id:string) => handleImageClick(index, image_id)}
-          />
+          <>
+            <JobImageGrid
+              images={filteredImages}
+              imageSize={imageSize}
+              onImageClick={(index: number, image_id:string) => handleImageClick(index, image_id)}
+            />
+
+            <div className="fixed bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
+              <PaginationControls
+                currentPage={currentPage}
+                totalItems={data?.total || 0}
+                itemsPerPage={itemsPerPage}
+                onPageChange={(page) => {
+                  setCurrentPage(page);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onItemsPerPageChange={(perPage) => {
+                  setItemsPerPage(perPage);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          </>
         )}
 
         <DatasetBuilder

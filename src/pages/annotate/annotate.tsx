@@ -5,13 +5,11 @@ import FilterTabs from "@/components/ui/filter/filter-tabs";
 import Spinner from '@/components/ui/animation/spinner';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/ui/toggle-group"; // if using shadcn UI
 import PaginationControls from "@/components/ui/actions/pagination-control";
-import AnnotateActions from "../../components/ui/actions/annotate-actions";
 import { Button } from "@/components/ui/ui/button";
 import { useJobImages } from "@/hooks/useJobImages";
 import { Info, Database } from "lucide-react";
 import { ImageSize } from "@/types/image";
 import QueryState from "@/components/common/QueryState";
-import { DatasetBuilder } from "@/components/dataset-builder/DatasetBuilder";
 import { AnnotateHeader } from "@/components/job-annotation/AnnotateHeader";
 
 interface Filter {
@@ -214,12 +212,6 @@ const Annotate: FC = () => {
           />
         )}
       </div>
-
-      <DatasetBuilder
-        images={data?.images || []}
-        open={datasetBuilderOpen}
-        onOpenChange={setDatasetBuilderOpen}
-      />
     </div>
    );
 };
