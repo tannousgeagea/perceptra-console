@@ -12,6 +12,7 @@ import { DataLakeHeader } from '@/components/datalake/DataLakeHeader';
 import { DataLakeFilters } from '@/components/datalake/DataLakeFilters';
 import { DataLakeSelectionHeader } from '@/components/datalake/DataLakeSelectionHeader';
 import { useUserProjects } from '@/hooks/useUserProjects';
+import { PaginationControls } from "@/components/ui/ui/pagination-control";
 
 const DataLake: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -20,6 +21,9 @@ const DataLake: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+
   const { mutate: addImagesToProject } = useAddImagesToProject();
 
   const parsedQuery = useSearchParser(searchText);
@@ -27,8 +31,8 @@ const DataLake: React.FC = () => {
 
   // Build API params from parsed query
   const apiParams: ImagesParams = {
-    limit: searchText ? 500 : 50,
-    skip: 0,
+    limit: itemsPerPage,
+    skip: (currentPage - 1) * itemsPerPage,
     q: _query,
     search: parsedQuery.text,
     tag: parsedQuery.tags.join(','),
@@ -135,15 +139,36 @@ const DataLake: React.FC = () => {
             </p>
           </div>
         </div>
-      ) : viewMode === 'grid' ? (
-        <ImageGrid images={data.images} selectedIds={selectedIds} onSelect={handleSelect} />
       ) : (
-        <ImageTable
-          images={data.images}
-          selectedIds={selectedIds}
-          onSelect={handleSelect}
-          onSelectAll={handleSelectAll}
-        />
+        <>
+          {viewMode === 'grid' ? (
+            <ImageGrid images={data.images} selectedIds={selectedIds} onSelect={handleSelect} />
+          ) : (
+            <ImageTable
+              images={data.images}
+              selectedIds={selectedIds}
+              onSelect={handleSelect}
+              onSelectAll={handleSelectAll}
+            />)}
+
+          <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
+            <PaginationControls
+              currentPage={currentPage}
+              totalItems={data?.total || 0}
+              itemsPerPage={itemsPerPage}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                setSelectedIds(new Set());
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onItemsPerPageChange={(perPage) => {
+                setItemsPerPage(perPage);
+                setCurrentPage(1);
+                setSelectedIds(new Set());
+              }}
+            />
+          </div>
+        </>
       )}
     </div>
   );
