@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/ui/card';
 import { Badge } from '@/components/ui/ui/badge';
 import { Checkbox } from '@/components/ui/ui/checkbox';
 import { formatDistanceToNow } from 'date-fns';
-import { FileImage, Tag, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Bike, ChartCandlestick, FlaskConical } from 'lucide-react';
+import { FileImage, Tag, CheckCircle2, AlertCircle, Clock, Database } from 'lucide-react';
 import BoundingBox from '../image/BoundingBox';
 
 interface ProjectImageCardProps {
@@ -17,7 +18,23 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
   const statusConfig = {
     annotated: { icon: CheckCircle2, color: 'bg-green-500/10 text-green-500 border-green-500/20' },
     reviewed: { icon: CheckCircle2, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+    dataset: { icon: Database, color: 'bg-green-500/10 text-green-500 border-blue-500/20' },
     unannotated: { icon: AlertCircle, color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+  };
+
+  const getModeBadge = () => {
+    if (!image.split) return null;
+    
+    const modeConfig = {
+      train: { label: 'Train', className: 'bg-blue-500', icon: Bike },
+      valid: { label: 'Val', className: 'bg-purple-500', icon: ChartCandlestick },
+      test: { label: 'Test', className: 'bg-orange-500', icon: FlaskConical },
+    };
+    
+    const config = modeConfig[image.split];
+    if (!config) return null;
+    
+    return <Badge className={config.className}><config.icon className='className="w-3 h-3 mr-1' />{config.label}</Badge>;
   };
 
   const StatusIcon = statusConfig[image.status].icon;
@@ -53,6 +70,9 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
             <StatusIcon className="w-3 h-3 mr-1" />
             {image.status}
           </Badge>
+        </div>
+        <div className="absolute bottom-2 left-2">
+          {getModeBadge()}
         </div>
         {image.marked_as_null && (
           <div className="absolute top-2 left-2">

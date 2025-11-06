@@ -5,25 +5,34 @@ import { Slider } from '@/components/ui/ui/slider';
 import { Card } from '@/components/ui/ui/card';
 import { Badge } from '@/components/ui/ui/badge';
 import { ArrowLeft, Sparkles, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useSplitDataset } from './useDatasetBuilder';
+import { toast } from 'sonner';
 import { SplitRatios, SPLIT_PRESETS } from '@/types/split';
+import { useSplitDataset } from '@/hooks/useProjectImageUpdate';
 
 interface ConfigureSplitStepProps {
+  projectId: string;
   finalizedCount: number;
   onComplete: () => void;
   onBack: () => void;
 }
 
-export function ConfigureSplitStep({ finalizedCount, onComplete, onBack }: ConfigureSplitStepProps) {
+export function ConfigureSplitStep({ projectId, finalizedCount, onComplete, onBack }: ConfigureSplitStepProps) {
   const [ratios, setRatios] = useState<SplitRatios>({
     train_ratio: 0.7,
     val_ratio: 0.2,
     test_ratio: 0.1
   });
 
-  const { toast } = useToast();
-  const { mutate: splitDataset, isLoading } = useSplitDataset();
+  const { mutateAsync: splitDataset, isPending } = useSplitDataset(projectId, {
+    onSuccess: (data) => {
+      toast.success(
+        `Split ${data.total_split} images: Train=${data.train_count}, Val=${data.val_count}, Test=${data.test_count}`
+      );
+      if (data.already_split > 0) {
+        toast.info(`${data.already_split} images were already split`);
+      }
+    },
+  });
 
   // Auto-adjust to ensure ratios sum to 1.0
   const adjustRatios = (newRatios: Partial<SplitRatios>) => {
@@ -50,19 +59,11 @@ export function ConfigureSplitStep({ finalizedCount, onComplete, onBack }: Confi
   const handleSplit = async () => {
     try {
       const response = await splitDataset(ratios);
-      
-      toast({
-        title: "Dataset Split Complete",
-        description: response.message,
-      });
+      toast.success(response.message);
       
       onComplete();
     } catch (error: any) {
-      toast({
-        title: "Split Failed",
-        description: error.message || "Failed to split dataset. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to split dataset. Please try again.");
     }
   };
 
@@ -203,12 +204,12 @@ export function ConfigureSplitStep({ finalizedCount, onComplete, onBack }: Confi
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-4 border-t">
-        <Button variant="outline" onClick={onBack} disabled={isLoading}>
+        <Button variant="outline" onClick={onBack} disabled={isPending}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <Button onClick={handleSplit} disabled={isLoading || !isValidTotal} size="lg">
-          {isLoading ? 'Splitting Dataset...' : 'Split Dataset'}
+        <Button onClick={handleSplit} disabled={isPending || !isValidTotal} size="lg">
+          {isPending ? 'Splitting Dataset...' : 'Split Dataset'}
         </Button>
       </div>
     </div>
