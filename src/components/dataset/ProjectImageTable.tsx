@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/ui/table';
 import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Database } from 'lucide-react';
 
 interface ProjectImageTableProps {
   images: ProjectImage[];
@@ -32,6 +32,8 @@ export function ProjectImageTable({
     annotated: { icon: CheckCircle2, color: 'bg-green-500/10 text-green-500 border-green-500/20' },
     reviewed: { icon: CheckCircle2, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
     unannotated: { icon: AlertCircle, color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+    dataset: { icon: Database, color: 'bg-green-500/10 text-green-500 border-blue-500/20' },
+
   };
 
   return (

@@ -21,13 +21,13 @@ const AnnotationTool = () => {
 
   // query parameters
   const jobId = searchParams.get("jobId") || "";
-  const filter = searchParams.get("filter") || "";
+  const status = searchParams.get("status") || "";
   const page = parseInt(searchParams.get("page") || "1", 10);
   const indexParam = parseInt(searchParams.get("index") || "0", 10);
 
   // fetch job images for context
   const { data: jobImages } = useJobImages(projectId!, jobId, {
-    status: filter || undefined,
+    status: status || undefined,
     skip: (page - 1) * 50,
     limit: 50,
   });
@@ -47,7 +47,7 @@ const AnnotationTool = () => {
     const params = new URLSearchParams(window.location.search);
 
     params.set("jobId", jobId ?? "");
-    params.set("filter", filter ?? "");
+    params.set("status", status ?? "");
     params.set("page", page?.toString() ?? "1");
     params.set("index", newIndex.toString());
 
@@ -92,8 +92,8 @@ const AnnotationTool = () => {
           total={imageIds.length}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          subtitle={`Filter: ${filter || "all"} (Page ${page})`}
-          backTo={`/projects/${projectId}/annotate/job/${jobId}?filter=${filter}`}
+          subtitle={`Filter: ${status || "all"} (Page ${page})`}
+          backTo={`/projects/${projectId}/annotate/job/${jobId}?status=${status}`}
         />
         <div className="flex h-full bg-card">
           <div className="w-56 p-4 border-r border-border flex flex-col gap-4">

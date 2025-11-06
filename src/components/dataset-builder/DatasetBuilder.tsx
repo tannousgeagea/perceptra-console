@@ -8,6 +8,7 @@ import { ProjectImage } from '@/types/dataset';
 
 
 interface DatasetBuilderProps {
+  projectId: string;
   images: ProjectImage[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -15,7 +16,7 @@ interface DatasetBuilderProps {
 
 type BuilderStep = 'select' | 'split' | 'complete';
 
-export function DatasetBuilder({ images, open, onOpenChange }: DatasetBuilderProps) {
+export function DatasetBuilder({ projectId, images, open, onOpenChange }: DatasetBuilderProps) {
   const [currentStep, setCurrentStep] = useState<BuilderStep>('select');
   const [selectedImageIds, setSelectedImageIds] = useState<number[]>([]);
   const [finalizedCount, setFinalizedCount] = useState(0);
@@ -70,6 +71,7 @@ export function DatasetBuilder({ images, open, onOpenChange }: DatasetBuilderPro
           <div className="flex-1 overflow-hidden">
             {currentStep === 'select' && (
               <SelectImagesStep 
+              projectId={projectId}
                 images={images}
                 onComplete={handleImagesFinalized} 
               />
@@ -77,6 +79,7 @@ export function DatasetBuilder({ images, open, onOpenChange }: DatasetBuilderPro
             
             {currentStep === 'split' && (
               <ConfigureSplitStep
+                projectId={projectId}
                 finalizedCount={finalizedCount}
                 onComplete={handleSplitComplete}
                 onBack={() => setCurrentStep('select')}

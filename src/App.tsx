@@ -9,6 +9,7 @@ import Index from './pages/annotate-tool/AnnotationTool';
 import { ProtectedRoute, PublicRoute} from './pages/login/ProtectedRoute';
 import AnalysisPage from './pages/analysis/Index';
 import Annotate from './pages/annotate/annotate';
+import JobAnnotation from './pages/annotate/JobAnnotation';
 import UploadIndex from './pages/upload/Index';
 import NotFound from './pages/NotFound';
 import ClassesManagement from './pages/class_management/ClassManagement';
@@ -74,7 +75,7 @@ const App = () => {
                       <Route path="models/:modelId/train" element={<ModelTraining />} />
                       <Route path="sessions" element={<SessionsPage />} />
                       <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
-                      <Route path='annotate/job/:jobId' element={<Annotate/>} />
+                      <Route path='annotate/job/:jobId' element={<JobAnnotation />} />
                       <Route path="no-permission" element={<NoPermissionPage />} />
                       <Route path="*" element={<NotFound />} />
                     </Route>

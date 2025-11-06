@@ -53,6 +53,21 @@ export interface BatchFinalizeResponse {
   total_requested: number;
 }
 
+export interface SplitDatasetRequest {
+  train_ratio: number;
+  val_ratio: number;
+  test_ratio: number;
+}
+
+export interface SplitDatasetResponse {
+  message: string;
+  train_count: number;
+  val_count: number;
+  test_count: number;
+  total_split: number;
+  already_split: number;
+}
+
 // ============================================
 // API FUNCTIONS
 // ============================================
@@ -193,7 +208,7 @@ export const batchFinalizeImages = async (
         'X-Organization-ID': organizationId,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ project_image_ids: projectImageIds }),
+      body: JSON.stringify(projectImageIds),
     }
   );
 
@@ -339,5 +354,59 @@ export const useBatchFinalizeImages = (projectId: string, options?: {
   });
 };
 
-// Usage: const { mutate: reviewImage } = useReviewProjectImage(projectId);
-// reviewImage({ projectImageId: 123, payload: { approved: true, feedback: 'Looks good!' } });
+// ==========================================================
+// Split Dataset
+// ==========================================================
+export const splitDataset = async (
+  organizationId: string,
+  projectId: string,
+  data: SplitDatasetRequest
+): Promise<SplitDatasetResponse> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) throw new Error("No authentication token found");
+
+  const response = await fetch(
+    `${baseURL}/api/v1/projects/${projectId}/images/split`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to split dataset' }));
+    throw new Error(error.detail);
+  }
+
+  return response.json();
+};
+
+export const useSplitDataset = (projectId: string, options?: {
+  onSuccess?: (data: SplitDatasetResponse) => void;
+  showToast?: boolean;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: (data: SplitDatasetRequest) => {
+      if (!currentOrganization) throw new Error("No organization selected");
+      return splitDataset(currentOrganization.id, projectId, data);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      if (showToast) toast.success(data.message);
+      onSuccess?.(data);
+    },
+    onError: (error: Error) => {
+      if (showToast) toast.error(error.message);
+    },
+  });
+};

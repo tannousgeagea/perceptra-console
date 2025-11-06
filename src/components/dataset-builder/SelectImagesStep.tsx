@@ -5,74 +5,31 @@ import { Checkbox } from '@/components/ui/ui/checkbox';
 import { Badge } from '@/components/ui/ui/badge';
 import { ScrollArea } from '@/components/ui/ui/scroll-area';
 import { Search, AlertCircle, ArrowRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useBatchFinalizeImages } from './useDatasetBuilder';
+import { toast } from 'sonner';
+import { useBatchFinalizeImages } from '@/hooks/useProjectImageUpdate';
 import { ProjectImage } from '@/types/dataset';
 
 interface SelectImagesStepProps {
+  projectId: string;
   images: ProjectImage[];
   onComplete: (imageIds: number[], finalizedCount: number) => void;
 }
 
-// Mock available images (annotated and reviewed, ready to be finalized)
-const generateMockImages = (): ProjectImage[] => {
-  return Array.from({ length: 30 }, (_, i) => ({
-    id: `ready-${i + 1}`,
-    image_id: `img-ready-${i + 1}`,
-    name: `annotated_image_${String(i + 1).padStart(4, '0')}.jpg`,
-    original_filename: `IMG_${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}.jpg`,
-    width: 1920,
-    height: 1080,
-    aspect_ratio: 16 / 9,
-    file_format: 'jpg',
-    file_size: 2048000,
-    file_size_mb: 2.0,
-    megapixels: 2.1,
-    storage_key: `storage/images/ready-${i + 1}.jpg`,
-    checksum: `md5-ready-${i}`,
-    source_of_origin: 'upload',
-    created_at: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-    updated_at: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-    uploaded_by: 'user-1',
-    tags: ['annotated', 'reviewed'],
-    storage_profile: {
-      id: 'profile-1',
-      name: 'Primary Storage',
-      backend: 's3',
-    },
-    download_url: `https://picsum.photos/seed/ready-${i}/800/600`,
-    status: 'reviewed' as const,
-    annotated: true,
-    reviewed: true,
-    marked_as_null: false,
-    priority: 0,
-    job_assignment_status: null,
-    added_at: new Date().toISOString(),
-    annotations: Array.from({ length: Math.floor(Math.random() * 5) + 2 }, (_, j) => ({
-      id: `ann-ready-${i}-${j}`,
-      annotation_uid: `uid-ready-${i}-${j}`,
-      type: 'bbox',
-      class_id: `class-${j % 3}`,
-      class_name: ['person', 'car', 'truck'][j % 3],
-      color: ['#22c55e', '#3b82f6', '#f59e0b'][j % 3],
-      data: [0,1,0,1],
-      source: 'manual',
-      confidence: 0.95,
-      reviewed: true,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      created_by: 'user-1',
-    })),
-  }));
-};
-
-export function SelectImagesStep({ images, onComplete }: SelectImagesStepProps) {
+export function SelectImagesStep({ projectId, images, onComplete }: SelectImagesStepProps) {
   const [searchText, setSearchText] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  // const [images] = useState<ProjectImage[]>(generateMockImages());
-  
-  const { toast } = useToast();
-  const { mutate: finalizeImages, isLoading } = useBatchFinalizeImages();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());  
+  const { mutateAsync: batchFinalize, isPending } = useBatchFinalizeImages(projectId, {
+    onSuccess: (data) => {
+      toast.success(
+        `Finalized ${data.finalized_count} of ${data.total_requested} images`
+      );
+      if (data.invalid_ids.length > 0) {
+        toast.warning(
+          `${data.invalid_ids.length} images skipped (not annotated/reviewed)`
+        );
+      }
+    },
+  });
 
   const filteredImages = useMemo(() => {
     if (!searchText.trim()) return images;
@@ -90,7 +47,6 @@ export function SelectImagesStep({ images, onComplete }: SelectImagesStepProps) 
     setSelectedIds(newSelected);
   };
 
-  console.log(selectedIds)
   const handleToggleAll = () => {
     if (selectedIds.size === filteredImages.length) {
       setSelectedIds(new Set());
@@ -101,38 +57,17 @@ export function SelectImagesStep({ images, onComplete }: SelectImagesStepProps) 
 
   const handleFinalize = async () => {
     if (selectedIds.size === 0) {
-      toast({
-        title: "No Images Selected",
-        description: "Please select at least one image to finalize.",
-        variant: "destructive",
-      });
-
+      toast.error("Please select at least one image to finalize.");
       return;
     }
 
     try {
-      const imageIds = Array.from(selectedIds).map(id => parseInt(id.split('-')[1]));
-      const response = await finalizeImages(imageIds);
-      
-      if (response.invalid_ids.length > 0) {
-        toast({
-          title: "Some Images Skipped",
-          description: `${response.finalized_count} images finalized. ${response.invalid_ids.length} images were not annotated or reviewed.`,
-        });
-      } else {
-        toast({
-          title: "Images Finalized",
-          description: `Successfully finalized ${response.finalized_count} images for dataset.`,
-        });
-      }
+      const imageIds = Array.from(selectedIds).map(id => parseInt(id));
+      const response = await batchFinalize(imageIds); // ✅ Added 'await' and fixed typo 'resonse'
       
       onComplete(imageIds, response.finalized_count);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to finalize images. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to finalize images. Please try again.");
     }
   };
 
@@ -220,8 +155,8 @@ export function SelectImagesStep({ images, onComplete }: SelectImagesStepProps) 
         <span className="text-sm font-medium">
           {selectedIds.size} image(s) selected
         </span>
-        <Button onClick={handleFinalize} disabled={isLoading || selectedIds.size === 0} size="lg">
-          {isLoading ? 'Finalizing...' : 'Finalize & Continue'}
+        <Button onClick={handleFinalize} disabled={isPending || selectedIds.size === 0} size="lg">
+          {isPending ? 'Finalizing...' : 'Finalize & Continue'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

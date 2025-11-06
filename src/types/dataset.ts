@@ -46,6 +46,7 @@ export interface ProjectImage {
   priority: number;
   job_assignment_status: 'assigned' | 'waiting' | 'excluded' | null;
   added_at: string;
+  split?: 'train' | 'valid' | 'test' | null;
   annotations: Annotation[];
 }
 

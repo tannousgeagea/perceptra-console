@@ -11,8 +11,8 @@ import { useJobImages } from "@/hooks/useJobImages";
 import { Info, Database } from "lucide-react";
 import { ImageSize } from "@/types/image";
 import QueryState from "@/components/common/QueryState";
-import { DatasetBuilder } from "@/components/annotate/DatasetBuilder";
-import { AnnotateHeader } from "@/components/annotate/AnnotateHeader";
+import { DatasetBuilder } from "@/components/dataset-builder/DatasetBuilder";
+import { AnnotateHeader } from "@/components/job-annotation/AnnotateHeader";
 
 interface Filter {
   key: string;
