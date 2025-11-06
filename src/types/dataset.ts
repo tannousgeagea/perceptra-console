@@ -1,3 +1,5 @@
+import { SplitType } from "./split";
+
 export interface Annotation {
   id: string;
   annotation_uid: string;
@@ -46,7 +48,7 @@ export interface ProjectImage {
   priority: number;
   job_assignment_status: 'assigned' | 'waiting' | 'excluded' | null;
   added_at: string;
-  split?: 'train' | 'valid' | 'test' | null;
+  split?: SplitType;
   annotations: Annotation[];
 }
 

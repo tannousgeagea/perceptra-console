@@ -1,4 +1,5 @@
 import { ProjectImage } from "./dataset";  
+import { SplitType } from "./split";
 
 export interface ImageCardGridProps {
     images: ImageData[];
@@ -17,7 +18,7 @@ export interface ParsedQuery {
   text: string;
   tags: string[];
   classes?: string[];
-  split?: 'train' | 'val' | 'test';
+  split?: SplitType;
   minHeight?: number;
   maxHeight?: number;
   minWidth?: number;

@@ -20,7 +20,7 @@ export function useSearchParser(searchText: string): ParsedQuery {
         parsed.classes?.push(part.substring(6));
       } else if (part.startsWith('split:')) {
         const splitValue = part.substring(6);
-        if (splitValue === 'train' || splitValue === 'val' || splitValue === 'test') {
+        if (splitValue === 'train' || splitValue === 'valid' || splitValue === 'test') {
           parsed.split = splitValue;
         }
       } else if (part.startsWith('job-status:')) {

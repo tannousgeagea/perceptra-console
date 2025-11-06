@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
-import { Badge } from '@/components/ui/ui/badge';
 import { Card } from '@/components/ui/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/ui/alert-dialog';
@@ -14,6 +13,7 @@ import { useRemoveImagesFromVersion } from './useDatasetVersions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
+import { getModeBadge } from '@/utils/split';
 
 interface VersionImagesManagerProps {
   versionId: string;
@@ -52,24 +52,6 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
         description: "Failed to remove image. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-
-  const getSplitBadgeVariant = (split: string) => {
-    switch (split) {
-      case 'train': return 'default';
-      case 'val': return 'secondary';
-      case 'test': return 'outline';
-      default: return 'default';
-    }
-  };
-
-  const getSplitColor = (split: string) => {
-    switch (split) {
-      case 'train': return 'text-success';
-      case 'val': return 'text-primary';
-      case 'test': return 'text-warning';
-      default: return 'text-foreground';
     }
   };
 
@@ -137,9 +119,7 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
                   </Button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <Badge variant={getSplitBadgeVariant(image.split)} className={getSplitColor(image.split)}>
-                    {image.split}
-                  </Badge>
+                  {getModeBadge(image.split)}
                   <span className="text-xs text-muted-foreground">
                     {image.annotation_count} annotations
                   </span>
@@ -178,9 +158,7 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
                   </TableCell>
                   <TableCell className="font-medium">{image.name}</TableCell>
                   <TableCell>
-                    <Badge variant={getSplitBadgeVariant(image.split)} className={getSplitColor(image.split)}>
-                      {image.split}
-                    </Badge>
+                    {getModeBadge(image.split)}
                   </TableCell>
                   <TableCell>{image.annotation_count}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">
@@ -204,6 +182,7 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
       )}
 
       <AddImagesToVersionDialog
+        projectId={projectId}
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         versionId={versionId}

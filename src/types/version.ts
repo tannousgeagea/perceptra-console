@@ -1,3 +1,5 @@
+import { SplitType } from "./split";
+
 /**
  * Query parameters for listing versions
  */
@@ -22,7 +24,7 @@ export interface VersionUpdate {
 
 export interface VersionImageAdd {
   project_image_ids: number[];
-  split: 'train' | 'val' | 'test';
+  split: SplitType;
 }
 
 export interface DatasetVersion {
@@ -53,7 +55,7 @@ export interface VersionImage {
   project_image_id: string;
   image_id: string;
   name: string;
-  split: 'train' | 'val' | 'test';
+  split: SplitType;
   annotation_count: number;
   added_at: string;
   download_url: string;
@@ -99,6 +101,6 @@ export interface DatasetVersionsResponse {
 export interface ListVersionImagesParams {
   skip?: number;
   limit?: number;
-  split?: 'train' | 'val' | 'test';
+  split?: SplitType;
   q?: string;
 }

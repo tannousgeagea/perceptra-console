@@ -8,10 +8,14 @@ import { Checkbox } from '@/components/ui/ui/checkbox';
 import { ScrollArea } from '@/components/ui/ui/scroll-area';
 import { Badge } from '@/components/ui/ui/badge';
 import { Search, Plus } from 'lucide-react';
-import { useAvailableProjectImages, useAddImagesToVersion } from './useDatasetVersions';
+import { useProjectImages } from '@/hooks/useProjectImages';
+import { useSearchParser } from '@/hooks/useSearchParser';
+import { buildImageQuery } from '@/hooks/useImages';
+import { useAddImagesToVersion } from '@/hooks/useProjectVersions';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddImagesToVersionDialogProps {
+  projectId:string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   versionId: string;
@@ -19,6 +23,7 @@ interface AddImagesToVersionDialogProps {
 }
 
 export function AddImagesToVersionDialog({
+  projectId,
   open,
   onOpenChange,
   versionId,
@@ -26,11 +31,16 @@ export function AddImagesToVersionDialog({
 }: AddImagesToVersionDialogProps) {
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [split, setSplit] = useState<'train' | 'val' | 'test'>('train');
+  const [split, setSplit] = useState<'train' | 'valid' | 'test'>('train');
 
   const { toast } = useToast();
-  const { data: availableImages, isLoading } = useAvailableProjectImages(versionId, searchText);
-  const { mutate: addImages, isLoading: isAdding } = useAddImagesToVersion(versionId);
+
+  const parsedQuery = useSearchParser(searchText);
+  const _query = buildImageQuery(parsedQuery);
+  const { data: availableImages, isLoading, error, refetch } = useProjectImages(projectId!, {
+    q: _query,
+  });
+  const { mutate: addImages, isPending: isAdding } = useAddImagesToVersion(projectId, versionId);
 
   const handleToggleImage = (imageId: string) => {
     const newSelected = new Set(selectedIds);
@@ -43,10 +53,10 @@ export function AddImagesToVersionDialog({
   };
 
   const handleToggleAll = () => {
-    if (selectedIds.size === availableImages.length) {
+    if (selectedIds.size === availableImages?.images.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(availableImages.map(img => img.id)));
+      setSelectedIds(new Set(availableImages?.images.map(img => img.id)));
     }
   };
 
@@ -109,15 +119,15 @@ export function AddImagesToVersionDialog({
               variant="outline"
               size="sm"
               onClick={handleToggleAll}
-              disabled={isLoading || availableImages.length === 0}
+              disabled={isLoading || availableImages?.images.length === 0}
             >
-              {selectedIds.size === availableImages.length ? 'Deselect All' : 'Select All'}
+              {selectedIds.size === availableImages?.images.length ? 'Deselect All' : 'Select All'}
             </Button>
           </div>
 
           <div className="space-y-2">
             <Label>Target Split</Label>
-            <RadioGroup value={split} onValueChange={(v) => setSplit(v as 'train' | 'val' | 'test')}>
+            <RadioGroup value={split} onValueChange={(v) => setSplit(v as 'train' | 'valid' | 'test')}>
               <div className="flex items-center gap-6">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="train" id="train" />
@@ -143,14 +153,14 @@ export function AddImagesToVersionDialog({
 
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading available images...</div>
-          ) : availableImages.length === 0 ? (
+          ) : availableImages?.images.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               No available images found. All project images may already be in this version.
             </div>
           ) : (
             <ScrollArea className="flex-1 -mx-6 px-6">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {availableImages.map((image) => (
+                {availableImages?.images.map((image) => (
                   <div
                     key={image.id}
                     className={`relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md ${

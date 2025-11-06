@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Bike, ChartCandlestick, FlaskConical } from 'lucide-react';
 import { FileImage, Tag, CheckCircle2, AlertCircle, Clock, Database } from 'lucide-react';
 import BoundingBox from '../image/BoundingBox';
+import { getModeBadge } from '@/utils/split';
 
 interface ProjectImageCardProps {
   image: ProjectImage;
@@ -20,21 +21,6 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
     reviewed: { icon: CheckCircle2, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
     dataset: { icon: Database, color: 'bg-green-500/10 text-green-500 border-blue-500/20' },
     unannotated: { icon: AlertCircle, color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-  };
-
-  const getModeBadge = () => {
-    if (!image.split) return null;
-    
-    const modeConfig = {
-      train: { label: 'Train', className: 'bg-blue-500', icon: Bike },
-      valid: { label: 'Val', className: 'bg-purple-500', icon: ChartCandlestick },
-      test: { label: 'Test', className: 'bg-orange-500', icon: FlaskConical },
-    };
-    
-    const config = modeConfig[image.split];
-    if (!config) return null;
-    
-    return <Badge className={config.className}><config.icon className='className="w-3 h-3 mr-1' />{config.label}</Badge>;
   };
 
   const StatusIcon = statusConfig[image.status].icon;
@@ -72,7 +58,7 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
           </Badge>
         </div>
         <div className="absolute bottom-2 left-2">
-          {getModeBadge()}
+          {getModeBadge(image.split!)}
         </div>
         {image.marked_as_null && (
           <div className="absolute top-2 left-2">
