@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/ui/button";
 import { Badge } from "@/components/ui/ui/badge";
 import { Progress } from "@/components/ui/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
-import { Download, FileText, Calendar, User, Package, Images } from "lucide-react";
+import { Download, FileText, Calendar, User, Package, Images, Settings } from "lucide-react";
 import { DatasetVersion } from "@/types/version";
 import { useVersionStatistics } from "./useDatasetVersions";
 import { Skeleton } from "@/components/ui/ui/skeleton";
@@ -77,8 +77,8 @@ export function VersionDetailSheet({ open, onOpenChange, projectId, version, onD
                 </span>
                 {version.is_ready && (
                   <Button onClick={() => onDownload(version)} size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
+                    <Settings className="h-4 w-4 mr-2" />
+                    Export & Download
                   </Button>
                 )}
               </div>

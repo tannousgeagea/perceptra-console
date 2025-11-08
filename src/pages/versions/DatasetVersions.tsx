@@ -4,7 +4,10 @@ import { VersionCard } from "@/components/version/VersionCard";
 import { VersionTable } from "@/components/version/VersionTable";
 import { CreateVersionDialog } from "@/components/version/CreateVersionDialog";
 import { VersionDetailSheet } from "@/components/version/VersionDetailSheet";
+import { ExportConfigDialog } from "@/components/version/ExportConfigDialog";
 import { useProjectVersions, useDeleteProjectVersion } from "@/hooks/useProjectVersions";
+import { useExportVersion } from "@/components/version/useDatasetVersions";
+import { ExportConfig } from "@/types/version";
 import { DatasetVersion } from "@/types/version";
 import { Input } from "@/components/ui/ui/input";
 import { Button } from "@/components/ui/ui/button";
@@ -22,6 +25,10 @@ export default function DatasetVersions() {
   const [detailVersion, setDetailVersion] = useState<DatasetVersion | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const { data, isLoading, refetch } = useProjectVersions(projectId!);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportVersion, setExportVersion] = useState<DatasetVersion | null>(null);
+
+  const { mutate: exportVersionMutate, isLoading: isExporting } = useExportVersion();
   const { mutateAsync: deleteVersion, isPending: isDeleting } = useDeleteProjectVersion(projectId!)
 
   const query = searchText.toLowerCase();
@@ -45,8 +52,15 @@ export default function DatasetVersions() {
     toast.info(`${version.version_name} has been deleted.`);
   };
 
+  const handleExport = async (config: ExportConfig) => {
+    if (!exportVersion) return;
+    await exportVersionMutate(exportVersion.version_id, config);
+  };
+
   const handleDownload = (version: DatasetVersion) => {
     toast.info(`Downloading ${version.version_name} (${version.export_format.toUpperCase()})...`);
+    setExportVersion(version);
+    setExportDialogOpen(true);
   };
 
   const handleViewDetails = (version: DatasetVersion) => {
@@ -154,6 +168,12 @@ export default function DatasetVersions() {
         onDownload={handleDownload}
       />
 
+      <ExportConfigDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        version={exportVersion}
+        onExport={handleExport}
+      />
 
     </div>
   );

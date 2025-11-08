@@ -104,3 +104,25 @@ export interface ListVersionImagesParams {
   split?: SplitType;
   q?: string;
 }
+
+export interface AugmentationConfig {
+  horizontal_flip: boolean;
+  vertical_flip: boolean;
+  rotation_limit: number;
+  brightness_contrast: boolean;
+  blur: boolean;
+  noise: boolean;
+}
+
+export interface ExportConfig {
+  export_format: 'yolo' | 'coco' | 'pascal_voc' | 'tfrecord' | 'custom';
+  image_size?: number;
+  image_quality: number;
+  normalize: boolean;
+  include_difficult: boolean;
+  include_predictions: boolean;
+  min_annotation_area: number;
+  augment: boolean;
+  augmentation_factor: number;
+  augmentation_config: AugmentationConfig;
+}

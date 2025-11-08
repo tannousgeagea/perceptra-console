@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { Button } from "@/components/ui/ui/button";
-import { Download, Eye, MoreVertical, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { Download, Eye, MoreVertical, CheckCircle2, Clock, AlertCircle, Loader2, Settings } from "lucide-react";
 import { DatasetVersion } from "@/types/version";
 import {
   DropdownMenu,
@@ -85,8 +85,8 @@ export function VersionCard({ version, onViewDetails, onEdit, onDelete, isDeleti
                 </DropdownMenuItem>
                 {version.is_ready && (
                   <DropdownMenuItem onClick={() => onDownload(version)}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
+                    <Settings className="h-4 w-4 mr-2" />
+                    Export & Download
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
