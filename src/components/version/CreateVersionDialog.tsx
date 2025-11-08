@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/ui/select";
 import { DatasetVersion } from "@/types/version";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateProjectVersion, useUpdateProjectVersion } from "@/hooks/useProjectVersions";
+import { useCreateProjectVersion, useUpdateProjectVersion } from "@/hooks/useDatasetVersions";
 
 const versionSchema = z.object({
   version_name: z

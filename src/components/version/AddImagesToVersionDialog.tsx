@@ -11,7 +11,7 @@ import { Search, Plus } from 'lucide-react';
 import { useProjectImages } from '@/hooks/useProjectImages';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
-import { useAddImagesToVersion } from '@/hooks/useProjectVersions';
+import { useAddImagesToVersion } from '@/hooks/useDatasetVersions';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddImagesToVersionDialogProps {
@@ -31,7 +31,7 @@ export function AddImagesToVersionDialog({
 }: AddImagesToVersionDialogProps) {
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [split, setSplit] = useState<'train' | 'valid' | 'test'>('train');
+  const [split, setSplit] = useState<'train' | 'val' | 'test'>('train');
 
   const { toast } = useToast();
 
@@ -127,7 +127,7 @@ export function AddImagesToVersionDialog({
 
           <div className="space-y-2">
             <Label>Target Split</Label>
-            <RadioGroup value={split} onValueChange={(v) => setSplit(v as 'train' | 'valid' | 'test')}>
+            <RadioGroup value={split} onValueChange={(v) => setSplit(v as 'train' | 'val' | 'test')}>
               <div className="flex items-center gap-6">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="train" id="train" />

@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tab
 import { Search, Plus, Trash2, Grid3X3, Table as TableIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { AddImagesToVersionDialog } from './AddImagesToVersionDialog';
-import { useVersionImages } from '@/hooks/useProjectVersions';
-import { useRemoveImagesFromVersion } from './useDatasetVersions';
-import { useToast } from '@/hooks/use-toast';
+import { useVersionImages } from '@/hooks/useDatasetVersions';
+import { useRemoveImagesFromVersion } from '@/hooks/useDatasetVersions';
+import { toast } from 'sonner';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
 import { getModeBadge } from '@/utils/split';
@@ -26,32 +26,23 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [removeImageId, setRemoveImageId] = useState<string | null>(null);
-  
-  const { toast } = useToast();
 
   const parsedQuery = useSearchParser(searchText);
   const _query = buildImageQuery(parsedQuery)
   const { data, isLoading } = useVersionImages(projectId, versionId, {
     q: _query
   });
-  const { mutate: removeImages, isLoading: isRemoving } = useRemoveImagesFromVersion(versionId);
+  const { mutateAsync: removeImages, isPending: isRemoving } = useRemoveImagesFromVersion(projectId, versionId);
 
   const handleRemove = async () => {
     if (!removeImageId) return;
     
     try {
-      await removeImages([removeImageId]);
-      toast({
-        title: "Image Removed",
-        description: "Image has been removed from the version.",
-      });
+      await removeImages([Number(removeImageId)]);
+      toast("Image has been removed from the version.");
       setRemoveImageId(null);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to remove image. Please try again.",
-        variant: "destructive",
-      });
+      toast(`Failed to remove image. ${error}`);
     }
   };
 
@@ -113,7 +104,7 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => setRemoveImageId(image.id)}
+                    onClick={() => setRemoveImageId(image.project_image_id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -169,7 +160,7 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
                       variant="ghost"
                       size="icon"
                       className="hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setRemoveImageId(image.id)}
+                      onClick={() => setRemoveImageId(image.project_image_id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -4,7 +4,7 @@ export interface SplitRatios {
   test_ratio: number;
 }
 
-export type SplitType = 'train' | 'valid' | 'test' | null;
+export type SplitType = 'train' | 'val' | 'test' | null;
 
 export interface SplitPreset {
   name: string;

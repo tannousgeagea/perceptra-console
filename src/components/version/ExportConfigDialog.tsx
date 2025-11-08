@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/ui/dialog";
+import { CustomDialog, CustomDialogContent, CustomDialogDescription, CustomDialogFooter, CustomDialogHeader, CustomDialogTitle } from "../common/CustomDialog";
 import { Button } from "@/components/ui/ui/button";
 import { Label } from "@/components/ui/ui/label";
 import { Input } from "@/components/ui/ui/input";
@@ -48,17 +49,17 @@ export function ExportConfigDialog({ open, onOpenChange, version, onExport }: Ex
   if (!version) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <CustomDialog open={open} onOpenChange={onOpenChange} className="max-w-3xl">
+      <CustomDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <CustomDialogHeader>
+          <CustomDialogTitle className="flex items-center gap-2">
             <Download className="h-5 w-5" />
             Export Configuration
-          </DialogTitle>
-          <DialogDescription>
+          </CustomDialogTitle>
+          <CustomDialogDescription>
             Configure export settings for {version.version_name}
-          </DialogDescription>
-        </DialogHeader>
+          </CustomDialogDescription>
+        </CustomDialogHeader>
 
         <Tabs defaultValue="format" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -315,7 +316,7 @@ export function ExportConfigDialog({ open, onOpenChange, version, onExport }: Ex
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
+        <CustomDialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
@@ -323,8 +324,8 @@ export function ExportConfigDialog({ open, onOpenChange, version, onExport }: Ex
             <Download className="h-4 w-4 mr-2" />
             Export Dataset
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </CustomDialogFooter>
+      </CustomDialogContent>
+    </CustomDialog>
   );
 }

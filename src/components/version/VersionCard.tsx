@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { Button } from "@/components/ui/ui/button";
-import { Download, Eye, MoreVertical, CheckCircle2, Clock, AlertCircle, Loader2, Settings } from "lucide-react";
+import { Edit2, Eye,Trash2, MoreVertical, CheckCircle2, Clock, AlertCircle, Loader2, Settings, Download } from "lucide-react";
 import { DatasetVersion } from "@/types/version";
 import {
   DropdownMenu,
@@ -21,9 +21,10 @@ interface VersionCardProps {
   onDelete: (version: DatasetVersion) => void;
   isDeleting: boolean;
   onDownload: (version: DatasetVersion) => void;
+  onExport: (version: DatasetVersion) => void;
 }
 
-export function VersionCard({ version, onViewDetails, onEdit, onDelete, isDeleting, onDownload }: VersionCardProps) {
+export function VersionCard({ version, onViewDetails, onEdit, onDelete, isDeleting, onDownload, onExport }: VersionCardProps) {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const getStatusIcon = () => {
@@ -83,20 +84,28 @@ export function VersionCard({ version, onViewDetails, onEdit, onDelete, isDeleti
                   <Eye className="h-4 w-4 mr-2" />
                   View Details
                 </DropdownMenuItem>
-                {version.is_ready && (
+
+                {version.is_ready ? (
                   <DropdownMenuItem onClick={() => onDownload(version)}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => onExport(version)}>
                     <Settings className="h-4 w-4 mr-2" />
-                    Export & Download
+                    Export
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onEdit(version)}>
+                  <Edit2 className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-red-600 focus:text-red-600 focus:bg-red-50"
                   onClick={() => setDeleteDialogOpen(true)}
                 >
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
