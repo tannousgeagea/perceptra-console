@@ -11,9 +11,12 @@ import {
   VersionImageAdd,
   ListVersionImagesParams,
   ListVersionImagesResponse,
-  AddVersionImagesResponse
+  AddVersionImagesResponse,
+  DownloadDatasetResponse,
+  ExportConfig,
+  ExportDatasetResponse
 } from "@/types/version";
-
+import { toast } from 'sonner';
 
 /**
  * Fetch all dataset versions for a project.
@@ -395,7 +398,7 @@ export const removeImagesFromVersion = async (
         'X-Organization-ID': organizationId,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ project_image_ids: projectImageIds }),
+      body: JSON.stringify(projectImageIds ),
     }
   );
 
@@ -433,6 +436,128 @@ export const useRemoveImagesFromVersion = (projectId: string, versionId: string)
       queryClient.invalidateQueries({
         queryKey: ["projectVersions", currentOrganization?.id, projectId]
       });
+    },
+  });
+};
+
+
+// ###################################################
+// Download Version
+// ###################################################
+
+export const downloadDataset = async (
+  organizationId: string,
+  projectId: string,
+  versionId: string
+): Promise<DownloadDatasetResponse> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) throw new Error("No authentication token found");
+
+  const response = await fetch(
+    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}/download`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to get download URL' }));
+    throw new Error(error.detail);
+  }
+
+  return response.json();
+};
+
+export const useDownloadDataset = (projectId: string, options?: {
+  onSuccess?: (data: DownloadDatasetResponse) => void;
+  showToast?: boolean;
+}) => {
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: (versionId: string) => {
+      if (!currentOrganization) throw new Error("No organization selected");
+      return downloadDataset(currentOrganization.id, projectId, versionId);
+    },
+    onSuccess: (data) => {
+      if (showToast) toast.success("Download URL generated");
+      // Trigger download
+      // window.open(data.download_url, '_blank');
+      const link = document.createElement("a");
+      link.href = data.download_url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      onSuccess?.(data);
+    },
+    onError: (error: Error) => {
+      if (showToast) toast.error(error.message);
+    },
+  });
+};
+
+// #########################################################
+// Export Dataset
+// #########################################################
+
+export const exportDataset = async (
+  organizationId: string,
+  projectId: string,
+  versionId: string,
+  config?: ExportConfig
+): Promise<ExportDatasetResponse> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) throw new Error("No authentication token found");
+
+  const response = await fetch(
+    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}/export`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+        'Content-Type': 'application/json',
+      },
+      body: config ? JSON.stringify(config) : undefined,
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to start export' }));
+    throw new Error(error.detail);
+  }
+
+  return response.json();
+};
+
+export const useExportDataset = (projectId: string, options?: {
+  onSuccess?: (data: ExportDatasetResponse) => void;
+  showToast?: boolean;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: ({ versionId, config }: { versionId: string; config?: ExportConfig }) => {
+      if (!currentOrganization) throw new Error("No organization selected");
+      return exportDataset(currentOrganization.id, projectId, versionId, config);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['versions', projectId] });
+      if (showToast) toast.success(data.message);
+      onSuccess?.(data);
+    },
+    onError: (error: Error) => {
+      if (showToast) toast.error(error.message);
     },
   });
 };

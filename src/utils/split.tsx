@@ -10,7 +10,7 @@ import { SplitType } from "@/types/split";
 export const getSplitBadgeVariant = (split: SplitType) => {
     switch (split) {
       case 'train': return 'default';
-      case 'valid': return 'secondary';
+      case 'val': return 'secondary';
       case 'test': return 'outline';
       default: return 'default';
     }
@@ -19,7 +19,7 @@ export const getSplitBadgeVariant = (split: SplitType) => {
 export const getSplitColor = (split: SplitType) => {
     switch (split) {
       case 'train': return 'text-success';
-      case 'valid': return 'text-primary';
+      case 'val': return 'text-primary';
       case 'test': return 'text-warning';
       default: return 'text-foreground';
     }
@@ -30,7 +30,7 @@ export const getModeBadge = (split: SplitType) => {
 
   const modeConfig = {
     train: { label: 'Train', className: 'bg-blue-500', icon: Bike },
-    valid: { label: 'Val', className: 'bg-purple-500', icon: ChartCandlestick },
+    val: { label: 'Val', className: 'bg-purple-500', icon: ChartCandlestick },
     test: { label: 'Test', className: 'bg-orange-500', icon: FlaskConical },
   };
 

@@ -126,3 +126,18 @@ export interface ExportConfig {
   augmentation_factor: number;
   augmentation_config: AugmentationConfig;
 }
+
+export interface DownloadDatasetResponse {
+  download_url: string;
+  file_size: number;
+  format: string;
+}
+
+
+export interface ExportDatasetResponse {
+  message: string;
+  version_id: string;
+  status: string;
+  config: ExportConfig;
+  estimated_time: string;
+}

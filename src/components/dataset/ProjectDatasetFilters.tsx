@@ -147,7 +147,7 @@ export function ProjectDatasetFilters({
         </div>
 
         <div className="flex items-center gap-2 border-l pl-4">
-          <span className="text-sm text-muted-foreground">View:</span>
+          {/* <span className="text-sm text-muted-foreground">View:</span> */}
           <Button
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="sm"
@@ -186,7 +186,7 @@ export function ProjectDatasetFilters({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 py-3">
         <span className="text-sm text-muted-foreground">Quick filters:</span>
         {QUICK_FILTERS.map((filter) => (
           <Badge

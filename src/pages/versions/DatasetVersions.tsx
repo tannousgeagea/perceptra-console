@@ -5,8 +5,9 @@ import { VersionTable } from "@/components/version/VersionTable";
 import { CreateVersionDialog } from "@/components/version/CreateVersionDialog";
 import { VersionDetailSheet } from "@/components/version/VersionDetailSheet";
 import { ExportConfigDialog } from "@/components/version/ExportConfigDialog";
-import { useProjectVersions, useDeleteProjectVersion } from "@/hooks/useProjectVersions";
+import { useProjectVersions, useDeleteProjectVersion, useDownloadDataset, downloadDataset } from "@/hooks/useDatasetVersions";
 import { useExportVersion } from "@/components/version/useDatasetVersions";
+import { useExportDataset } from "@/hooks/useDatasetVersions";
 import { ExportConfig } from "@/types/version";
 import { DatasetVersion } from "@/types/version";
 import { Input } from "@/components/ui/ui/input";
@@ -28,8 +29,9 @@ export default function DatasetVersions() {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportVersion, setExportVersion] = useState<DatasetVersion | null>(null);
 
-  const { mutate: exportVersionMutate, isLoading: isExporting } = useExportVersion();
+  const { mutate: exportDataset } = useExportDataset(projectId!); 
   const { mutateAsync: deleteVersion, isPending: isDeleting } = useDeleteProjectVersion(projectId!)
+  const { mutate: downloadDataset } = useDownloadDataset(projectId!);
 
   const query = searchText.toLowerCase();
   const filtered_data = data?.versions.filter(v => 
@@ -52,15 +54,18 @@ export default function DatasetVersions() {
     toast.info(`${version.version_name} has been deleted.`);
   };
 
+  const handleExpoortClick = (version: DatasetVersion) => {
+    setExportVersion(version);
+    setExportDialogOpen(true);
+  };  
+
   const handleExport = async (config: ExportConfig) => {
     if (!exportVersion) return;
-    await exportVersionMutate(exportVersion.version_id, config);
+    exportDataset({ versionId: exportVersion.version_id, config })
   };
 
   const handleDownload = (version: DatasetVersion) => {
-    toast.info(`Downloading ${version.version_name} (${version.export_format.toUpperCase()})...`);
-    setExportVersion(version);
-    setExportDialogOpen(true);
+    downloadDataset(version.version_id)
   };
 
   const handleViewDetails = (version: DatasetVersion) => {
@@ -136,6 +141,7 @@ export default function DatasetVersions() {
                 onDelete={handleDelete}
                 isDeleting={isDeleting}
                 onDownload={handleDownload}
+                onExport={handleExpoortClick}
               />
             ))}
           </div>

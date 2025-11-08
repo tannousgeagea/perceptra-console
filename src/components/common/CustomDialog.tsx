@@ -6,9 +6,10 @@ interface CustomDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
+  className?: string; 
 }
 
-export function CustomDialog({ open, onOpenChange, children }: CustomDialogProps) {
+export function CustomDialog({ open, onOpenChange, children, className = 'max-w-lg' }: CustomDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export function CustomDialog({ open, onOpenChange, children }: CustomDialogProps
       {/* Dialog Content */}
       <div
         ref={dialogRef}
-        className="relative z-50 w-full max-w-lg bg-background border rounded-lg shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-200"
+        className={`relative z-50 w-full bg-background border rounded-lg shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-200 ${className}`}        
         onClick={(e) => e.stopPropagation()}
       >
         {children}
