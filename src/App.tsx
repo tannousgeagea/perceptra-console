@@ -8,12 +8,11 @@ import ProjectLayout from './components/ui/common/project-layout';
 import Index from './pages/annotate-tool/AnnotationTool';
 import { ProtectedRoute, PublicRoute} from './pages/login/ProtectedRoute';
 import AnalysisPage from './pages/analysis/Index';
-import Annotate from './pages/annotate/annotate';
 import JobAnnotation from './pages/annotate/JobAnnotation';
 import UploadIndex from './pages/upload/Index';
 import NotFound from './pages/NotFound';
 import ClassesManagement from './pages/class_management/ClassManagement';
-import AnalyticsPage from './pages/analytics/analytics';
+import Analytics from './pages/analytics/Analytics';
 import { Toaster } from './components/ui/ui/toaster';
 import { Toaster as Sonner } from "@/components/ui/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -67,7 +66,7 @@ const App = () => {
                       <Route path='versions' element={<DatasetVersions />} />
                       <Route path="analysis" element={<AnalysisPage/>} />
                       <Route path='classes' element={<ClassesManagement/>} />
-                      <Route path='analytics' element={<AnalyticsPage/>} />
+                      <Route path='analytics' element={<Analytics/>} />
                       <Route path='members' element={<ProjectMembersPage/>} />
                       <Route path='annotate' element={<JobPage/>} />
                       <Route path="models" element={<ModelsList />} />

@@ -81,7 +81,7 @@ const JobItem: FC<JobItemProps> = ({ job }) => {
 
       <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
         <Clock size={12} />
-        <span>{formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}</span>
+        <span>{formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}</span>
       </div>
     </div>
   );

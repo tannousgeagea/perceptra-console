@@ -28,14 +28,14 @@ const JobPage = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   const { data: users } = useProjectMembers(projectId || '')
-  const { data: jobs, isLoading, error, refetch } = useProjectJobs(projectId || '');
+  const { data, isLoading, error, refetch } = useProjectJobs(projectId || '');
   const { mutate: assignJob } = useAssignJob(projectId!);
   const { mutate: unassignJob } = useUnassignJob(projectId!);
   const { mutate: updateJob, isPending } = useUpdateJob(projectId!);
   const { mutate: splitJob, isPending: splitPending } = useSplitJob(projectId!);
   const { mutate: deleteJob, isPending: deletePending } = useDeleteJob(projectId!);
 
-  if (isLoading || !jobs) {
+  if (isLoading || !data?.jobs) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4 w-full">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -49,7 +49,7 @@ const JobPage = () => {
   }
 
   // Filter jobs based on search query
-  const filteredJobs = jobs.filter(
+  const filteredJobs = data?.jobs.filter(
     (job) =>
       job.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,7 +123,7 @@ const JobPage = () => {
         toast.error('Job Id is undefined');
         return;
       };
-      if (job.imageCount < numberOfSlices) {
+      if (job.image_count < numberOfSlices) {
         toast.error("Cannot split a job into more slices than it has images");
         return;
       }
@@ -163,7 +163,7 @@ const JobPage = () => {
     <div className="space-y-6 p-6 w-full">
       <JobsHeader 
         projectId={projectId!}
-        totalJobs={jobs?.length || 0}
+        totalJobs={data?.jobs.length || 0}
         reviewedJobs={jobsByStatus.inReview.length}
         processingJobs={jobsByStatus.assigned.length}
         onRefresh={refetch}
@@ -172,7 +172,7 @@ const JobPage = () => {
       />
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="mx-auto px-4 py-6">
         <div className="grid grid-cols-1 gap-8">
           {/* Job Sections */}
           <div className="flex flex-col gap-8">

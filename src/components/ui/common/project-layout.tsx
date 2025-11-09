@@ -10,7 +10,7 @@ const ProjectLayout: FC = () => {
   return (
     <ProjectProvider>
       <ClassesProvider>
-        <div className="project-layout">
+        <div className="project-layout bg-background">
           <div className='project-layout-sidebar'>
             <ProjectSideBar />
           </div>

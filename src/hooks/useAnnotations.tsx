@@ -120,6 +120,9 @@ export const useCreateAnnotation = (
       queryClient.invalidateQueries({ 
         queryKey: ['projectImage', projectId, projectImageId] 
       });
+      queryClient.invalidateQueries({ 
+        queryKey: ["projectImages", currentOrganization?.id, projectId] 
+      });
 
       if (showToast) {
         toast.success(data.message);

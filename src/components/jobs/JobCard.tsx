@@ -101,12 +101,12 @@ const getStatusBadge = (status: JobStatus) => {
         <div className="mt-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Images:</span>
-            <span className="text-sm font-medium">{job.imageCount}</span>
+            <span className="text-sm font-medium">{job.image_count}</span>
           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Created:</span>
-            <span className="text-sm">{formatDistanceToNow(job.createdAt, { addSuffix: true })}</span>
+            <span className="text-sm">{formatDistanceToNow(job.created_at, { addSuffix: true })}</span>
           </div>
           {renderProgressBar(job)}
           <div className="flex items-center justify-between">
@@ -145,7 +145,7 @@ const getStatusBadge = (status: JobStatus) => {
               </TooltipContent>
             </Tooltip>
 
-            {onSplitJob && job.imageCount >= 2 && job.status === JobStatus.UNASSIGNED && (
+            {onSplitJob && job.image_count >= 2 && job.status === JobStatus.UNASSIGNED && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button 

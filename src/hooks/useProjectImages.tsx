@@ -57,7 +57,7 @@ export const useProjectImages = (
   const { currentOrganization } = useCurrentOrganization();
 
   return useQuery({
-    queryKey: ["job-images", currentOrganization?.id, projectId, params],
+    queryKey: ["projectImages", currentOrganization?.id, projectId, params],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
       return fetchProjectImages(currentOrganization.id, projectId, params);

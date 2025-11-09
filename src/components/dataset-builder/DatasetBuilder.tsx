@@ -40,6 +40,7 @@ export function DatasetBuilder({ projectId, images, open, onOpenChange }: Datase
 
   const stepProgress = currentStep === 'select' ? 33 : currentStep === 'split' ? 66 : 100;
 
+  console.log(images)
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
@@ -71,7 +72,7 @@ export function DatasetBuilder({ projectId, images, open, onOpenChange }: Datase
           <div className="flex-1 overflow-hidden">
             {currentStep === 'select' && (
               <SelectImagesStep 
-              projectId={projectId}
+                projectId={projectId}
                 images={images}
                 onComplete={handleImagesFinalized} 
               />
