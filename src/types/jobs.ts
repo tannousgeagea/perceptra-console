@@ -24,29 +24,33 @@ export interface Job {
     name: string;
     description?: string;
     status: JobStatus;
-    imageCount: number;
+    image_count: number;
     assignedUser: User | null;
-    createdAt: Date;
-    updatedAt: Date;
+    created_at: Date;
+    updated_at: Date;
     parentJobId?: string;
     sliceNumber?: number;
     projectId?: string;
     progress?: JobProgress;   // 👈 new
   }
 
-  export type AllowedTransition = {
-    from: JobStatus;
-    to: JobStatus[];
-  };
+export interface JobsResponse {
+  jobs: Job[]
+} 
+
+export type AllowedTransition = {
+  from: JobStatus;
+  to: JobStatus[];
+};
   
-  export const allowedStatusTransitions: AllowedTransition[] = [
-    {
-      from: JobStatus.ASSIGNED,
-      to: [JobStatus.IN_REVIEW],
-    },
-    {
-      from: JobStatus.IN_REVIEW,
-      to: [JobStatus.ASSIGNED, JobStatus.COMPLETED],
-    },
-  ];
+export const allowedStatusTransitions: AllowedTransition[] = [
+  {
+    from: JobStatus.ASSIGNED,
+    to: [JobStatus.IN_REVIEW],
+  },
+  {
+    from: JobStatus.IN_REVIEW,
+    to: [JobStatus.ASSIGNED, JobStatus.COMPLETED],
+  },
+];
   

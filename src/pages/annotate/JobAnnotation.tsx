@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/ui/pagination-control';
+import { da } from 'zod/v4/locales';
 
 export default function JobAnnotation() {
   const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
@@ -47,7 +48,6 @@ export default function JobAnnotation() {
       `/projects/${projectId}/images/${image_id}?jobId=${jobId}&status=${activeStatus}&index=${index}`);
   };
 
-
   // Filter images based on active tab and search
   const filteredImages = data?.images.filter(img => {
     const matchesStatus = img.status === activeStatus;
@@ -56,6 +56,8 @@ export default function JobAnnotation() {
     return matchesStatus && matchesSearch;
   }) || [];
 
+
+  console.log(filteredImages)
   return (
     <div className="min-h-screen w-full bg-background">
       <div className="mx-auto p-6 space-y-6">
@@ -131,7 +133,7 @@ export default function JobAnnotation() {
         <DatasetBuilder
           projectId={projectId}
           open={datasetBuilderOpen}
-          images={data?.images || []}
+          images={data?.images.filter(img => img.status === 'reviewed') || []}
           onOpenChange={setDatasetBuilderOpen}
         />
       </div>
