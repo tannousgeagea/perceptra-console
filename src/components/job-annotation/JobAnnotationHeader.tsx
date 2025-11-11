@@ -8,7 +8,8 @@ interface JobAnnotationHeaderProps {
   createdAt: string;
   onRefresh: () => void;
   searchText: string;
-  onSearchChange: (text: string) => void;
+  onSearchChange: (text: string) => void; 
+  onBack: () => void;
   onBuildDataset: () => void;
 }
 
@@ -18,6 +19,7 @@ export function JobAnnotationHeader({
   onRefresh,
   searchText,
   onSearchChange,
+  onBack,
   onBuildDataset,
 }: JobAnnotationHeaderProps) {
   const navigate = useNavigate();
@@ -28,7 +30,7 @@ export function JobAnnotationHeader({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate(-1)}
+          onClick={onBack}
           className="shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />

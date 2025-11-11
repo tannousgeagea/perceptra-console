@@ -44,7 +44,6 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
 }) => {
   const { boxes } = useAnnotation();
 
-  console.log(currentImage)
   const handleCopy = async () => {
     await navigator.clipboard.writeText(currentImage.image.image_id);
     toast.info("Copied image ID!");

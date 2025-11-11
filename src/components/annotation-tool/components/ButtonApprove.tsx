@@ -36,8 +36,8 @@ const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, g
       });
 
       // Reset the current annotations
-      setBoxes([]);
-      setSelectedBox(null);
+      // setBoxes([]);
+      // setSelectedBox(null);
       goToNextImage();
 
     } catch (error) {

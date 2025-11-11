@@ -118,7 +118,7 @@ export default function ProjectDataset() {
                 }}
               />
             )}
-            <div className="fixed bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
+            <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
               <PaginationControls
                 currentPage={currentPage}
                 totalItems={data?.total || 0}
