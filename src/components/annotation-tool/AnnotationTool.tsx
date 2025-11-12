@@ -74,7 +74,7 @@ const AnnotationTool = () => {
       <>
         <QueryState
           isLoading={isLoading}
-          isError={true}
+          isError={isError}
           onRetry={refetch}
           loadingMessage="Loading annotation classes..."
           errorMessage="Failed to fetch annotation classes. Please try again."

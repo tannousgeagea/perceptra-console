@@ -19,6 +19,7 @@ export interface CreateAnnotationPayload {
   annotation_uid?: string;
   annotation_source?: string;
   confidence?: number;
+  annotation_time_seconds?: number;
 }
 
 export interface AnnotationOut {
