@@ -10,18 +10,20 @@ import {
   ActivityTrend,
   LeaderboardEntry, 
   PredictionQuality,
-  ActivityHeatmap
+  ActivityHeatmap,
+  TimelineEvent
 } from "@/types/activity";
 
 // ============= Fetch Functions ============
 const fetchUserActivitySummary = async (
   organizationId: string,
+  projectId: string,
   params?: Record<string, string | number>
 ): Promise<UserSummary> => {
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const url = new URL(`${baseURL}/api/v1/activity/organization/summary`);
+  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/summary`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
@@ -112,7 +114,7 @@ const fetchProjectTimeline = async (
   organizationId: string,
   projectId: string,
   params?: Record<string, string | number | string[]>
-): Promise<ActivityTrend[]> => {
+): Promise<TimelineEvent[]> => {
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
@@ -172,12 +174,13 @@ const fetchPredictionQuality = async (
 
 const fetchActivityHeatmap = async (
   organizationId: string,
+  projectId: string,
   params?: Record<string, string | number>
 ): Promise<ActivityHeatmap> => {
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const url = new URL(`${baseURL}/api/v1/activity/activity-heatmap`);
+  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/heatmap`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
@@ -201,11 +204,42 @@ const fetchActivityHeatmap = async (
 };
 
 
+const fetchActivityTrend = async (
+  organizationId: string,
+  projectId: string,
+  params?: Record<string, string | number>
+): Promise<ActivityTrend> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+  if (!token) throw new Error("No authentication token found");
+
+  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/activity-trend`);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.append(key, String(value));
+    });
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-Organization-ID': organizationId,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
+    throw new Error(error.detail);
+  }
+
+  return response.json();
+};
+
 // ============= Query Hooks =============
 export const useUserActivitySummary = (
-  userId: string,
+  projectId: string,
   options?: {
-    projectId?: string;
+    userId?: string;
     startDate?: string;
     endDate?: string;
   }
@@ -213,21 +247,22 @@ export const useUserActivitySummary = (
   const { currentOrganization } = useCurrentOrganization();
 
   return useQuery({
-    queryKey: ['activity', 'user-summary', userId, options],
+    queryKey: ['activity', 'user-summary', projectId, options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
       
       const params: Record<string, string> = {};
-      if (options?.projectId) params.project_id = options.projectId;
+      if (options?.userId) params.project_id = options.userId;
       if (options?.startDate) params.start_date = options.startDate;
       if (options?.endDate) params.end_date = options.endDate;
 
       return fetchUserActivitySummary(
         currentOrganization.id,
+        projectId,
         params
       );
     },
-    enabled: !!currentOrganization && !!userId,
+    enabled: !!currentOrganization && !!projectId,
   });
 };
 
@@ -330,20 +365,50 @@ export const usePredictionQuality = (projectId: string) => {
 };
 
 export const useActivityHeatmap = (
+  projectId: string,
   startDate: string,
   endDate: string
 ) => {
   const { currentOrganization } = useCurrentOrganization();
 
   return useQuery({
-    queryKey: ['activity', 'heatmap', startDate, endDate],
+    queryKey: ['activity', projectId, 'heatmap', startDate, endDate],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
       return fetchActivityHeatmap(
         currentOrganization.id,
+        projectId,
         { start_date: startDate, end_date: endDate }
       );
     },
-    enabled: !!currentOrganization && !!startDate && !!endDate,
+    enabled: !!currentOrganization && !!projectId && !!startDate && !!endDate,
+  });
+};
+
+export const useActivityTrend = (
+  projectId: string,
+  options?: {
+    userId?: string;
+    days?: number;
+  }
+) => {
+  const { currentOrganization } = useCurrentOrganization();
+
+  return useQuery({
+    queryKey: ['activity', projectId, 'heatmap', options],
+    queryFn: () => {
+      if (!currentOrganization) throw new Error("No organization selected");
+
+      const params: Record<string, string | number> = {};
+      if (options?.userId) params.project_id = options.userId;
+      if (options?.days) params.days = options.days;
+
+      return fetchActivityTrend(
+        currentOrganization.id,
+        projectId,
+        params
+      );
+    },
+    enabled: !!currentOrganization && !!projectId,
   });
 };

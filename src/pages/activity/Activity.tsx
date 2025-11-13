@@ -8,29 +8,41 @@ import { PredictionQualityTab } from "@/components/activity/tabs/PredictionQuali
 import { TimelineTab } from "@/components/activity/tabs/TimelineTab";
 import { HeatmapTab } from "@/components/activity/tabs/HeatmapTab";
 import { useParams } from "react-router-dom";
-import { useUserActivitySummary, useProjectProgress } from "@/hooks/useActivity";
+import { 
+  useUserActivitySummary, 
+  useProjectProgress, 
+  useProjectLeaderboard,
+  useProjectTimeline,
+  usePredictionQuality,
+  useActivityHeatmap,
+  useActivityTrend
+} from "@/hooks/useActivity";
 
 import QueryState from "@/components/common/QueryState";
 import {
-  mockUserSummary,
-  mockProjectProgress,
-  mockLeaderboard,
-  mockTimeline,
-  mockPredictionQuality,
-  mockActivityHeatmap,
   mockActivityTrend,
 } from "@/components/activity/mockData";
 
 const ActivityPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [activeTab, setActiveTab] = useState("overview");
-  const { data: userActivity, isLoading: userActivityLoading, isError: userActivityError, refetch } = useUserActivitySummary("1");
-  // const { data: progress, isLoading: progressLoading, isError: progressError } = useProjectProgress(projectId!);
+  const { data: userActivity, isLoading: userActivityLoading, isError: userActivityError, refetch } = useUserActivitySummary(projectId!);
+  const { data: progress, isLoading: progressLoading, isError: progressError } = useProjectProgress(projectId!);
+  const { data: leaderboard, isLoading: leaderboardLoading, isError: leaderboardError } = useProjectLeaderboard(projectId!, { metric: 'annotations_created', periodDays: 30 });
+  const { data: timeline, isLoading: timelineLoading, isError: timelineError } = useProjectTimeline(projectId!, { limit: 15 });
+  const { data: quality, isLoading: qualityLoading, isError: qualityError } = usePredictionQuality(projectId!);
 
-  const isLoading = userActivityLoading //|| progressLoading
-  const isError = userActivityError //|| progressError
+  const endDate = new Date().toISOString().split('T')[0];
+  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const { data: heatmap, isLoading: heatmapLoading, isError: heatmapError } = useActivityHeatmap(projectId!, startDate, endDate);
+  const { data: trend, isLoading: trendLoading, isError: trendError } = useActivityTrend(projectId!);
 
-  if (isLoading || isError || !userActivity) {
+
+  const isLoading = userActivityLoading || progressLoading || leaderboardLoading || timelineLoading || qualityLoading || heatmapLoading || trendLoading
+  const isError = userActivityError || progressError || leaderboardError || timelineError || qualityError || heatmapError || trendError
+
+
+  if (isLoading || isError || !userActivity || !progress || !timeline || !quality || !heatmap || !trend) {
     return (
       <>
         <QueryState
@@ -43,6 +55,8 @@ const ActivityPage = () => {
       </>
     )
   }
+
+  console.log(trend)
 
   return (
     <div className="min-h-screen w-full bg-background">
@@ -106,19 +120,19 @@ const ActivityPage = () => {
         {activeTab === "overview" && (
           <OverviewTab
             userSummary={userActivity!}
-            projectProgress={mockProjectProgress}
-            activityTrend={mockActivityTrend}
+            projectProgress={progress!}
+            activityTrend={trend}
           />
         )}
-        {activeTab === "user" && <UserActivityTab userSummary={mockUserSummary} />}
+        {activeTab === "user" && <UserActivityTab userSummary={userActivity} />}
         {activeTab === "leaderboard" && (
-          <LeaderboardTab leaderboard={mockLeaderboard} />
+          <LeaderboardTab leaderboard={leaderboard!} />
         )}
         {activeTab === "quality" && (
-          <PredictionQualityTab predictionQuality={mockPredictionQuality} />
+          <PredictionQualityTab predictionQuality={quality} />
         )}
-        {activeTab === "timeline" && <TimelineTab timeline={mockTimeline} />}
-        {activeTab === "heatmap" && <HeatmapTab heatmap={mockActivityHeatmap} />}
+        {activeTab === "timeline" && <TimelineTab timeline={timeline} />}
+        {activeTab === "heatmap" && <HeatmapTab heatmap={heatmap} />}
       </main>
     </div>
   );

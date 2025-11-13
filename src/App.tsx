@@ -60,7 +60,6 @@ const App = () => {
                     <Route path='/projects/add' element={<CreateProject />} />
                     <Route path='/inference' element={<Inference />} />
                     <Route path='/settings/*' element={<Settings />} />
-                    <Route path='/activity' element={<ActivityPage />} />
                     <Route path='projects/:projectId' element={<ProjectLayout />}>
                       <Route path='upload' element={<UploadIndex />} />
                       <Route path='dataset' element={<ProjectDataset />} />
@@ -70,6 +69,7 @@ const App = () => {
                       <Route path='classes' element={<ClassesManagement/>} />
                       <Route path='analytics' element={<Analytics/>} />
                       <Route path='members' element={<ProjectMembersPage/>} />
+                      <Route path='activity' element={<ActivityPage />} />
                       <Route path='annotate' element={<JobPage/>} />
                       <Route path="models" element={<ModelsList />} />
                       <Route path="models/:modelId" element={<ModelDetail />} />
