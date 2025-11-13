@@ -13,6 +13,7 @@ import {
   ActivitySquare,
   ChevronRight,
   CircleDot,
+  Activity,
 } from "lucide-react";
 
 interface Item {
@@ -37,6 +38,7 @@ const ProjectSideBar: FC = () => {
     // Insights Section
     { section: "Insights", label: "Analysis", path: `/projects/${projectId}/analysis`, icon: <BarChart size={18} /> },
     { section: "Insights", label: "Analytics", path: `/projects/${projectId}/analytics`, icon: <LineChart size={18} /> },
+    { section: "Insights", label: "Activity", path: `/projects/${projectId}/activity`, icon: <Activity size={18} /> },
 
     // Models Section
     { section: "Models", label: "Version", path: `/projects/${projectId}/versions`, icon: <Layers size={18} /> },

@@ -12,6 +12,7 @@ import JobAnnotation from './pages/annotate/JobAnnotation';
 import UploadIndex from './pages/upload/Index';
 import NotFound from './pages/NotFound';
 import ClassesManagement from './pages/class_management/ClassManagement';
+import ActivityPage from './pages/activity/Activity';
 import Analytics from './pages/analytics/Analytics';
 import { Toaster } from './components/ui/ui/toaster';
 import { Toaster as Sonner } from "@/components/ui/ui/sonner";
@@ -68,6 +69,7 @@ const App = () => {
                       <Route path='classes' element={<ClassesManagement/>} />
                       <Route path='analytics' element={<Analytics/>} />
                       <Route path='members' element={<ProjectMembersPage/>} />
+                      <Route path='activity' element={<ActivityPage />} />
                       <Route path='annotate' element={<JobPage/>} />
                       <Route path="models" element={<ModelsList />} />
                       <Route path="models/:modelId" element={<ModelDetail />} />

@@ -67,6 +67,7 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
     Number(image.image.id)
   );
 
+  const [annotationStartTime, setAnnotationStartTime] = useState<number | null>(null);
   const { mutate: createAnnotation, isPending } = useCreateAnnotation(
     projectId!,
     Number(image.image.id)
@@ -122,6 +123,11 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
           const color = getRandomColor();
           annotation.color = color;
         }
+      
+        // Calculate annotation time
+        const annotationTimeSeconds = annotationStartTime 
+          ? (Date.now() - annotationStartTime) / 1000 
+          : null;
 
         createAnnotation({
           annotation_type: 'box',
@@ -135,7 +141,10 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
           annotation_source: 'manual',
           confidence: 1.0,
           annotation_uid: annotation.id,
+          annotation_time_seconds: annotationTimeSeconds!,
         });
+
+        setAnnotationStartTime(null);
         // await saveAnnotation(annotation, projectId!, image.image.image_id);
       }
     }
@@ -196,6 +205,10 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
     if (e.altKey || e.button === 1) {
       handleZoomMouseDown(e);
     } else {
+  
+      if (!annotationStartTime) {
+        setAnnotationStartTime(Date.now());
+      }
       // Otherwise handle drawing
       startDrawing(e, tool);
     }

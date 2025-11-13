@@ -45,8 +45,15 @@ export default function JobAnnotation() {
 
   const handleImageClick = (index: number, image_id:string): void => {
     navigate(
-      `/projects/${projectId}/images/${image_id}?jobId=${jobId}&status=${activeStatus}&index=${index}`);
+      `/projects/${projectId}/images/${image_id}?jobId=${jobId}&status=${activeStatus}&index=${index + 1}`);
   };
+
+
+  const handleBack = (): void => {
+    navigate(
+      `/projects/${projectId}/annotate`
+    )
+  }
 
   // Filter images based on active tab and search
   const filteredImages = data?.images.filter(img => {
@@ -56,8 +63,6 @@ export default function JobAnnotation() {
     return matchesStatus && matchesSearch;
   }) || [];
 
-
-  console.log(filteredImages)
   return (
     <div className="min-h-screen w-full bg-background">
       <div className="mx-auto p-6 space-y-6">
@@ -67,6 +72,7 @@ export default function JobAnnotation() {
           onRefresh={handleRefresh}
           searchText={searchText}
           onSearchChange={setSearchText}
+          onBack={handleBack}
           onBuildDataset={handleBuildDataset}
         />
 
@@ -112,7 +118,7 @@ export default function JobAnnotation() {
               onImageClick={(index: number, image_id:string) => handleImageClick(index, image_id)}
             />
 
-            <div className="fixed bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
+            <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
               <PaginationControls
                 currentPage={currentPage}
                 totalItems={data?.total || 0}
