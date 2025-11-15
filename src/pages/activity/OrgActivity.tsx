@@ -4,12 +4,9 @@ import { TabButton } from "@/components/activity/TabButton";
 import { OrgOverviewTab } from "@/components/activity/tabs/OrgOverviewTab";
 import { OrgUsersTab } from "@/components/activity/tabs/OrgUsersTab";
 import { OrgProjectsTab } from "@/components/activity/tabs/OrgProjectTab";
-import { UserActivityTab } from "@/components/activity/tabs/UserActivityTab";
 import { LeaderboardTab } from "@/components/activity/tabs/LeaderboardTab";
-import { PredictionQualityTab } from "@/components/activity/tabs/PredictionQualityTab";
 import { TimelineTab } from "@/components/activity/tabs/TimelineTab";
 import { HeatmapTab } from "@/components/activity/tabs/HeatmapTab";
-import { useParams } from "react-router-dom";
 import { 
   useOrgActivitySummary, 
   useOrgProjectsProgress, 
@@ -19,22 +16,69 @@ import {
   useOrgActivityTrend,
   useOrgUsersActivity
 } from "@/hooks/useActivity";
-
+import { DateRange } from "react-day-picker";
 import QueryState from "@/components/common/QueryState";
+import { FilterBar } from "@/components/activity/FilterBar";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
+import { toast } from "sonner";
+import {
+  exportToCSV,
+  exportToPDF,
+  prepareLeaderboardForExport,
+} from "@/utils/exportUtils";
 
 const OrgActivityPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { data: orgSummary, isLoading: orgSummaryLoading, isError: orgSummaryError, refetch } = useOrgActivitySummary();
-  const { data: userActivity, isLoading: userActivityLoading, isError: userActivityError } = useOrgUsersActivity({ sortBy: 'total_annotations' });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [selectedProject, setSelectedProject] = useState("");
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [appliedStartDate, setAppliedStartDate] = useState<string>(
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+  );
+  const [appliedEndDate, setAppliedEndDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
+
+  const handleDateRangeChange = (start: Date | null, end: Date | null) => {
+    if (start && end) {
+      setDateRange({ from: start, to: end });
+      setAppliedStartDate(start.toISOString().split("T")[0]);
+      setAppliedEndDate(end.toISOString().split("T")[0]);
+    } else {
+      setDateRange(undefined);
+      // Reset to defaults when cleared
+      setAppliedStartDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+      setAppliedEndDate(new Date().toISOString().split("T")[0]);
+    }
+  };
+
+  const { data: orgSummary, isLoading: orgSummaryLoading, isError: orgSummaryError, refetch } = useOrgActivitySummary({
+    startDate: appliedStartDate,
+    endDate: appliedEndDate
+  });
+  const { data: userActivity, isLoading: userActivityLoading, isError: userActivityError } = useOrgUsersActivity({ 
+    sortBy: 'total_annotations',
+    startDate: appliedStartDate,
+    endDate: appliedEndDate, 
+  });
   const { data: projects, isLoading: projecstLoading, isError: projectsError } = useOrgProjectsProgress({ status: 'active' });
   const { data: leaderboard, isLoading: leaderboardLoading, isError: leaderboardError } = useOrgLeaderboard();
-  const { data: timeline, isLoading: timelineLoading, isError: timelineError } = useOrgTimeline({ limit: 15 });
+  const { data: timeline, isLoading: timelineLoading, isError: timelineError } = useOrgTimeline({ 
+    limit: 15,
+    startDate: appliedStartDate,
+    endDate: appliedEndDate, 
+  });
 
-  const endDate = new Date().toISOString().split('T')[0];
-  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const { data: heatmap, isLoading: heatmapLoading, isError: heatmapError } = useOrgHeatmap(startDate, endDate);
+
+  const { data: heatmap, isLoading: heatmapLoading, isError: heatmapError } = useOrgHeatmap(
+    appliedStartDate, appliedEndDate
+  );
   const { data: trend, isLoading: trendLoading, isError: trendError } = useOrgActivityTrend();
 
+  const { isEnabled, lastUpdated, isRefreshing, toggleAutoRefresh, manualRefresh } = useAutoRefresh(
+    refetch,
+    30 // 30 seconds
+  );
 
   const isLoading = userActivityLoading || orgSummaryLoading || projecstLoading || leaderboardLoading || timelineLoading || heatmapLoading || trendLoading
   const isError = userActivityError || orgSummaryError || projectsError || leaderboardError || timelineError || heatmapError || trendError
@@ -54,7 +98,27 @@ const OrgActivityPage = () => {
     )
   }
 
-  console.log(trend)
+  const handleExport = (type: "csv" | "pdf") => {
+    try {
+      if (activeTab === "leaderboard") {
+        const data = prepareLeaderboardForExport(leaderboard || []);
+        if (type === "csv") {
+          exportToCSV(data, "leaderboard");
+        } else {
+          const headers = Object.keys(data[0]);
+          const rows = data.map(row => Object.values(row));
+          exportToPDF("Leaderboard Report", headers, rows, "leaderboard");
+        }
+      } else {
+        toast.info("Export not available for this view");
+        return;
+      }
+      toast.success(`${type.toUpperCase()} exported successfully`);
+    } catch (error) {
+      toast.error("Export failed");
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-background">
@@ -112,6 +176,24 @@ const OrgActivityPage = () => {
           </nav>
         </div>
       </header>
+
+
+      <FilterBar
+        viewMode={'project'}
+        dateRange={dateRange}
+        onDateRangeChange={handleDateRangeChange}
+        onProjectChange={setSelectedProject}
+        onUserSearch={setUserSearchQuery}
+        onExport={handleExport}
+        onRefresh={manualRefresh}
+        isRefreshing={isRefreshing}
+        lastUpdated={lastUpdated}
+        autoRefreshEnabled={isEnabled}
+        onToggleAutoRefresh={toggleAutoRefresh}
+        projects={undefined}
+        selectedProject={selectedProject}
+      />
+
 
       {/* Content */}
       <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
