@@ -69,11 +69,39 @@ export interface ActivityTrend {
   uploads: number;
 }
 
-// export type ActivityHeatmap = Record<string, Record<string, number>>;
-
-
 export interface ActivityHeatmap {
   [date: string]: {
     [hour: string]: number;
   };
+}
+
+export interface TopPerformer {
+  user_id: string;
+  username: string;
+  full_name: string;
+  count: number;
+}
+
+export interface OrganizationSummary {
+  organization_id: string;
+  organization_name: string;
+  period: {
+    start: string;
+    end: string;
+  };
+  total_events: number;
+  total_annotations: number;
+  manual_annotations: number;
+  ai_predictions_edited: number;
+  ai_predictions_accepted: number;
+  images_reviewed: number;
+  images_finalized: number;
+  avg_annotation_time_seconds: number | null;
+  avg_edit_magnitude: number | null;
+  total_active_users: number;
+  avg_annotations_per_user: number;
+  total_projects: number;
+  active_projects: number;
+  top_annotator: TopPerformer | null;
+  top_reviewer: TopPerformer | null;
 }
