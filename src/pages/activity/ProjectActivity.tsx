@@ -23,7 +23,7 @@ import {
   mockActivityTrend,
 } from "@/components/activity/mockData";
 
-const ActivityPage = () => {
+const ProjectActivityPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [activeTab, setActiveTab] = useState("overview");
   const { data: userActivity, isLoading: userActivityLoading, isError: userActivityError, refetch } = useUserActivitySummary(projectId!);
@@ -138,4 +138,4 @@ const ActivityPage = () => {
   );
 };
 
-export default ActivityPage;
+export default ProjectActivityPage;
