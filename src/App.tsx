@@ -37,6 +37,8 @@ import Inference from './pages/inference/Inference';
 import CreateProject from './pages/project/create-project';
 import Settings from './pages/settings/Settings';
 import { TooltipProvider } from './components/ui/ui/tooltip';
+import { OAuthCallback } from '@/pages/auth/OAuthCallback';
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -48,6 +50,7 @@ const App = () => {
             <TooltipProvider delayDuration={100}>
               <Routes>
                 <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                <Route path="/auth/callback" element={<OAuthCallback />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Navigate to="/projects" replace />} />

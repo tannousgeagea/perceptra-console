@@ -4,7 +4,8 @@ import {
   LoginResponse, 
   RefreshTokenResponse, 
   User,
-  AUTH_STORAGE_KEYS 
+  AUTH_STORAGE_KEYS,
+  OAuthInitiateResponse
 } from "@/types/auth";
 
 /**
@@ -194,6 +195,65 @@ export const authService = {
    */
   logout: (): void => {
     authStorage.clear();
+  },
+
+  /**
+   * Initiate OAuth flow
+   */
+  initiateOAuth: async (provider: 'microsoft' | 'google'): Promise<OAuthInitiateResponse> => {
+    try {
+      const res = await fetch(`${baseURL}/api/v1/auth/oauth/initiate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new ApiError(
+          res.status,
+          error.detail || "Failed to initiate OAuth",
+          error
+        );
+      }
+
+      return res.json();
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(500, "Network error initiating OAuth");
+    }
+  },
+
+  /**
+   * Complete OAuth callback
+   */
+  completeOAuth: async (
+    provider: 'microsoft' | 'google',
+    code: string,
+    state: string
+  ): Promise<LoginResponse> => {
+    try {
+      const res = await fetch(`${baseURL}/api/v1/auth/oauth/callback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, code, state }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new ApiError(
+          res.status,
+          error.detail || "OAuth authentication failed",
+          error
+        );
+      }
+
+      const data: LoginResponse = await res.json();
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(500, "Network error completing OAuth");
+    }
   },
 };
 

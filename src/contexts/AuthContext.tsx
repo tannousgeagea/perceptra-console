@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService, authStorage, ApiError } from '@/services/authService';
-import { User, Organization } from '@/types/auth';
+import { User, Organization, OAuthProviderType } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +15,8 @@ interface AuthContextType {
   getCurrentOrganization: () => Organization | null;
   switchOrganization: (organizationId: string) => boolean;
   hasPermission: (organizationId: string, requiredRole: 'owner' | 'admin') => boolean;
+  loginWithOAuth: (provider: OAuthProviderType) => Promise<void>;
+  handleOAuthCallback: (provider: OAuthProviderType, code: string, state: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -254,6 +256,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user]
   );
 
+  /**
+   * Initiate OAuth login flow
+   */
+  const loginWithOAuth = async (provider: OAuthProviderType) => {
+    try {
+      const response = await authService.initiateOAuth(provider);
+      
+      // Store state in sessionStorage for verification
+      sessionStorage.setItem('oauth_state', response.state);
+      sessionStorage.setItem('oauth_provider', provider);
+      
+
+      console.log(response.state)
+      // Redirect to OAuth provider
+      window.location.href = response.authorization_url;
+    } catch (error) {
+      console.error('OAuth initiation failed:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Handle OAuth callback
+   */
+  const handleOAuthCallback = async (
+    provider: OAuthProviderType,
+    code: string,
+    state: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      setIsLoading(true);
+
+      // Verify state matches (CSRF protection)
+      const storedState = sessionStorage.getItem('oauth_state');
+      const storedProvider = sessionStorage.getItem('oauth_provider');
+      
+      if (storedState !== state || storedProvider !== provider) {
+        throw new Error('Invalid OAuth state - possible CSRF attack');
+      }
+
+      // Complete OAuth flow
+      const response = await authService.completeOAuth(provider, code, state);
+      
+      // Store auth data (always use sessionStorage for OAuth to be safe)
+      authStorage.setAuthData(
+        response.access_token,
+        response.refresh_token,
+        response.user,
+        response.expires_in,
+        false // Don't persist OAuth logins by default
+      );
+
+      setUser(response.user);
+      
+      // Set primary organization
+      if (response.user.organizations.length > 0) {
+        const primaryOrg = response.user.organizations.find(org => org.role === 'owner') 
+          || response.user.organizations[0];
+        setCurrentOrgId(primaryOrg.id);
+      }
+
+      // Setup auto-refresh
+      setupTokenRefresh(response.expires_in);
+
+      // Clean up OAuth state
+      sessionStorage.removeItem('oauth_state');
+      sessionStorage.removeItem('oauth_provider');
+
+      return { success: true };
+    } catch (error) {
+      console.error('OAuth callback failed:', error);
+      
+      // Clean up on error
+      sessionStorage.removeItem('oauth_state');
+      sessionStorage.removeItem('oauth_provider');
+      
+      let errorMessage = 'Authentication failed. Please try again.';
+      if (error instanceof ApiError) {
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -265,6 +356,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getCurrentOrganization,
     switchOrganization,
     hasPermission,
+    loginWithOAuth,
+    handleOAuthCallback,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -154,3 +154,22 @@ export const getOrganizationById = (
 ): Organization | undefined => {
   return user.organizations.find(org => org.id === organizationId);
 };
+
+// OAuth-specific types
+export interface OAuthInitiateResponse {
+  authorization_url: string;
+  state: string;
+}
+
+export type OAuthProviderType = 'microsoft' | 'google'
+
+export interface OAuthProvider {
+  id: OAuthProviderType;
+  name: string;
+  icon: string;
+}
+
+export const OAUTH_PROVIDERS: OAuthProvider[] = [
+  { id: 'microsoft', name: 'Microsoft', icon: '🪟' },
+  { id: 'google', name: 'Google', icon: '🔍' },
+];
