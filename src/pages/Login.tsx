@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/ui/label";
 import { Card } from "@/components/ui/ui/card";
 import { Eye, EyeOff, ScanEye, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { OAuthButtons } from '@/components/auth/OAuthButtons';
 
 // Array of welcome messages to rotate through
 const welcomeMessages = [
@@ -87,7 +88,7 @@ const Login = () => {
               <ScanEye className='w-6 h-6 mr-1'/>
               <h2>VisionNest</h2>
             </span>
-            <h2 className="mt-6 text-3xl font-bold text-visionNest-navy dark:text-white">
+            <h2 className="mt-6 text-xl font-bold text-visionNest-navy dark:text-white">
               {welcomeMessages[welcomeIndex]}
             </h2>
             <p className="mt-2 text-gray-500 dark:text-gray-400 transition-opacity duration-300 animate-fade-in">
@@ -96,6 +97,7 @@ const Login = () => {
           </div>
           
           <Card className="p-6 shadow-lg border-0 bg-white/80 dark:bg-gray-800/90 backdrop-blur transition-all duration-300 hover:shadow-xl">
+            <OAuthButtons className="mb-6" />
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="dark:text-gray-300">Email</Label>
