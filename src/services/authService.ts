@@ -255,7 +255,100 @@ export const authService = {
       throw new ApiError(500, "Network error completing OAuth");
     }
   },
+
+  /**
+   * Sign up a new user
+   */
+  signup: async (data: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+  }): Promise<LoginResponse> => {
+    try {
+      const res = await fetch(`${baseURL}/api/v1/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          password_confirm: data.confirmPassword,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          username: data.username,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new ApiError(
+          res.status,
+          error.detail || "Sign up failed",
+          error
+        );
+      }
+
+      const responseData: LoginResponse = await res.json();
+      return responseData;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(500, "Network error during sign up");
+    }
+  },
+
+  /**
+   * Request password reset
+   */
+  requestPasswordReset: async (email: string): Promise<void> => {
+    try {
+      const res = await fetch(`${baseURL}/api/v1/auth/password-reset/request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new ApiError(
+          res.status,
+          error.detail || "Failed to send reset email",
+          error
+        );
+      }
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(500, "Network error requesting password reset");
+    }
+  },
+
+  /**
+   * Reset password with token
+   */
+  resetPassword: async (token: string, newPassword: string): Promise<void> => {
+    try {
+      const res = await fetch(`${baseURL}/api/v1/auth/password-reset/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, new_password: newPassword }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new ApiError(
+          res.status,
+          error.detail || "Failed to reset password",
+          error
+        );
+      }
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(500, "Network error resetting password");
+    }
+  },
 };
+
 
 
 /**

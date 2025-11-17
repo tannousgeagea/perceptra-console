@@ -6,7 +6,7 @@ import DatasetVersions from './pages/versions/DatasetVersions';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProjectLayout from './components/ui/common/project-layout';
 import Index from './pages/annotate-tool/AnnotationTool';
-import { ProtectedRoute, PublicRoute} from './pages/login/ProtectedRoute';
+import { ProtectedRoute, PublicRoute} from './pages/ProtectedRoute';
 import AnalysisPage from './pages/analysis/Index';
 import JobAnnotation from './pages/annotate/JobAnnotation';
 import UploadIndex from './pages/upload/Index';
@@ -37,7 +37,11 @@ import Inference from './pages/inference/Inference';
 import CreateProject from './pages/project/create-project';
 import Settings from './pages/settings/Settings';
 import { TooltipProvider } from './components/ui/ui/tooltip';
-import { OAuthCallback } from '@/pages/auth/OAuthCallback';
+import { OAuthCallback } from '@/pages/OAuthCallback';
+import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './pages/ForgotPassword';
+import Signup from './pages/Signup';
+import { AuthLayout } from './components/auth/AuthLayout';
 
 const queryClient = new QueryClient();
 
@@ -49,8 +53,15 @@ const App = () => {
           <AuthProviderMock>
             <TooltipProvider delayDuration={100}>
               <Routes>
-                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-                <Route path="/auth/callback" element={<OAuthCallback />} />
+                <Route element={<PublicRoute />}>
+                  <Route element={<AuthLayout />}>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/auth/callback" element={<OAuthCallback />} />
+                  </Route>
+                </Route>
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Navigate to="/projects" replace />} />

@@ -79,6 +79,15 @@ export interface AuthState {
   isLoading: boolean;
 }
 
+export interface UserCreate {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+}
+
 /**
  * Storage keys
  */
