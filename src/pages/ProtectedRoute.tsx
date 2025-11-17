@@ -10,6 +10,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Check if the user is authenticated by verifying the token
   // const isAuthenticated = !!localStorage.getItem("token");
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation(); 
+
   if (isLoading) {
     // Show loading state while checking authentication
     return (
@@ -23,6 +25,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
   if (!isAuthenticated) {
     // Redirect to login if not authenticated
+    // return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 

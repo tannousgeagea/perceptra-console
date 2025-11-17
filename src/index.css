@@ -87,7 +87,13 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
 
-    --radius: 0.5rem;
+    /* Auth-specific colors */
+    --auth-gradient-start: 215 85% 35%;
+    --auth-gradient-end: 180 65% 50%;
+    --auth-card-bg: 0 0% 100%;
+    --auth-card-shadow: 215 25% 15% / 0.08;
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 84% 4.9%;
@@ -117,12 +123,14 @@
 
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-hover: 215 90% 65%;
 
     --secondary: 262.1 83.3% 57.8%;
     --secondary-foreground: 210 40% 98%;
 
     --accent: 173.4 80.4% 40.0%;
     --accent-foreground: 210 40% 98%;
+    --accent-hover: 180 70% 60%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
@@ -134,6 +142,25 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
 
+    /* Success state */
+    --success: 145 70% 50%;
+    --success-foreground: 215 30% 10%;
+    --success-light: 142 71% 15%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 92% 15%;
+    
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+    --danger-light: 0 84% 15%;
+
+    /* Auth-specific colors for dark mode */
+    --auth-gradient-start: 215 85% 40%;
+    --auth-gradient-end: 180 65% 55%;
+    --auth-card-bg: 215 28% 12%;
+    --auth-card-shadow: 0 0% 0% / 0.3;
+
     --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217.2 91.2% 59.8%;
@@ -142,6 +169,12 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 212.7 26.8% 83.9%;
+
+    --chart-1: 217 91% 60%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 271 81% 56%;
+    --chart-5: 0 84% 60%;
   }
 }
 

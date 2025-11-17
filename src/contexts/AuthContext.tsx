@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService, authStorage, ApiError } from '@/services/authService';
-import { User, Organization, OAuthProviderType } from '@/types/auth';
+import { User, Organization, OAuthProviderType, UserCreate } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   setUser: (user: User) => void;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
+  signup: (data: UserCreate) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshToken: () => Promise<boolean>;
   getCurrentOrganization: () => Organization | null;
@@ -17,6 +18,8 @@ interface AuthContextType {
   hasPermission: (organizationId: string, requiredRole: 'owner' | 'admin') => boolean;
   loginWithOAuth: (provider: OAuthProviderType) => Promise<void>;
   handleOAuthCallback: (provider: OAuthProviderType, code: string, state: string) => Promise<{ success: boolean; error?: string }>;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -345,12 +348,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  /**
+   * Sign up a new user
+   */
+  const signup = async (data: UserCreate): Promise<{ success: boolean; error?: string }> => {
+    try {
+      setIsLoading(true);
+      
+      const response = await authService.signup(data);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Signup failed:', error);
+      
+      let errorMessage = 'Sign up failed. Please try again.';
+      if (error instanceof ApiError) {
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Request password reset
+   */
+  const requestPasswordReset = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await authService.requestPasswordReset(email);
+      return { success: true };
+    } catch (error) {
+      console.error('Password reset request failed:', error);
+      
+      let errorMessage = 'Failed to send reset email. Please try again.';
+      if (error instanceof ApiError) {
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  /**
+   * Reset password with token
+   */
+  const resetPassword = async (token: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await authService.resetPassword(token, newPassword);
+      return { success: true };
+    } catch (error) {
+      console.error('Password reset failed:', error);
+      
+      let errorMessage = 'Failed to reset password. The link may have expired.';
+      if (error instanceof ApiError) {
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isLoading,
     setUser,
     login,
+    signup,
     logout,
     refreshToken,
     getCurrentOrganization,
@@ -358,6 +430,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasPermission,
     loginWithOAuth,
     handleOAuthCallback,
+    requestPasswordReset,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
