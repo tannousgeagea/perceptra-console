@@ -62,6 +62,14 @@ export interface ProjectStatistic {
   annotation_groups: number;
 }
 
+export interface UserBasicInfo {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
 export interface Project {
   id: number;
   project_id: string;
@@ -72,9 +80,25 @@ export interface Project {
   visibility_name: string;
   organization_id?: number;
   created_at: string;
+  created_by?: UserBasicInfo;
+  updated_by?: UserBasicInfo;
+  user_role: string;
   last_edited: string;
   is_active: boolean;
   images?: number;
   statistics: ProjectStatistic;
   annotation_groups: AnnotationGroupResponse[];
 }
+
+export interface ProjectUpdate {
+  name?: string;
+  description?: string;
+  project_type_id?: number;
+  visibility_id?: number;
+  thumbnail_url?: string;
+  is_active?: boolean;
+  settings?: Record<string, any>;
+}
+
+export type SortField = 'name' | 'created_at' | 'total_images' | 'total_annotations';
+export type SortDirection = 'asc' | 'desc';

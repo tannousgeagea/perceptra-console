@@ -19,6 +19,7 @@
 .project-layout-content {
     display: flex;
     justify-content: flex-start;
+    flex-direction: column;
     box-sizing: border-box;
     height: 100%;
     overflow-y: scroll;

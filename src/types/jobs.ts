@@ -30,7 +30,8 @@ export interface Job {
     updated_at: Date;
     parentJobId?: string;
     sliceNumber?: number;
-    projectId?: string;
+    project_id?: string;
+    project_name?: string;
     progress?: JobProgress;   // 👈 new
   }
 

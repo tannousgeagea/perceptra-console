@@ -1,5 +1,5 @@
 import './App.css';
-import Projects from './pages/project/projects';
+import Projects from './pages/project/Projects';
 import Layout from './components/ui/common/layout';
 import ProjectDataset from './pages/dataset/Dataset';
 import DatasetVersions from './pages/versions/DatasetVersions';
@@ -42,7 +42,7 @@ import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
 import Signup from './pages/Signup';
 import { AuthLayout } from './components/auth/AuthLayout';
-
+import { ProjectProvider } from './contexts/ProjectContext';
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -76,7 +76,11 @@ const App = () => {
                     <Route path='/inference' element={<Inference />} />
                     <Route path='/activity' element={<OrgActivityPage />} />
                     <Route path='/settings/*' element={<Settings />} />
-                    <Route path='projects/:projectId' element={<ProjectLayout />}>
+                    <Route path='projects/:projectId' element={
+                      <ProjectProvider>
+                        <ProjectLayout />
+                      </ProjectProvider>
+                    }>
                       <Route path='upload' element={<UploadIndex />} />
                       <Route path='dataset' element={<ProjectDataset />} />
                       {/* <Route path='annotate' element={<Annotate />} /> */}
