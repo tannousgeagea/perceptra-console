@@ -1,25 +1,25 @@
-import { Bell, Clock, User, Package, X } from "lucide-react";
+import { Bell, Clock, Package, X, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { FC, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { FC } from "react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/ui/badge";
-import { Skeleton } from "@/components/ui/ui/skeleton";
-import { useUserJobs } from "@/hooks/useUserJobs";
+import { Button } from "@/components/ui/ui/button";
+import { ScrollArea } from "@/components/ui/ui/scroll-area";
 import { Job, JobStatus } from "@/types/jobs";
 import { cn } from "@/lib/utils";
 
 const getStatusColor = (status: JobStatus) => {
   switch (status) {
     case JobStatus.ASSIGNED:
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-primary/10 text-primary border-primary/20";
     case JobStatus.IN_REVIEW:
-      return "bg-purple-100 text-purple-800 border-purple-200";
+      return "bg-warning/10 text-warning border-warning/20";
     case JobStatus.COMPLETED:
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-success/10 text-success border-success/20";
     case JobStatus.UNASSIGNED:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-muted text-muted-foreground border-border";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-muted text-muted-foreground border-border";
   }
 };
 
@@ -38,7 +38,6 @@ const getStatusLabel = (status: JobStatus) => {
   }
 };
 
-
 interface JobItemProps {
   job: Job;
 }
@@ -47,134 +46,142 @@ const JobItem: FC<JobItemProps> = ({ job }) => {
   const navigate = useNavigate();
 
   const handleJobClick = () => {
-    navigate(`/projects/${job.projectId}/annotate/job/${job.id}`);
+    navigate(`/projects/${job.project_id}/annotate/job/${job.id}`);
   };
 
   return (
     <div
-      className="cursor-pointer p-3 border border-transparent rounded hover:bg-slate-100 transition"
+      className="group cursor-pointer p-4 border-b border-border hover:bg-accent/5 transition-colors"
       onClick={handleJobClick}
     >
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm truncate">{job.name}</h4>
+          <h4 className="font-medium text-sm text-foreground truncate mb-1">
+            {job.name}
+          </h4>
+          <p className="text-xs text-muted-foreground mb-2">
+            {job.project_name}
+          </p>
           {job.description && (
-            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
               {job.description}
             </p>
           )}
         </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
       </div>
 
-      <div className="flex justify-between items-center mt-2">
+      <div className="flex items-center justify-between gap-2">
         <Badge
           variant="outline"
-          className={cn("text-xs", getStatusColor(job.status))}
+          className={cn("text-xs font-medium", getStatusColor(job.status))}
         >
           {getStatusLabel(job.status)}
         </Badge>
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Package size={12} />
-          <span>{job.imageCount}</span>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Package className="h-3 w-3" />
+            <span>{job.image_count}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>{formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}</span>
+          </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
-        <Clock size={12} />
-        <span>{formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}</span>
       </div>
     </div>
   );
 };
 
-const LoadingSkeleton = () => (
-  <div className="space-y-3 p-3">
-    {[...Array(3)].map((_, i) => (
-      <div key={i} className="space-y-2">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-        <div className="flex justify-between">
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-3 w-8" />
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
 const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center p-6 text-center">
-    <Bell className="h-12 w-12 text-muted-foreground mb-3" />
-    <h3 className="font-medium text-sm mb-1">No assigned jobs</h3>
-    <p className="text-xs text-muted-foreground">
+  <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+    <div className="rounded-full bg-muted p-4 mb-4">
+      <Bell className="h-8 w-8 text-muted-foreground" />
+    </div>
+    <h3 className="font-semibold text-sm mb-2 text-foreground">No assigned jobs</h3>
+    <p className="text-xs text-muted-foreground max-w-[200px]">
       You don't have any jobs assigned to you at the moment.
     </p>
   </div>
 );
 
-export const NotificationSidebar: FC = () => {
-  const { data: jobs, isLoading, error } = useUserJobs();
-  const [isOpen, setIsOpen] = useState(false);
+interface NotificationSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  jobs: Job[];
+}
+
+export const NotificationSidebar: FC<NotificationSidebarProps> = ({
+  isOpen,
+  onClose,
+  jobs,
+}) => {
+  const activeJobs = jobs.filter(
+    (job) => job.status === JobStatus.ASSIGNED || job.status === JobStatus.IN_REVIEW
+  );
 
   return (
     <>
+      {/* Overlay */}
       {isOpen && (
-        <div className="fixed top-0 right-0 w-[300px] h-full bg-white shadow-lg border-r border-slate-200 z-50 flex flex-col mb-6">
-          <div className="flex items-center justify-between border-b px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 text-slate-700" />
-              <h2 className="font-semibold text-sm text-slate-700 px-1 py-4">My Assigned Jobs</h2>
-              {jobs && jobs.length > 0 && (
-                <Badge variant="secondary" className="ml-2 text-xs">
-                  {jobs.length}
-                </Badge>
-              )}
-            </div>
-            <button onClick={() => setIsOpen(false)}>
-              <X className="h-4 w-4 text-slate-500" />
-            </button>
-          </div>
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 animate-fade-in"
+          onClick={onClose}
+        />
+      )}
 
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center gap-2 px-4 py-4 text-xs text-slate-500 font-semibold">
-              <User className="h-3 w-3" />
-              Current Tasks
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed top-0 right-0 h-full w-[380px] bg-card border-l border-border z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Bell className="h-5 w-5 text-primary" />
             </div>
-
-            <div className="flex-1 overflow-auto max-h-[calc(100vh-100px)] pb-6">
-              {isLoading ? (
-                <LoadingSkeleton />
-              ) : error ? (
-                <div className="p-4 text-center">
-                  <p className="text-sm text-red-600">Failed to load jobs</p>
-                </div>
-              ) : !jobs || jobs.length === 0 ? (
-                <EmptyState />
-              ) : (
-                <div className="p-2 space-y-1">
-                  {jobs.map((job) => (
-                    <JobItem key={job.id} job={job} />
-                  ))}
-                </div>
-              )}
+            <div>
+              <h2 className="font-semibold text-base text-foreground">My Jobs</h2>
+              <p className="text-xs text-muted-foreground">
+                {activeJobs.length} active {activeJobs.length === 1 ? "job" : "jobs"}
+              </p>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 rounded-full hover:bg-muted"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-      )}
 
-      {!isOpen && (
-        <button
-          className="fixed top-4 right-4 z-50 bg-yellow-300 p-2 rounded shadow hover:bg-yellow-500 transition"
-          onClick={() => setIsOpen(true)}
-        >
-          <Bell className="h-6 w-6 text-white" />
-          {jobs && jobs.length > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
-              {jobs.length}
-            </span>
+        {/* Jobs List */}
+        <ScrollArea className="flex-1">
+          {jobs.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="divide-y divide-border">
+              {jobs.map((job) => (
+                <JobItem key={job.id} job={job} />
+              ))}
+            </div>
           )}
-        </button>
-      )}
+        </ScrollArea>
+
+        {/* Footer */}
+        {jobs.length > 0 && (
+          <div className="p-4 border-t border-border bg-muted/30">
+            <p className="text-xs text-center text-muted-foreground">
+              Showing {jobs.length} total {jobs.length === 1 ? "job" : "jobs"}
+            </p>
+          </div>
+        )}
+      </div>
     </>
   );
 };

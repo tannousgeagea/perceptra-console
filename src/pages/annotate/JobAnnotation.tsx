@@ -118,7 +118,7 @@ export default function JobAnnotation() {
               onImageClick={(index: number, image_id:string) => handleImageClick(index, image_id)}
             />
 
-            <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
+            <div className="fixed w-full bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
               <PaginationControls
                 currentPage={currentPage}
                 totalItems={data?.total || 0}
