@@ -43,6 +43,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import Signup from './pages/Signup';
 import { AuthLayout } from './components/auth/AuthLayout';
 import { ProjectProvider } from './contexts/ProjectContext';
+import Billing from './pages/Billing';
+import BillingReport from './pages/BillingReport';
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -75,6 +78,8 @@ const App = () => {
                     <Route path='/projects/add' element={<CreateProject />} />
                     <Route path='/inference' element={<Inference />} />
                     <Route path='/activity' element={<OrgActivityPage />} />
+                    <Route path="/billing" element={<Billing />} />
+                    <Route path="/billing/report" element={<BillingReport />} />
                     <Route path='/settings/*' element={<Settings />} />
                     <Route path='projects/:projectId' element={
                       <ProjectProvider>
