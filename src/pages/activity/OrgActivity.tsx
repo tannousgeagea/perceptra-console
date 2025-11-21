@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Activity } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Activity, FolderKanban, DollarSign } from "lucide-react";
 import { TabButton } from "@/components/activity/TabButton";
 import { OrgOverviewTab } from "@/components/activity/tabs/OrgOverviewTab";
 import { OrgUsersTab } from "@/components/activity/tabs/OrgUsersTab";
@@ -126,14 +127,38 @@ const OrgActivityPage = () => {
       <header className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Activity className="w-7 h-7 text-primary" />
-              Activity Monitoring Dashboard
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Track team progress, quality metrics, and user contributions
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Activity className="w-7 h-7 text-primary" />
+                  Activity Monitoring Dashboard
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Track team progress, quality metrics, and user contributions
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Projects Link */}
+                <Link to="/projects">
+                  <button className="px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
+                    <FolderKanban className="w-4 h-4" />
+                    Manage Projects
+                  </button>
+                </Link>
+                
+                {/* Billing Link */}
+                <Link to="/billing">
+                  <button className="px-4 py-2 rounded-md text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
+                    Billing
+                  </button>
+                </Link>
+              </div>
+            </div>
           </div>
+
+
 
           {/* Tabs */}
           <nav className="flex gap-1 overflow-x-auto" aria-label="Dashboard tabs">
