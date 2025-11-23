@@ -10,6 +10,10 @@ import { useProjectImageDetails } from '@/hooks/useProjectImage';
 import { useJobImages } from "@/hooks/useJobImages";
 import QueryState from '../common/QueryState';
 
+import { AnnotationInfo } from './AnnotationInfo';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
+import { useSAMSession } from '@/hooks/useSAMSession';
+
 const AnnotationTool = () => {
   const { projectId, imageId } = useParams<{ projectId: string; imageId: string }>();
   const { data: image, isLoading, isError, refetch } = useProjectImageDetails(
@@ -18,6 +22,7 @@ const AnnotationTool = () => {
   );
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const samSession = useSAMSession(projectId!, image?.id || "");
 
   // query parameters
   const jobId = searchParams.get("jobId") || "";
@@ -69,6 +74,10 @@ const AnnotationTool = () => {
     }
   };
 
+  const hasPreviousImage = currentIndex > 0;
+  const previousImageId = hasPreviousImage ? imageIds[currentIndex - 1] : undefined;
+
+
   if (isLoading || isError || !image) {
     return (
       <>
@@ -98,15 +107,50 @@ const AnnotationTool = () => {
         <div className="flex h-full bg-card">
           <div className="w-56 p-4 border-r border-border flex flex-col gap-4">
             <ToolBar />
-            <LabelPanel />
+            <div className="flex-1 overflow-y-auto p-4">
+              <LabelPanel />
+            </div>
           </div>
 
           <div className='flex flex-1'>
-            <Canvas image={image}/>
-            <ActionSidebar 
-              currentImage={image} 
-              projectId={projectId!}
-              goToNextImage={handleNext} />
+            <Canvas 
+              image={image}
+              samSession={samSession}
+            />
+
+            <div className="w-80 border-l border-border flex flex-col">
+              <Tabs defaultValue="actions" className="flex flex-col h-full">
+                <TabsList className="grid w-full grid-cols-2 rounded-none border-b">
+                  <TabsTrigger value="actions">Actions</TabsTrigger>
+                  <TabsTrigger value="info">Info</TabsTrigger>
+                </TabsList>
+                <TabsContent value="actions" className="flex-1 overflow-hidden m-0">
+                  <ActionSidebar 
+                    currentImage={image} 
+                    projectId={projectId!}
+                    goToNextImage={handleNext}
+                    samSession={samSession}
+                    // suggestions={suggestions}
+                    // generateAI={() => generateAI({})}
+                    // suggestSimilar={(id) => suggestSimilar(id)}
+                    // propagate={() => previousImageId && propagate(previousImageId)}
+                    // acceptSuggestion={(id) => acceptSuggestion({ suggestionId: id })}
+                    // rejectSuggestion={rejectSuggestion}
+                    // handleAcceptAll={handleAcceptAll}
+                    // clearSuggestions={clearSuggestions}
+                    // isGenerating={isGenerating}
+                    hasPreviousImage={hasPreviousImage}
+                    previousImageId={previousImageId}
+
+                  />
+                </TabsContent>
+                <TabsContent value="info" className="flex-1 overflow-hidden m-0">
+                  <AnnotationInfo 
+                    image={image}
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </div>
       </div>

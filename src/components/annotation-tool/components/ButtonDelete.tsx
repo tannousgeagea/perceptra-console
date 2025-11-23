@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProjectImageOut } from '@/types/image';
 import { useDeleteProjectImage } from '@/hooks/useProjectImageUpdate';
@@ -13,12 +13,7 @@ interface DeleteButtonProps {
 }
 
 const DeleteButton:React.FC<DeleteButtonProps> = ( {currentImage, projectId, goToNextImage, className} ) => {
-  const { mutate: deleteImage, isPending } = useDeleteProjectImage(projectId!, {
-    // onSuccess: () => {
-    //   toast.success('Image deleted');
-    //   // Navigate away or update list
-    // },
-  });
+  const { mutate: deleteImage, isPending } = useDeleteProjectImage(projectId);
 
   const handleDelete = async () => {
     try {
@@ -35,9 +30,9 @@ const DeleteButton:React.FC<DeleteButtonProps> = ( {currentImage, projectId, goT
       disabled={isPending}
       className={className}
       variant="destructive"
+      title='delete image'
     >
-      <Trash2 className="mr-2 h-4 w-4" />
-      {isPending ? "Deleting..." : "Delete"}
+      {isPending ? <Loader className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
     </Button>
   );
 };

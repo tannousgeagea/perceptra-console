@@ -52,7 +52,7 @@ const DeleteJobModal = ({ isOpen, onClose, job, onDelete, isLoading }: DeleteJob
         <div className="bg-slate-50 p-3 rounded border">
           <p className="font-medium text-slate-800">{job.name}</p>
           <p className="text-sm text-slate-600">ID: {job.id}</p>
-          <p className="text-sm text-slate-600">Images: {job.imageCount}</p>
+          <p className="text-sm text-slate-600">Images: {job.image_count}</p>
           {job.assignedUser && (
             <p className="text-sm text-slate-600">
               Assigned to: {job.assignedUser.username}

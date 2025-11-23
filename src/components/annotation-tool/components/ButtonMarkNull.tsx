@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/ui/button';
-import { Ban } from 'lucide-react';
+import { Ban, Loader } from 'lucide-react';
 import { ProjectImageOut } from '@/types/image';
 import { useMarkImageAsNull } from '@/hooks/useProjectImageUpdate';
 import { useAnnotation } from '@/contexts/AnnotationContext';
@@ -42,9 +42,9 @@ const MarkAsNullButton:React.FC<MarkAsNullButtonProps> = ( {currentImage, projec
       onClick={handleMarkAsNull} 
       disabled={isPending}
       className={className}
+      title='mark image as null (backgroud image)'
     >
-      <Ban className="mr-1 h-4 w-4" />
-      {isPending ? "Marking ..." : "Mark null"}
+      {isPending ? <Loader className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
     </Button>
   );
 };

@@ -1,4 +1,28 @@
 
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface Polygon {
+  id: string;
+  points: Point[];
+  label: string;
+}
+
+type AnnotationTool = 'draw' | 'move' | 'polygon';
+
+export interface Box {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  color: string;
+  class_id: number;
+}
+
 export interface AnnotationData {
   id: string;
   x: number;

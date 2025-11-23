@@ -53,7 +53,7 @@ export const OverviewTab = ({
       />
       <StatCard
         title="Avg Annotation Time"
-        value={`${userSummary.avg_annotation_time_seconds}s`}
+        value={`${userSummary.avg_annotation_time_seconds.toFixed(2)}s`}
         subtitle="Per annotation"
         icon={Clock}
         trend="-5.2% faster"

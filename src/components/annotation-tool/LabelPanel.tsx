@@ -1,4 +1,6 @@
 import React from 'react';
+
+import { Card } from '@/components/ui/ui/card';
 import { useAnnotation } from '@/contexts/AnnotationContext';
 
 
@@ -27,7 +29,7 @@ const LabelPanel: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-lg font-medium">Labels</h3>
+      <h3 className="font-semibold mb-3">Labels</h3>
       {labelArray.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           Draw boxes to start annotating
@@ -45,12 +47,12 @@ const LabelPanel: React.FC = () => {
             >
               <div className="flex items-center gap-2">
                 <span
-                  className="inline-block w-3 h-3 rounded-full"
+                  className="w-4 h-4 rounded-full"
                   style={{ backgroundColor: color }}
                 />
-                <span>{label}</span>
+                <span className='text-sm'>{label}</span>
               </div>
-              <span className="text-sm text-muted-foreground rounded-full">{count}</span>
+              <span className="text-xs text-muted-foreground rounded-full">{count}</span>
             </div>
           ))}
         </div>
