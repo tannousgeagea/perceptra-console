@@ -94,11 +94,13 @@ export const samService = {
 
   // Segmentation Operations
   async segmentWithPoints(
+    projectId: string,
+    imageId: string,
     request: SegmentPointsRequest,
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/suggestions/segment/points`, {
+    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/points`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,11 +114,13 @@ export const samService = {
   },
 
   async segmentWithBox(
+    projectId: string,
+    imageId: string,
     request: SegmentBoxRequest,
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/suggestions/segment/box`, {
+    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/box`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -130,11 +134,13 @@ export const samService = {
   },
 
   async segmentWithText(
+    projectId: string,
+    imageId: string,
     request: SegmentTextRequest,
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/suggestions/segment/text`, {
+    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/text`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -148,11 +154,13 @@ export const samService = {
   },
 
   async segmentWithExemplar(
+    projectId: string,
+    imageId: string,
     request: SegmentExemplarRequest,
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/suggestions/segment/exemplar`, {
+    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/exemplar`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -166,11 +174,13 @@ export const samService = {
   },
 
   async propagateAnnotations(
+    projectId: string,
+    imageId: string,
     request: PropagateRequest,
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/suggestions/propagate`, {
+    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/propagate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

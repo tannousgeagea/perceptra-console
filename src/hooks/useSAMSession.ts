@@ -91,6 +91,8 @@ export const useSAMSession = (projectId: string, imageId: string) => {
       const token = await getAccessToken();
       if (!token || !sessionId) throw new Error('No session');
       return samService.segmentWithPoints(
+        projectId,
+        imageId,
         { session_id: sessionId, points: pointsToSegment },
         currentOrganization.id,
         token
@@ -110,7 +112,12 @@ export const useSAMSession = (projectId: string, imageId: string) => {
     mutationFn: async (box: BBox) => {
       const token = await getAccessToken();
       if (!token || !sessionId) throw new Error('No session');
-      return samService.segmentWithBox({ session_id: sessionId, box }, currentOrganization.id, token);
+      return samService.segmentWithBox(
+        projectId,
+        imageId,
+        { session_id: sessionId, box }, 
+        currentOrganization.id, token
+      );
     },
     onSuccess: (data) => {
       setSuggestions((prev) => [...prev, ...data.suggestions]);
@@ -126,7 +133,10 @@ export const useSAMSession = (projectId: string, imageId: string) => {
     mutationFn: async (text: string) => {
       const token = await getAccessToken();
       if (!token || !sessionId) throw new Error('No session');
-      return samService.segmentWithText({ session_id: sessionId, text }, currentOrganization.id, token);
+      return samService.segmentWithText(
+        projectId,
+        imageId,
+        { session_id: sessionId, text }, currentOrganization.id, token);
     },
     onSuccess: (data) => {
       setSuggestions((prev) => [...prev, ...data.suggestions]);
@@ -143,6 +153,8 @@ export const useSAMSession = (projectId: string, imageId: string) => {
       const token = await getAccessToken();
       if (!token || !sessionId) throw new Error('No session');
       return samService.segmentWithExemplar(
+        projectId,
+        imageId,
         { session_id: sessionId, reference_annotation_uid: referenceAnnotationUid },
         currentOrganization.id,
         token
@@ -169,6 +181,8 @@ export const useSAMSession = (projectId: string, imageId: string) => {
       const token = await getAccessToken();
       if (!token || !sessionId) throw new Error('No session');
       return samService.propagateAnnotations(
+        projectId,
+        imageId,
         {
           session_id: sessionId,
           source_image_id: sourceImageId,
