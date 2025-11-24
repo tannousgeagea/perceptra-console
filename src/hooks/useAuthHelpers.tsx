@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { AUTH_STORAGE_KEYS } from '@/types/auth';
 import { 
   getUserFullName, 
   getPrimaryOrganization, 
@@ -12,6 +13,7 @@ import {
   getOrganizationById,
   OrganizationRole 
 } from '@/types/auth';
+import { authStorage } from '@/services/authService';
 
 /**
  * Hook for common auth helper functions
@@ -70,6 +72,16 @@ export const useAuthHelpers = () => {
 
   return helpers;
 };
+
+export const getAccessToken = () => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  return token
+}
 
 /**
  * Hook for organization-specific operations

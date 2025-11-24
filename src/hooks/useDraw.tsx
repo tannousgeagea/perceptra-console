@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useCoordinates } from '@/hooks/annotation/useCoordinates';
 import { useAnnotation } from '@/contexts/AnnotationContext';
 import { toast } from '@/hooks/use-toast';
+import type { UseSAMSessionReturn } from '@/hooks/useSAMSession'; // ADD THIS TYPE
+
 
 export interface Box {
   id: string;
@@ -36,6 +38,7 @@ interface UseDrawReturn {
 }
 
 export const useDraw = (
+  samSession?: ReturnType<typeof import('@/hooks/useSAMSession').useSAMSession>
 ): UseDrawReturn => {
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [currentBox, setCurrentBox] = useState<Box | null>(null);
@@ -111,15 +114,43 @@ export const useDraw = (
         width: Math.abs(currentBox.width),
         height: Math.abs(currentBox.height),
       };
-      setBoxes([...boxes, normalizedBox]);
-      setSelectedBox(normalizedBox.id);
-    }
+
+      if (samSession?.isSessionActive) {
+        samSession.segmentWithBox({
+          x: normalizedBox.x,
+          y: normalizedBox.y,
+          width: normalizedBox.width,
+          height: normalizedBox.height,
+        });
+
+      } else {
+        setBoxes([...boxes, normalizedBox]);
+        setSelectedBox(normalizedBox.id);
+      };
+    };
     setIsDrawing(false);
     setCurrentBox(null);
     setShowGuideLines(true);
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLElement>, tool: Tool) => {
+    // SAM point click mode (when session active and using draw tool)
+
+    console.log(tool)
+    console.log(samSession?.isSessionActive)
+    if (tool === 'draw' && samSession?.isSessionActive) {
+      e.stopPropagation();
+      const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
+      const isRightClick = e.button === 2;
+      
+      samSession.addPoint({
+        x,
+        y,
+        label: isRightClick ? 0 : 1, // 0 = negative, 1 = positive
+      });
+      return;
+    }
+
     if (tool !== 'polygon') return;
     e.stopPropagation();
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);

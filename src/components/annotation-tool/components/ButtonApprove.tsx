@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/ui/button';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader } from 'lucide-react';
 import { useReviewProjectImage } from '@/hooks/useProjectImageUpdate';
 import { useAnnotation } from '@/contexts/AnnotationContext';
 import { toast } from '@/hooks/use-toast';
@@ -63,9 +63,9 @@ const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, g
       disabled={isPending}
       className={className}
       variant="default"
+      title='approve image'
     >
-      <CheckCircle className="mr-2 h-4 w-4" />
-      {isPending ? "Approving ..." : "Approve"}
+      {isPending ? <Loader className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" /> }
     </Button>
   );
 };

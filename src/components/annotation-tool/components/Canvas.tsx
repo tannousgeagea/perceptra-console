@@ -14,6 +14,7 @@ import { ProjectImageOut } from '@/types/image';
 import { useClasses } from '@/hooks/useClasses';
 import QueryState from '@/components/common/QueryState';
 import { useCreateAnnotation, useAnnotations } from '@/hooks/useAnnotations';
+import { useSAMSession } from '@/hooks/useSAMSession';
 
 interface Image {
   image_id: string;
@@ -23,11 +24,12 @@ interface Image {
 
 interface CanvasProps {
   image: ProjectImageOut;
+  samSession: ReturnType<typeof useSAMSession>; // ADD THIS
 }
 
   
 
-const Canvas: React.FC<CanvasProps> = ({ image }) => {
+const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   const {
     boxes,
     polygons,
@@ -54,7 +56,7 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
     showGuideLines, 
     handleCanvasClick, 
     handleContextMenu 
-  } = useDraw();
+  } = useDraw(samSession);
   
   const { projectId } = useParams<{projectId: string}>()
   const { data: classes, isLoading, isError, refetch } = useClasses(projectId);
@@ -244,6 +246,53 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
     );
   }
 
+  // ADD: Render SAM suggestions as overlays
+  const renderSAMSuggestions = () => {
+    if (!samSession.suggestions.length) return null;
+    
+    return samSession.suggestions
+      .filter(s => s.status === 'pending')
+      .map(suggestion => (
+        <div
+          key={suggestion.id}
+          className="absolute border-2 border-blue-400 bg-blue-500/20 cursor-pointer hover:bg-blue-500/30 transition-colors"
+          style={{
+            left: `${suggestion.bbox.x * 100}%`,
+            top: `${suggestion.bbox.y * 100}%`,
+            width: `${suggestion.bbox.width * 100}%`,
+            height: `${suggestion.bbox.height * 100}%`,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            samSession.acceptSuggestions({ suggestionIds: [suggestion.id] });
+          }}
+        >
+          <div className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+            {suggestion.suggested_label || 'AI'} ({Math.round(suggestion.confidence * 100)}%)
+          </div>
+        </div>
+      ));
+  };
+
+  // ADD: Render SAM points being collected
+  const renderSAMPoints = () => {
+    if (!samSession.isSessionActive || !samSession.points.length) return null;
+    
+    return samSession.points.map((point, index) => (
+      <div
+        key={index}
+        className="absolute w-3 h-3 rounded-full border-2 border-white pointer-events-none"
+        style={{
+          left: `${point.x * 100}%`,
+          top: `${point.y * 100}%`,
+          backgroundColor: point.label === 1 ? '#22c55e' : '#ef4444',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+    ));
+  };
+
+
   return (
     <div className="flex relative p-4 flex-1 justify-center items-center w-full h-full">
       {selectedBox && (
@@ -296,6 +345,12 @@ const Canvas: React.FC<CanvasProps> = ({ image }) => {
               setSelectedPolygon={setSelectedPolygon}
               updateBoxPosition={updateBoxPosition}
             />
+
+            {/* SAM Suggestions - ADD THIS */}
+            {renderSAMSuggestions()}
+            
+            {/* SAM Points - ADD THIS */}
+            {renderSAMPoints()}
             
             <DrawingBox currentBox={currentBox} />
             <CurrentPolygon currentPolygon={currentPolygon} mousePosition={mousePosition} />
