@@ -18,7 +18,7 @@ export const fetchMyAssignedProjects = async (organizationId: string): Promise<P
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(`${baseURL}/api/v1/projects/me`, {
+  const response = await fetch(`${baseURL}/api/v1/projects/user/me`, {
     headers: { 
       'Authorization': `Bearer ${token}`,
       'X-Organization-ID': organizationId, // ✅ Added organization header
