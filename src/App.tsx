@@ -30,6 +30,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ModelsList from "./pages/models/ModelsList";
 import ModelDetail from "./pages/models/ModelDetail";
 import ModelTraining from "./pages/models/ModelTraining";
+import CreateModel from './pages/models/CreateModel';
 import SessionsPage from './pages/training_sessions/TrainingSession';
 import SessionDetailPage from './pages/training_sessions/TrainingSessionDetails';
 import TeamProgress from './pages/team_progress/TeamProgress';
@@ -97,6 +98,7 @@ const App = () => {
                       <Route path='activity' element={<ActivityPage />} />
                       <Route path='annotate' element={<JobPage/>} />
                       <Route path="models" element={<ModelsList />} />
+                      <Route path="models/new" element={<CreateModel />} />
                       <Route path="models/:modelId" element={<ModelDetail />} />
                       <Route path="models/:modelId/train" element={<ModelTraining />} />
                       <Route path="sessions" element={<SessionsPage />} />

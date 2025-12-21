@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/ui/card";
 import { Button } from "@/components/ui/ui/button";
 import { Model } from "@/types/models";
+import { ModelDetail } from "@/hooks/useModels";
 import { Badge } from "@/components/ui/ui/badge";
 import { Switch } from "@/components/ui/ui/switch";
 import { Label } from "@/components/ui/ui/label";
@@ -17,18 +18,19 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
 import { Layers, Settings, Play, Code, Link } from "lucide-react";
 
-const ModelDeploymentView: React.FC<{ model: Model }> = ({ model }) => {
+
+const ModelDeploymentView: React.FC<{ model: ModelDetail }> = ({ model }) => {
   const [autoDeployEnabled, setAutoDeployEnabled] = useState<boolean>(false);
   
   // Get production version if it exists
   const productionVersion = model.versions.find(
-    (v) => v.id === model.currentProductionVersion
+    (v) => v.id === model.production_version?.id
   );
   
   // Get latest version
   const latestVersion = [...model.versions]
     .filter((v) => v.status === "trained")
-    .sort((a, b) => b.versionNumber - a.versionNumber)[0];
+    .sort((a, b) => b.version_number - a.version_number)[0];
 
   // Simulated mutation for deploying a model
   const deployMutation = useMutation({
@@ -66,7 +68,7 @@ const ModelDeploymentView: React.FC<{ model: Model }> = ({ model }) => {
               {productionVersion ? (
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="bg-green-100 text-green-800 border-0">
-                    v{productionVersion.versionNumber}
+                    v{productionVersion.version_number}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
                     Deployed
@@ -154,13 +156,13 @@ const ModelDeploymentView: React.FC<{ model: Model }> = ({ model }) => {
 
                 {model.versions
                   .filter((v) => v.status === "trained")
-                  .sort((a, b) => b.versionNumber - a.versionNumber)
+                  .sort((a, b) => b.version_number - a.version_number)
                   .slice(0, 3)
                   .map((version) => (
                     <div
                       key={version.id}
                       className={`border rounded-md p-4 ${
-                        version.id === model.currentProductionVersion
+                        version.id === model.production_version?.id
                           ? "border-primary bg-primary/5"
                           : ""
                       }`}
@@ -168,9 +170,9 @@ const ModelDeploymentView: React.FC<{ model: Model }> = ({ model }) => {
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-medium">
-                            Version {version.versionNumber}
+                            Version {version.version_number}
                           </h4>
-                          {version.id === model.currentProductionVersion && (
+                          {version.id === model.production_version?.id && (
                             <Badge className="mt-1 bg-primary/20 text-primary border-0">
                               Current
                             </Badge>
@@ -180,11 +182,11 @@ const ModelDeploymentView: React.FC<{ model: Model }> = ({ model }) => {
                           variant="outline"
                           disabled={
                             deployMutation.isPending ||
-                            version.id === model.currentProductionVersion
+                            version.id === model.production_version?.id
                           }
                           onClick={() => deployMutation.mutate()}
                         >
-                          {version.id === model.currentProductionVersion
+                          {version.id === model.production_version?.id
                             ? "Deployed"
                             : "Deploy"}
                         </Button>

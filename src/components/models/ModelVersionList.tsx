@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, Check, TagIcon, Database } from "lucide-react";
-import { Model, ModelVersion, VersionTag } from "@/types/models";
+import { VersionTag } from "@/types/models";
+import { ModelArtifact, ModelDetail, ModelVersion } from "@/hooks/useModels";
 import { ModelService } from "./ModelService";
 import { Button } from "@/components/ui/ui/button";
 import {
@@ -31,7 +32,7 @@ import {
 } from "@/components/ui/ui/tooltip";
 
 interface ModelVersionsListProps {
-  model: Model;
+  model: ModelDetail;
   projectId: string;
 }
 
@@ -49,12 +50,6 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
     });
   };
 
-  // Format dataset info for display
-  const formatDatasetInfo = (version: ModelVersion) => {
-    if (!version.datasetUsed) return "Unknown dataset";
-    const { name, itemCount } = version.datasetUsed;
-    return itemCount ? `${name} (${itemCount} items)` : name;
-  };
 
   // Get badge for version status
   const getStatusBadge = (status: string) => {
@@ -102,10 +97,10 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
   const isComparing = selectedVersions.length > 0;
 
   // Download artifacts
-  const handleDownload = (artifactType: string, version: ModelVersion) => {
+  const handleDownload = (artifactType: keyof ModelArtifact, version: ModelVersion) => {
     // In a real app, this would download the file
-    toast.info(`Downloading ${artifactType} for version ${version.versionNumber}`, {
-      description: `This would download ${version[artifactType as keyof typeof version.artifacts] || "the file"}`,
+    toast.info(`Downloading ${artifactType} for version ${version.version_number}`, {
+      description: `This would download ${version.artifacts[artifactType] || "the file"}`,
     });
   };
 
@@ -164,7 +159,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
           </TableHeader>
           <TableBody>
             {model.versions
-              .sort((a, b) => b.versionNumber - a.versionNumber)
+              .sort((a, b) => b.version_number - a.version_number)
               .map((version) => (
                 <TableRow key={version.id}>
                   <TableCell>
@@ -176,32 +171,32 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                     />
                   </TableCell>
                   <TableCell className="font-medium">
-                    v{version.versionNumber}
+                    v{version.version_number}
                   </TableCell>
                   <TableCell>{getStatusBadge(version.status)}</TableCell>
                   <TableCell>
-                    {version.datasetUsed ? (
+                    {version.dataset ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div className="flex items-center gap-1">
                               <Database className="h-3.5 w-3.5 text-muted-foreground" />
                               <span className="truncate max-w-[120px]">
-                                {version.datasetUsed.name}
+                                {version.dataset.name}
                               </span>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm">
                             <div className="space-y-1">
-                              <p className="font-medium">{version.datasetUsed.name}</p>
-                              {version.datasetUsed.itemCount && (
+                              <p className="font-medium">{version.dataset.name}</p>
+                              {version.dataset.item_count && (
                                 <p className="text-xs text-muted-foreground">
-                                  {version.datasetUsed.itemCount} items
+                                  {version.dataset.item_count} items
                                 </p>
                               )}
-                              {version.datasetUsed.createdAt && (
+                              {version.dataset.created_at && (
                                 <p className="text-xs text-muted-foreground">
-                                  Created: {formatDate(version.datasetUsed.createdAt)}
+                                  Created: {formatDate(version.dataset.created_at)}
                                 </p>
                               )}
                             </div>
@@ -212,9 +207,9 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                       <span className="text-muted-foreground text-sm">Unknown</span>
                     )}
                   </TableCell>
-                  <TableCell>{formatDate(version.createdAt)}</TableCell>
+                  <TableCell>{formatDate(version.created_at)}</TableCell>
                   <TableCell className="max-w-[120px] truncate">
-                    {version.createdBy}
+                    {version.created_by}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
@@ -292,9 +287,9 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                                 ONNX Model
                               </DropdownMenuItem>
                             )}
-                            {version.artifacts.weights && (
+                            {version.artifacts.checkpoint && (
                               <DropdownMenuItem
-                                onClick={() => handleDownload("weights", version)}
+                                onClick={() => handleDownload("checkpoint", version)}
                               >
                                 Weights
                               </DropdownMenuItem>

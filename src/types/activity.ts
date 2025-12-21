@@ -8,7 +8,7 @@ export interface UserSummary {
   ai_predictions_accepted: number;
   images_reviewed: number;
   images_finalized: number;
-  avg_annotation_time_seconds: number;
+  avg_annotation_time_seconds: number | null;
   avg_edit_magnitude: number;
   last_activity: string;
   total_sessions: number;

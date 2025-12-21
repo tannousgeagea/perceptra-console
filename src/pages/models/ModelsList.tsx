@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
 import { BadgePlus, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
@@ -20,28 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/ui/select";
-import { ModelService } from "@/components/models/ModelService";
-import { Model, ModelType } from "@/types/models";
+import { ModelType } from "@/types/models";
 import { Skeleton } from "@/components/ui/ui/skeleton";
-import { useModelsByProject } from "@/hooks/useModelsByProject";
+import { useProjectModels } from "@/hooks/useModels";
 
 const ModelsList: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchQuery, setSearchQuery] = useState("");
   const [modelTypeFilter, setModelTypeFilter] = useState<string>("all");
-
-  // Fetch models for this project
-  // const {
-  //   data: models,
-  //   isLoading,
-  //   error,
-  // } = useQuery({
-  //   queryKey: ["models", projectId],
-  //   queryFn: () => ModelService.getModelsByProjectId(projectId || ""),
-  //   enabled: !!projectId,
-  // });
-
-  const { data: models, isLoading, error } = useModelsByProject(projectId || '');
+  const { data: models, isLoading, error  } = useProjectModels(projectId!);
 
   // Filter models based on search query and type filter
   const filteredModels = models
@@ -55,7 +41,7 @@ const ModelsList: React.FC = () => {
           );
 
         const matchesType =
-          modelTypeFilter === "all" || model.type === modelTypeFilter;
+          modelTypeFilter === "all" || model.task === modelTypeFilter;
 
         return matchesSearch && matchesType;
       })
@@ -207,9 +193,9 @@ const ModelsList: React.FC = () => {
                     <CardTitle className="truncate">{model.name}</CardTitle>
                     <Badge
                       variant="outline"
-                      className={`${getModelTypeColor(model.type)} border-0`}
+                      className={`${getModelTypeColor(model.task)} border-0`}
                     >
-                      {getModelTypeLabel(model.type)}
+                      {getModelTypeLabel(model.task)}
                     </Badge>
                   </div>
                   <CardDescription className="line-clamp-2">
@@ -220,11 +206,11 @@ const ModelsList: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                     <div>
                       <p className="text-muted-foreground">Last Updated</p>
-                      <p className="font-medium">{formatDate(model.updatedAt)}</p>
+                      <p className="font-medium">{formatDate(model.updated_at)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Versions</p>
-                      <p className="font-medium">{model.versions.length}</p>
+                      <p className="font-medium">{model.version_count}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
