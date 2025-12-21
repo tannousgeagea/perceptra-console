@@ -21,12 +21,12 @@ import ModelVisualResults from "@/components/models/ModelVisualResults";
 import ModelMetricsView from "@/components/models/ModelMetricView";
 import ModelDeploymentView from "@/components/models/ModelDeploymentView";
 import { useModelById } from "@/hooks/useModelById";
+import { useModelDetail } from "@/hooks/useModels";
 
 const ModelDetail: React.FC = () => {
   const { projectId, modelId } = useParams<{ projectId: string; modelId: string }>();
-  const { data: model, isLoading, error } = useModelById(modelId || "");
-  
-  // Format date for display
+  const { data: model, isLoading, error } = useModelDetail(modelId!);
+    // Format date for display
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -105,9 +105,7 @@ const ModelDetail: React.FC = () => {
   }
 
   // Get production version if exists
-  const productionVersion = model.versions.find(
-    (version) => version.id === model.currentProductionVersion
-  );
+  const productionVersion = model.production_version
 
   return (
     <div className="space-y-6 p-6 w-full">
@@ -118,9 +116,9 @@ const ModelDetail: React.FC = () => {
             <h1 className="text-2xl font-bold tracking-tight">{model.name}</h1>
             <Badge
               variant="outline"
-              className={`${getModelTypeColor(model.type)} border-0`}
+              className={`${getModelTypeColor(model.task)} border-0`}
             >
-              {getModelTypeLabel(model.type)}
+              {getModelTypeLabel(model.task)}
             </Badge>
           </div>
           <p className="text-muted-foreground">{model.description}</p>
@@ -148,7 +146,7 @@ const ModelDetail: React.FC = () => {
             <span className="text-sm font-medium">Production</span>
           </div>
           <p className="text-2xl font-bold">
-            {productionVersion ? `v${productionVersion.versionNumber}` : "None"}
+            {productionVersion ? `v${productionVersion.version_number}` : "None"}
           </p>
         </div>
         
@@ -157,7 +155,7 @@ const ModelDetail: React.FC = () => {
             <Clock className="h-4 w-4" />
             <span className="text-sm font-medium">Last Update</span>
           </div>
-          <p className="text-lg font-medium">{formatDate(model.updatedAt)}</p>
+          <p className="text-lg font-medium">{formatDate(model.updated_at)}</p>
         </div>
         
         <div className="bg-muted/50 rounded-lg p-4">
@@ -165,7 +163,7 @@ const ModelDetail: React.FC = () => {
             <Database className="h-4 w-4" />
             <span className="text-sm font-medium">Created By</span>
           </div>
-          <p className="text-sm font-medium truncate">{model.createdBy}</p>
+          <p className="text-sm font-medium truncate">{model.created_at}</p>
         </div>
       </div>
 

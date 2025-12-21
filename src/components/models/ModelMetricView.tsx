@@ -28,18 +28,19 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { ModelDetail } from "@/hooks/useModels";
 
-const ModelMetricsView: React.FC<{ model: Model }> = ({ model }) => {
+const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
   const [selectedVersions, setSelectedVersions] = useState<string[]>(
-    model.currentProductionVersion
-      ? [model.currentProductionVersion]
+    model.production_version
+      ? [model.production_version.id]
       : model.versions.length > 0
       ? [model.versions[0].id]
       : []
   );
 
   // Get metrics config based on model type
-  const metricsConfig = ModelService.getMetricsConfig(model.type);
+  const metricsConfig = ModelService.getMetricsConfig(model.task);
 
   // Only use versions that are trained
   const trainedVersions = model.versions.filter(
@@ -59,7 +60,7 @@ const ModelMetricsView: React.FC<{ model: Model }> = ({ model }) => {
       };
       
       selectedVersionObjects.forEach((version) => {
-        dataPoint[`v${version.versionNumber}`] = version.metrics[metricConfig.key] || 0;
+        dataPoint[`v${version.version_number}`] = version.metrics[metricConfig.key] || 0;
       });
       
       return dataPoint;
@@ -69,9 +70,9 @@ const ModelMetricsView: React.FC<{ model: Model }> = ({ model }) => {
   // Prepare data for history chart (comparing all versions for a specific metric)
   const prepareHistoryData = (metricKey: string) => {
     return trainedVersions
-      .sort((a, b) => a.versionNumber - b.versionNumber)
+      .sort((a, b) => a.version_number - b.version_number)
       .map((version) => ({
-        name: `v${version.versionNumber}`,
+        name: `v${version.version_number}`,
         value: version.metrics[metricKey] || 0,
       }));
   };
@@ -110,10 +111,10 @@ const ModelMetricsView: React.FC<{ model: Model }> = ({ model }) => {
                 </SelectTrigger>
                 <SelectContent>
                   {trainedVersions
-                    .sort((a, b) => b.versionNumber - a.versionNumber)
+                    .sort((a, b) => b.version_number - a.version_number)
                     .map((version) => (
                       <SelectItem key={version.id} value={version.id}>
-                        v{version.versionNumber}
+                        v{version.version_number}
                         {version.tags.includes("production")
                           ? " (Production)"
                           : ""}
@@ -146,7 +147,7 @@ const ModelMetricsView: React.FC<{ model: Model }> = ({ model }) => {
                           key={version.id}
                           className="px-4 py-3 text-left text-sm font-medium"
                         >
-                          v{version.versionNumber}
+                          v{version.version_number}
                           {version.tags.includes("production")
                             ? " (Production)"
                             : ""}
@@ -197,8 +198,8 @@ const ModelMetricsView: React.FC<{ model: Model }> = ({ model }) => {
                         {selectedVersionObjects.map((version) => (
                           <Bar
                             key={version.id}
-                            dataKey={`v${version.versionNumber}`}
-                            name={`Version ${version.versionNumber}`}
+                            dataKey={`v${version.version_number}`}
+                            name={`Version ${version.version_number}`}
                             fill={version.tags.includes("production") ? "#8884d8" : "#82ca9d"}
                           />
                         ))}

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/ui/select";
 import { Model } from "@/types/models";
+import { ModelDetail } from "@/hooks/useModels";
 
 // Placeholder components for different visualization types
 const ClassificationVisual: React.FC = () => (
@@ -173,16 +174,16 @@ const VisualLanguageModelVisual: React.FC = () => (
   </div>
 );
 
-const ModelVisualResults: React.FC<{ model: Model }> = ({ model }) => {
+const ModelVisualResults: React.FC<{ model: ModelDetail }> = ({ model }) => {
   const [selectedVersion, setSelectedVersion] = useState<string>(
-    model.currentProductionVersion || 
+    model.production_version?.id || 
     (model.versions.length > 0 ? model.versions[0].id : "")
   );
   
   const [sampleIndex, setSampleIndex] = useState<string>("1");
 
   const renderVisualization = () => {
-    switch (model.type) {
+    switch (model.task) {
       case "classification":
         return <ClassificationVisual />;
       case "object-detection":
@@ -223,13 +224,13 @@ const ModelVisualResults: React.FC<{ model: Model }> = ({ model }) => {
                 <SelectContent>
                   {model.versions
                     .filter(v => v.status === "trained" || v.status === "deployed")
-                    .sort((a, b) => b.versionNumber - a.versionNumber)
+                    .sort((a, b) => b.version_number - a.version_number)
                     .map(version => (
                       <SelectItem
                         key={version.id}
                         value={version.id}
                       >
-                        v{version.versionNumber}
+                        v{version.version_number}
                         {version.tags.includes("production") ? " (Production)" : ""}
                       </SelectItem>
                     ))}
