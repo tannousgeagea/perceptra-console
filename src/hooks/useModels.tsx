@@ -47,6 +47,13 @@ export interface ModelCreateRequest {
   tags?: string[];
 }
 
+export interface ModelUpdateRequest {
+  name?: string;
+  description?: string;
+  tags?: string[];
+  config?: Record<string, any>;
+}
+
 export interface ModelArtifact {
   checkpoint?: string;
   onnx?: string;
@@ -249,6 +256,66 @@ export const triggerTraining = async (
   return response.json();
 };
 
+export const updateModel = async (
+  organizationId: string,
+  modelId: string,
+  request: ModelUpdateRequest
+): Promise<ModelDetail> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `${baseURL}/api/v1/models/${modelId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to update model' }));
+    throw new Error(error.message || 'Failed to update model');
+  }
+
+  return response.json();
+};
+
+export const deleteModel = async (
+  organizationId: string,
+  modelId: string
+): Promise<void> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `${baseURL}/api/v1/models/${modelId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to delete model' }));
+    throw new Error(error.message || 'Failed to delete model');
+  }
+};
+
+
 // ============================================
 // HOOKS
 // ============================================
@@ -353,6 +420,82 @@ export const useTriggerTraining = (options?: {
     onError: (error: Error) => {
       if (showToast) {
         toast.error(error.message || 'Failed to start training');
+      }
+
+      onError?.(error);
+    },
+  });
+};
+
+export const useUpdateModel = (options?: {
+  onSuccess?: (data: ModelDetail) => void;
+  onError?: (error: Error) => void;
+  showToast?: boolean;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, onError, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: ({ modelId, request }: { modelId: string; request: ModelUpdateRequest }) => {
+      if (!currentOrganization) {
+        throw new Error("No organization selected");
+      }
+      return updateModel(currentOrganization.id, modelId, request);
+    },
+
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['modelDetail', currentOrganization?.id, data.id] });
+      queryClient.invalidateQueries({ queryKey: ['projectModels'] });
+
+      if (showToast) {
+        toast.success('Model updated successfully');
+      }
+
+      onSuccess?.(data);
+    },
+
+    onError: (error: Error) => {
+      if (showToast) {
+        toast.error(error.message || 'Failed to update model');
+      }
+
+      onError?.(error);
+    },
+  });
+};
+
+export const useDeleteModel = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+  showToast?: boolean;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, onError, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: (modelId: string) => {
+      if (!currentOrganization) {
+        throw new Error("No organization selected");
+      }
+      return deleteModel(currentOrganization.id, modelId);
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['modelDetail'] });
+      queryClient.invalidateQueries({ queryKey: ['projectModels'] });
+
+      if (showToast) {
+        toast.success('Model deleted successfully');
+      }
+
+      onSuccess?.();
+    },
+
+    onError: (error: Error) => {
+      if (showToast) {
+        toast.error(error.message || 'Failed to delete model');
       }
 
       onError?.(error);
