@@ -19,9 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/ui/select";
-import { ModelType, Model } from "@/types/models";
+import { ModelType } from "@/types/models";
 import { Skeleton } from "@/components/ui/ui/skeleton";
-import { useProjectModels, ModelListItem } from "@/hooks/useModels";
+import { useProjectModels, ModelListItem, useUpdateModel, useDeleteModel } from "@/hooks/useModels";
 
 import { toast } from "sonner";
 import EditModelDialog from "@/components/models/EditModelDialog";
@@ -38,6 +38,13 @@ const ModelsList: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<ModelListItem | null>(null);
 
   const { data: models, isLoading, error  } = useProjectModels(projectId!);
+  const updateModel = useUpdateModel({
+    onSuccess: (data) => {
+      console.log('Model updated:', data.id);
+    }
+  });
+
+  const deleteModel = useDeleteModel();
 
   // Filter models based on search query and type filter
   const filteredModels = models
@@ -111,6 +118,12 @@ const ModelsList: React.FC = () => {
 
   // Handle save edited model
   const handleSaveModel = (updatedModel: ModelListItem) => {
+    // Update model name and description
+    updateModel.mutate({
+      modelId: updatedModel.id,
+      request: updatedModel
+    }); 
+
     toast.success("Model updated successfully!", {
       description: `${updatedModel.name} has been updated.`,
     });
@@ -124,6 +137,7 @@ const ModelsList: React.FC = () => {
 
   // Handle confirm delete
   const handleConfirmDelete = (modelId: string) => {
+    deleteModel.mutate(modelId)
     toast.success("Model deleted", {
       description: "The model has been permanently deleted.",
     });

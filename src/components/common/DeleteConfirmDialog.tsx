@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
 import { Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmDialogProps {
   // Required props
@@ -69,7 +70,6 @@ export function DeleteConfirmDialog({
 
   const handleConfirm = () => {
     onConfirm();
-    setOpen(false);
   };
 
   const handleCancel = () => {
@@ -79,6 +79,8 @@ export function DeleteConfirmDialog({
   // Only render trigger if not using controlled state
   const shouldRenderTrigger = controlledOpen === undefined;
 
+
+  console.log(isLoading)
   return (
     <>
       {/* Trigger (only if uncontrolled) */}
@@ -110,9 +112,21 @@ export function DeleteConfirmDialog({
 
       {/* Dialog */}
       <CustomDialog open={open} onOpenChange={setOpen}>
-        <CustomDialogContent showClose onClose={handleCancel}>
+        <CustomDialogContent showClose onClose={handleCancel} className='space-y-4'>
           <CustomDialogHeader>
-            <CustomDialogTitle>{title}</CustomDialogTitle>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+              </div>
+
+              <div>
+                <CustomDialogTitle className='text-xl'>{title}</CustomDialogTitle>
+                <CustomDialogDescription className="mt-1">
+                  This action cannot be undone.
+                </CustomDialogDescription>
+              </div>
+            </div>
+
             <CustomDialogDescription>
               {description}
             </CustomDialogDescription>
@@ -120,6 +134,9 @@ export function DeleteConfirmDialog({
 
           {requireTextConfirmation && (
             <div className="mt-3 mb-4">
+              <p className="text-sm font-medium py-2">
+                Type <span className="font-mono text-destructive">{confirmText}</span> to confirm:
+              </p>
               <Input
                 placeholder={`Type "${confirmText}" to confirm`}
                 value={inputText}
@@ -144,12 +161,13 @@ export function DeleteConfirmDialog({
             </Button>
             <Button
               type="button"
+              variant='destructive'
               onClick={handleConfirm}
               disabled={!isConfirmed || isLoading}
               className={
                 isConfirmed && !isLoading
                   ? 'bg-red-500 hover:bg-red-600 text-white'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'cursor-not-allowed'
               }
             >
               {isLoading ? (
@@ -158,7 +176,11 @@ export function DeleteConfirmDialog({
                   Deleting...
                 </>
               ) : (
-                'Delete'
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {title}
+                </>
+
               )}
             </Button>
           </CustomDialogFooter>
