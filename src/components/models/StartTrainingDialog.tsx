@@ -7,6 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/ui/dialog";
+
+import { 
+  CustomDialog, 
+  CustomDialogContent, 
+  CustomDialogHeader, 
+  CustomDialogTitle, 
+  CustomDialogDescription, 
+  CustomDialogFooter 
+} from "@/components/common/CustomDialog";
 import { Button } from "@/components/ui/ui/button";
 import { Input } from "@/components/ui/ui/input";
 import { Label } from "@/components/ui/ui/label";
@@ -24,9 +33,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/ui/accordion";
-import { Play, Loader2, Settings2 } from "lucide-react";
-import { Model, Dataset } from "@/types/models";
-import { mockDatasets } from "@/data/mockModels";
+import { Play, Loader2, Settings2, GitBranch } from "lucide-react";
+import { mockDatasets } from "./mockModels";
+import { Badge } from "@/components/ui/ui/badge";
+import { ModelDetail, useModelDetail } from "@/hooks/useModels";
 
 interface TrainingConfig {
   batchSize: number;
@@ -37,10 +47,10 @@ interface TrainingConfig {
 }
 
 interface StartTrainingDialogProps {
-  model: Model | null;
+  modelId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (model: Model, config: TrainingConfig, datasetId: string) => void;
+  onConfirm: (model: ModelDetail, config: TrainingConfig, datasetId: string, baseVersionId?: string) => void;
 }
 
 const defaultConfig: TrainingConfig = {
@@ -66,19 +76,32 @@ const schedulerOptions = [
 ];
 
 const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
-  model,
+  modelId,
   open,
   onOpenChange,
   onConfirm,
 }) => {
   const [config, setConfig] = useState<TrainingConfig>(defaultConfig);
   const [selectedDataset, setSelectedDataset] = useState<string>("");
+  const [selectedBaseVersion, setSelectedBaseVersion] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const { data: model, error } = useModelDetail(modelId!);
+  
+
+  // Get sorted versions (latest first)
+  const sortedVersions = model?.versions
+   .slice()
+    .sort((a, b) => b.version_number - a.version_number) || [];
+  
+  const latestVersion = sortedVersions[0];
 
   useEffect(() => {
-    if (open) {
+    if (open && model) {
       setConfig(defaultConfig);
       setSelectedDataset(mockDatasets[0]?.id || "");
+      
+      // Set latest version as default
+      setSelectedBaseVersion(latestVersion?.id || "");
     }
   }, [open]);
 
@@ -105,19 +128,57 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
   const selectedDatasetInfo = mockDatasets.find((d) => d.id === selectedDataset);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <CustomDialog open={open} onOpenChange={onOpenChange}>
+      <CustomDialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+        <CustomDialogHeader>
+          <CustomDialogTitle className="flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" />
             Start Training
-          </DialogTitle>
-          <DialogDescription>
+          </CustomDialogTitle>
+          <CustomDialogDescription>
             Configure and start a new training run for "{model.name}".
-          </DialogDescription>
-        </DialogHeader>
+          </CustomDialogDescription>
+        </CustomDialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Base Version Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="base-version" className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4" />
+              Base Version
+            </Label>
+            <Select value={selectedBaseVersion} onValueChange={setSelectedBaseVersion}>
+              <SelectTrigger id="base-version">
+                <SelectValue placeholder="Select base version" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortedVersions.map((version) => (
+                  <SelectItem key={version.id} value={version.id}>
+                    <div className="flex items-center gap-2">
+                      <span>v{version.version_number}</span>
+                      {version.id === latestVersion?.id && (
+                        <Badge variant="secondary" className="text-xs py-0 px-1.5">
+                          Latest
+                        </Badge>
+                      )}
+                      {version.tags?.includes("production") && (
+                        <Badge variant="default" className="text-xs py-0 px-1.5 bg-green-600">
+                          Prod
+                        </Badge>
+                      )}
+                      <span className="text-muted-foreground text-xs capitalize">
+                        ({version.status})
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              The new training run will start from this version's weights
+            </p>
+          </div>
+
           {/* Dataset Selection */}
           <div className="space-y-2">
             <Label htmlFor="dataset">Training Dataset</Label>
@@ -262,14 +323,18 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
               <div className="text-muted-foreground">Model:</div>
               <div className="font-medium">{model.name}</div>
               <div className="text-muted-foreground">Type:</div>
-              <div className="font-medium capitalize">{model.type.replace("-", " ")}</div>
+              <div className="font-medium capitalize">{model.task.replace("-", " ")}</div>
+              <div className="text-muted-foreground">Base Version:</div>
+              <div className="font-medium">
+                v{sortedVersions.find(v => v.id === selectedBaseVersion)?.version_number || "-"}
+              </div>
               <div className="text-muted-foreground">New Version:</div>
               <div className="font-medium">v{model.versions.length + 1}</div>
             </div>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <CustomDialogFooter className="gap-2 sm:gap-0">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -293,9 +358,9 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
               </>
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </CustomDialogFooter>
+      </CustomDialogContent>
+    </CustomDialog>
   );
 };
 

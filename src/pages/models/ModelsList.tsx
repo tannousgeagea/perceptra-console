@@ -26,13 +26,16 @@ import {
   ModelListItem, 
   useUpdateModel, 
   useDeleteModel, 
-  useDuplicateModel 
+  useDuplicateModel,
+  useTriggerTraining,
+  ModelDetail,
 } from "@/hooks/useModels";
 
 import { toast } from "sonner";
 import EditModelDialog from "@/components/models/EditModelDialog";
 import DeleteModelDialog from "@/components/models/DeleteModelDialog";
 import DuplicateModelDialog from "@/components/models/DuplicateModelDialog";
+import StartTrainingDialog from "@/components/models/StartTrainingDialog";
 import ModelCardActions from "@/components/models/ModelCardActions";
 
 const ModelsList: React.FC = () => {
@@ -43,6 +46,8 @@ const ModelsList: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [trainingDialogOpen, setTrainingDialogOpen] = useState(false);
+
 
   const [selectedModel, setSelectedModel] = useState<ModelListItem | null>(null);
 
@@ -59,6 +64,20 @@ const ModelsList: React.FC = () => {
       console.log('Duplicated model:', data.id);
     }
   });
+
+  // Use the hook with custom callbacks
+  const triggerTraining = useTriggerTraining({
+    onSuccess: (data) => {
+      console.log('Training started:', data);
+      // Or show the task details
+      console.log(`Training task ${data.task_id} on ${data.compute_provider} ${data.instance_type}`);
+    },
+    onError: (error) => {
+      console.error('Failed to start training:', error);
+    },
+    showToast: true,
+  });
+
   // Filter models based on search query and type filter
   const filteredModels = models
     ? models.filter((model) => {
@@ -184,8 +203,30 @@ const ModelsList: React.FC = () => {
 
   // Handle start training
   const handleStartTraining = (model: ModelListItem) => {
-    toast.info("Training started", {
-      description: `Starting new training run for ${model.name}...`,
+    setSelectedModel(model);
+    setTrainingDialogOpen(true);
+  };
+
+
+  // Handle confirm training
+  const handleConfirmTraining = (
+    model: ModelDetail,
+    config: { batchSize: number; learningRate: number; epochs: number; optimizer: string; scheduler: string },
+    datasetId: string,
+    baseVersionId?: string,
+  ) => {
+
+    triggerTraining.mutate({
+      modelId: model.id,
+      request: {
+        dataset_version_id: datasetId,
+        parent_version_id: baseVersionId || undefined,
+        config,
+      },
+    });
+
+    toast.success("Training started!", {
+      description: `Training v${model.latest_version} of ${model.name} has begun.`,
     });
   };
 
@@ -365,6 +406,14 @@ const ModelsList: React.FC = () => {
         onConfirm={handleConfirmDuplicate}
       />
       
+      {/* Start Training Dialog */}
+      <StartTrainingDialog
+        modelId={selectedModel?.id!}
+        open={trainingDialogOpen}
+        onOpenChange={setTrainingDialogOpen}
+        onConfirm={handleConfirmTraining}
+      />
+
     </div>
   );
 };

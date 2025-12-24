@@ -20,7 +20,6 @@ import ModelVersionsList from "@/components/models/ModelVersionList";
 import ModelVisualResults from "@/components/models/ModelVisualResults";
 import ModelMetricsView from "@/components/models/ModelMetricView";
 import ModelDeploymentView from "@/components/models/ModelDeploymentView";
-import { useModelById } from "@/hooks/useModelById";
 import { useModelDetail } from "@/hooks/useModels";
 
 const ModelDetail: React.FC = () => {
