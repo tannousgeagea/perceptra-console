@@ -45,6 +45,13 @@ export interface ModelCreateRequest {
   task: string;
   framework: string;
   tags?: string[];
+  config: {
+    batchSize: number;
+    learningRate: number;
+    epochs: number;
+    optimizer: string;
+    scheduler: string;
+  };
 }
 
 export interface ModelUpdateRequest {
@@ -316,6 +323,38 @@ export const deleteModel = async (
 };
 
 
+export const duplicateModel = async (
+  organizationId: string,
+  modelId: string,
+  newName?: string
+): Promise<ModelDetail> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const url = new URL(`${baseURL}/api/v1/models/${modelId}/duplicate`);
+  if (newName) {
+    url.searchParams.append('new_name', newName);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-Organization-ID': organizationId,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to duplicate model' }));
+    throw new Error(error.message || 'Failed to duplicate model');
+  }
+
+  return response.json();
+};
+
 // ============================================
 // HOOKS
 // ============================================
@@ -496,6 +535,43 @@ export const useDeleteModel = (options?: {
     onError: (error: Error) => {
       if (showToast) {
         toast.error(error.message || 'Failed to delete model');
+      }
+
+      onError?.(error);
+    },
+  });
+};
+
+export const useDuplicateModel = (options?: {
+  onSuccess?: (data: ModelDetail) => void;
+  onError?: (error: Error) => void;
+  showToast?: boolean;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const { onSuccess, onError, showToast = true } = options || {};
+
+  return useMutation({
+    mutationFn: ({ modelId, newName }: { modelId: string; newName?: string }) => {
+      if (!currentOrganization) {
+        throw new Error("No organization selected");
+      }
+      return duplicateModel(currentOrganization.id, modelId, newName);
+    },
+
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['projectModels'] });
+
+      if (showToast) {
+        toast.success('Model duplicated successfully');
+      }
+
+      onSuccess?.(data);
+    },
+
+    onError: (error: Error) => {
+      if (showToast) {
+        toast.error(error.message || 'Failed to duplicate model');
       }
 
       onError?.(error);
