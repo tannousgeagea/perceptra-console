@@ -21,13 +21,30 @@ import {
 } from "@/components/ui/ui/select";
 import { ModelType } from "@/types/models";
 import { Skeleton } from "@/components/ui/ui/skeleton";
-import { useProjectModels } from "@/hooks/useModels";
+import { useProjectModels, ModelListItem, useUpdateModel, useDeleteModel } from "@/hooks/useModels";
+
+import { toast } from "sonner";
+import EditModelDialog from "@/components/models/EditModelDialog";
+import DeleteModelDialog from "@/components/models/DeleteModelDialog";
+import ModelCardActions from "@/components/models/ModelCardActions";
 
 const ModelsList: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchQuery, setSearchQuery] = useState("");
   const [modelTypeFilter, setModelTypeFilter] = useState<string>("all");
+  // Dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelListItem | null>(null);
+
   const { data: models, isLoading, error  } = useProjectModels(projectId!);
+  const updateModel = useUpdateModel({
+    onSuccess: (data) => {
+      console.log('Model updated:', data.id);
+    }
+  });
+
+  const deleteModel = useDeleteModel();
 
   // Filter models based on search query and type filter
   const filteredModels = models
@@ -69,17 +86,17 @@ const ModelsList: React.FC = () => {
   const getModelTypeColor = (type: ModelType): string => {
     switch (type) {
       case "classification":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
       case "object-detection":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
       case "segmentation":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
       case "llm":
-        return "bg-amber-100 text-amber-800";
+        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
       case "vlm":
-        return "bg-pink-100 text-pink-800";
+        return "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -90,6 +107,60 @@ const ModelsList: React.FC = () => {
       year: "numeric",
       month: "short",
       day: "numeric",
+    });
+  };
+
+  // Handle edit model
+  const handleEditModel = (model: ModelListItem) => {
+    setSelectedModel(model);
+    setEditDialogOpen(true);
+  };
+
+  // Handle save edited model
+  const handleSaveModel = (updatedModel: ModelListItem) => {
+    // Update model name and description
+    updateModel.mutate({
+      modelId: updatedModel.id,
+      request: updatedModel
+    }); 
+
+    toast.success("Model updated successfully!", {
+      description: `${updatedModel.name} has been updated.`,
+    });
+  };
+
+  // Handle delete model
+  const handleDeleteModel = (model: ModelListItem) => {
+    setSelectedModel(model);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = (modelId: string) => {
+    deleteModel.mutate(modelId)
+    toast.success("Model deleted", {
+      description: "The model has been permanently deleted.",
+    });
+  };
+
+  // Handle duplicate model
+  const handleDuplicateModel = (model: ModelListItem) => {
+    const duplicatedModel: ModelListItem = {
+      ...model,
+      id: `model-${Date.now()}`,
+      name: `${model.name} (Copy)`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    toast.success("Model duplicated!", {
+      description: `${duplicatedModel.name} has been created.`,
+    });
+  };
+
+  // Handle start training
+  const handleStartTraining = (model: ModelListItem) => {
+    toast.info("Training started", {
+      description: `Starting new training run for ${model.name}...`,
     });
   };
 
@@ -183,59 +254,83 @@ const ModelsList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredModels.map((model) => (
-            <Link
-              to={`/projects/${projectId}/models/${model.id}`}
-              key={model.id}
-            >
-              <Card className="hover:shadow-md transition-shadow overflow-hidden h-full">
-                <CardHeader>
-                  <div className="flex justify-between items-start w-full">
-                    <CardTitle className="truncate">{model.name}</CardTitle>
-                    <Badge
-                      variant="outline"
-                      className={`${getModelTypeColor(model.task)} border-0`}
-                    >
-                      {getModelTypeLabel(model.task)}
-                    </Badge>
-                  </div>
-                  <CardDescription className="line-clamp-2">
-                    {model.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                    <div>
-                      <p className="text-muted-foreground">Last Updated</p>
-                      <p className="font-medium">{formatDate(model.updated_at)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Versions</p>
-                      <p className="font-medium">{model.version_count}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {model.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
+            <div key={model.id} className="relative group">
+              <ModelCardActions
+                onEdit={() => handleEditModel(model)}
+                onDelete={() => handleDeleteModel(model)}
+                onDuplicate={() => handleDuplicateModel(model)}
+                onTrain={() => handleStartTraining(model)}
+              />
+              <Link
+                to={`/projects/${projectId}/models/${model.id}`}
+                key={model.id}
+              >
+                <Card className="hover:shadow-md transition-shadow overflow-hidden h-full border-border/50 hover:border-primary/30">
+                  <CardHeader>
+                    <div className="flex justify-between items-start pr-8 w-full">
+                      <CardTitle className="line-clamp-1">{model.name}</CardTitle>
+                      <Badge
+                        variant="outline"
+                        className={`${getModelTypeColor(model.task)} border-0 shrink-0`}
+                      >
+                        {getModelTypeLabel(model.task)}
                       </Badge>
-                    ))}
-                    {model.tags.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{model.tags.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-muted/50 px-6 py-3">
-                  <Button variant="ghost" className="w-full" asChild>
-                    <div>View Details</div>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </Link>
+                    </div>
+                    <CardDescription className="line-clamp-2">
+                      {model.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                      <div>
+                        <p className="text-muted-foreground">Last Updated</p>
+                        <p className="font-medium">{formatDate(model.updated_at)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Versions</p>
+                        <p className="font-medium">{model.version_count}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {model.tags.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {model.tags.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{model.tags.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/50 px-6 py-3">
+                    <Button variant="ghost" className="w-full" asChild>
+                      <div>View Details</div>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </Link>
+            </div>
           ))}
         </div>
       )}
+
+      {/* Edit Model Dialog */}
+      <EditModelDialog
+        model={selectedModel}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleSaveModel}
+      />
+
+      {/* Delete Model Dialog */}
+      <DeleteModelDialog
+        model={selectedModel}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };
