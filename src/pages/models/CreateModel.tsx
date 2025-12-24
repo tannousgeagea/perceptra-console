@@ -66,6 +66,7 @@ const CreateModel: React.FC = () => {
         task: formData.task,
         framework: formData.framework,
         tags: formData.tags.length > 0 ? formData.tags : undefined,
+        config: formData.config
       },
     });
     

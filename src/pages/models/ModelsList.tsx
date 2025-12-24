@@ -21,11 +21,18 @@ import {
 } from "@/components/ui/ui/select";
 import { ModelType } from "@/types/models";
 import { Skeleton } from "@/components/ui/ui/skeleton";
-import { useProjectModels, ModelListItem, useUpdateModel, useDeleteModel } from "@/hooks/useModels";
+import { 
+  useProjectModels, 
+  ModelListItem, 
+  useUpdateModel, 
+  useDeleteModel, 
+  useDuplicateModel 
+} from "@/hooks/useModels";
 
 import { toast } from "sonner";
 import EditModelDialog from "@/components/models/EditModelDialog";
 import DeleteModelDialog from "@/components/models/DeleteModelDialog";
+import DuplicateModelDialog from "@/components/models/DuplicateModelDialog";
 import ModelCardActions from "@/components/models/ModelCardActions";
 
 const ModelsList: React.FC = () => {
@@ -35,6 +42,8 @@ const ModelsList: React.FC = () => {
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+
   const [selectedModel, setSelectedModel] = useState<ModelListItem | null>(null);
 
   const { data: models, isLoading, error  } = useProjectModels(projectId!);
@@ -45,7 +54,11 @@ const ModelsList: React.FC = () => {
   });
 
   const deleteModel = useDeleteModel();
-
+  const duplicateModel = useDuplicateModel({
+    onSuccess: (data) => {
+      console.log('Duplicated model:', data.id);
+    }
+  });
   // Filter models based on search query and type filter
   const filteredModels = models
     ? models.filter((model) => {
@@ -143,15 +156,27 @@ const ModelsList: React.FC = () => {
     });
   };
 
-  // Handle duplicate model
   const handleDuplicateModel = (model: ModelListItem) => {
+    setSelectedModel(model);
+    setDuplicateDialogOpen(true);
+  };
+
+  // Handle duplicate model
+  const handleConfirmDuplicate = (model: ModelListItem, newName: string) => {
     const duplicatedModel: ModelListItem = {
       ...model,
       id: `model-${Date.now()}`,
-      name: `${model.name} (Copy)`,
+      name: newName,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      version_count: 0,
     };
+
+    duplicateModel.mutate({ 
+      modelId:model.id, 
+      newName: newName 
+    });
+
     toast.success("Model duplicated!", {
       description: `${duplicatedModel.name} has been created.`,
     });
@@ -331,6 +356,15 @@ const ModelsList: React.FC = () => {
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
       />
+
+      {/* Duplicate Model Dialog */}
+      <DuplicateModelDialog
+        model={selectedModel}
+        open={duplicateDialogOpen}
+        onOpenChange={setDuplicateDialogOpen}
+        onConfirm={handleConfirmDuplicate}
+      />
+      
     </div>
   );
 };
