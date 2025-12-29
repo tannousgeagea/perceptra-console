@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/ui/input";
 import { Label } from "@/components/ui/ui/label";
 import { Textarea } from "@/components/ui/ui/textarea";
 import { Badge } from "@/components/ui/ui/badge";
-import { ModelListItem, ModelTask } from "@/hooks/useModels";
+import { ModelListItem, ModelTask } from "@/types/models";
 import {
   Select,
   SelectContent,

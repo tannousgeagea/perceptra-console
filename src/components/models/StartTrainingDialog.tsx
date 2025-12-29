@@ -1,13 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/ui/dialog";
-
 import { 
   CustomDialog, 
   CustomDialogContent, 
@@ -33,24 +24,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/ui/accordion";
-import { Play, Loader2, Settings2, GitBranch } from "lucide-react";
+import { Play, Loader2, Settings2, GitBranch, Cpu, Sparkles, Tag } from "lucide-react";
 import { mockDatasets } from "./mockModels";
 import { Badge } from "@/components/ui/ui/badge";
-import { ModelDetail, useModelDetail } from "@/hooks/useModels";
-
-interface TrainingConfig {
-  batchSize: number;
-  learningRate: number;
-  epochs: number;
-  optimizer: string;
-  scheduler: string;
-}
+import { useModelDetail } from "@/hooks/useModels";
+import { ModelDetail, TrainingConfig, ComputeProfile, TrainingTriggerRequest, ComputeProfiles } from "@/types/models";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/ui/radio-group";
+import { Separator } from "@/components/ui/ui/separator";
 
 interface StartTrainingDialogProps {
   modelId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (model: ModelDetail, config: TrainingConfig, datasetId: string, baseVersionId?: string) => void;
+  onConfirm: (model: ModelDetail, request: TrainingTriggerRequest ) => void;
 }
 
 const defaultConfig: TrainingConfig = {
@@ -85,6 +71,9 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
   const [selectedDataset, setSelectedDataset] = useState<string>("");
   const [selectedBaseVersion, setSelectedBaseVersion] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [trainingMode, setTrainingMode] = useState<"scratch" | "transfer">("transfer");
+  const [versionName, setVersionName] = useState<string>("");
+  const [selectedComputeProfile, setSelectedComputeProfile] = useState<string>("");
   const { data: model, error } = useModelDetail(modelId!);
   
 
@@ -94,24 +83,44 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
     .sort((a, b) => b.version_number - a.version_number) || [];
   
   const latestVersion = sortedVersions[0];
+  const hasVersions = sortedVersions.length > 0;
+
+  // Get default compute profile
+  const defaultComputeProfile = ComputeProfiles.find(p => p.isDefault);
+
 
   useEffect(() => {
     if (open && model) {
       setConfig(defaultConfig);
       setSelectedDataset(mockDatasets[0]?.id || "");
       
-      // Set latest version as default
-      setSelectedBaseVersion(latestVersion?.id || "");
+      setVersionName("");
+      setSelectedComputeProfile(defaultComputeProfile?.id || "");
+      
+      // Set training mode and base version based on available versions
+      if (hasVersions) {
+        setTrainingMode("transfer");
+        setSelectedBaseVersion(latestVersion?.id || "");
+      } else {
+        setTrainingMode("scratch");
+        setSelectedBaseVersion("");
+      }
     }
-  }, [open]);
+  }, [open, model, latestVersion?.id, hasVersions, defaultComputeProfile?.id]);
 
   const handleConfirm = async () => {
     if (!model || !selectedDataset) return;
     
     setIsLoading(true);
-    // Simulate a brief delay for better UX
+    const request: TrainingTriggerRequest = {
+      dataset_version_id: selectedDataset,
+      parent_version_id: trainingMode === "transfer" ? selectedBaseVersion : null,
+      config: config,
+      version_name: versionName || undefined,
+      compute_profile_id: selectedComputeProfile || undefined,
+    }
     await new Promise((resolve) => setTimeout(resolve, 800));
-    onConfirm(model, config, selectedDataset);
+    onConfirm(model, request);
     setIsLoading(false);
     onOpenChange(false);
   };
@@ -126,10 +135,12 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
   if (!model) return null;
 
   const selectedDatasetInfo = mockDatasets.find((d) => d.id === selectedDataset);
+  const selectedComputeInfo = ComputeProfiles.find((p) => p.id === selectedComputeProfile);
+  const nextVersionNumber = Math.max(...model.versions.map(v => v.version_number), 0) + 1
 
   return (
     <CustomDialog open={open} onOpenChange={onOpenChange}>
-      <CustomDialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+      <CustomDialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <CustomDialogHeader>
           <CustomDialogTitle className="flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" />
@@ -141,43 +152,113 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
         </CustomDialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Base Version Selection */}
+          {/* Version Name (Optional) */}
           <div className="space-y-2">
-            <Label htmlFor="base-version" className="flex items-center gap-2">
-              <GitBranch className="h-4 w-4" />
-              Base Version
+            <Label htmlFor="version-name" className="flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Version Name
+              <span className="text-muted-foreground text-xs">(optional)</span>
             </Label>
-            <Select value={selectedBaseVersion} onValueChange={setSelectedBaseVersion}>
-              <SelectTrigger id="base-version">
-                <SelectValue placeholder="Select base version" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortedVersions.map((version) => (
-                  <SelectItem key={version.id} value={version.id}>
-                    <div className="flex items-center gap-2">
-                      <span>v{version.version_number}</span>
-                      {version.id === latestVersion?.id && (
-                        <Badge variant="secondary" className="text-xs py-0 px-1.5">
-                          Latest
-                        </Badge>
-                      )}
-                      {version.tags?.includes("production") && (
-                        <Badge variant="default" className="text-xs py-0 px-1.5 bg-green-600">
-                          Prod
-                        </Badge>
-                      )}
-                      <span className="text-muted-foreground text-xs capitalize">
-                        ({version.status})
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="version-name"
+              placeholder={`e.g., "Improved accuracy" or "Experiment A"`}
+              value={versionName}
+              onChange={(e) => setVersionName(e.target.value)}
+              maxLength={255}
+            />
             <p className="text-xs text-muted-foreground">
-              The new training run will start from this version's weights
+              Give this version a memorable name for easy identification
             </p>
           </div>
+
+          <Separator />
+
+          {/* Training Mode Selection */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Training Mode
+            </Label>
+            <RadioGroup
+              value={trainingMode}
+              onValueChange={(value) => setTrainingMode(value as "scratch" | "transfer")}
+              className="grid grid-cols-2 gap-4"
+            >
+              <div className={`relative flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-all ${trainingMode === "scratch" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                <RadioGroupItem value="scratch" id="scratch" className="mt-1" />
+                <div className="space-y-1">
+                  <Label htmlFor="scratch" className="cursor-pointer font-medium">
+                    Train from Scratch
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Start fresh with random weights
+                  </p>
+                </div>
+              </div>
+              <div className={`relative flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-all ${!hasVersions ? "opacity-50 cursor-not-allowed" : ""} ${trainingMode === "transfer" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                <RadioGroupItem 
+                  value="transfer" 
+                  id="transfer" 
+                  className="mt-1" 
+                  disabled={!hasVersions}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="transfer" className={`font-medium ${hasVersions ? "cursor-pointer" : "cursor-not-allowed"}`}>
+                    Transfer Learning
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {hasVersions 
+                      ? "Continue from existing version"
+                      : "No versions available yet"
+                    }
+                  </p>
+                </div>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Base Version Selection (only for transfer learning) */}
+          {trainingMode === "transfer" && hasVersions && (
+            <div className="space-y-2">
+              <Label htmlFor="base-version" className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Base Version
+              </Label>
+              <Select value={selectedBaseVersion} onValueChange={setSelectedBaseVersion}>
+                <SelectTrigger id="base-version">
+                  <SelectValue placeholder="Select base version" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortedVersions.map((version) => (
+                    <SelectItem key={version.id} value={version.id}>
+                      <div className="flex items-center gap-2">
+                        <span>v{version.version_number}</span>
+                        {version.version_name && (
+                          <span className="text-muted-foreground">- {version.version_name}</span>
+                        )}
+                        {version.id === latestVersion?.id && (
+                          <Badge variant="secondary" className="text-xs py-0 px-1.5">
+                            Latest
+                          </Badge>
+                        )}
+                        {version.tags?.includes("production") && (
+                          <Badge variant="default" className="text-xs py-0 px-1.5 bg-green-600">
+                            Prod
+                          </Badge>
+                        )}
+                        <span className="text-muted-foreground text-xs capitalize">
+                          ({version.status})
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                The new training run will start from this version's weights
+              </p>
+            </div>
+          )}
 
           {/* Dataset Selection */}
           <div className="space-y-2">
@@ -189,7 +270,17 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
               <SelectContent>
                 {mockDatasets.map((dataset) => (
                   <SelectItem key={dataset.id} value={dataset.id}>
-                    {dataset.name} ({dataset.itemCount?.toLocaleString()} items)
+                    <div className="flex items-center gap-2">
+                      <span>{dataset.name}</span>
+                      {dataset.version && (
+                        <Badge variant="outline" className="text-xs py-0">
+                          {dataset.version}
+                        </Badge>
+                      )}
+                      <span className="text-muted-foreground text-xs">
+                        ({dataset.itemCount?.toLocaleString()} items)
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -197,6 +288,43 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
             {selectedDatasetInfo && (
               <p className="text-xs text-muted-foreground">
                 {selectedDatasetInfo.itemCount?.toLocaleString()} images available for training
+              </p>
+            )}
+          </div>
+
+          {/* Compute Profile Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="compute" className="flex items-center gap-2">
+              <Cpu className="h-4 w-4" />
+              Compute Profile
+            </Label>
+            <Select value={selectedComputeProfile} onValueChange={setSelectedComputeProfile}>
+              <SelectTrigger id="compute">
+                <SelectValue placeholder="Select compute profile" />
+              </SelectTrigger>
+              <SelectContent>
+                {ComputeProfiles.map((profile) => (
+                  <SelectItem key={profile.id} value={profile.id}>
+                    <div className="flex items-center gap-2">
+                      <span>{profile.name}</span>
+                      {profile.isDefault && (
+                        <Badge variant="secondary" className="text-xs py-0 px-1.5">
+                          Default
+                        </Badge>
+                      )}
+                      {profile.gpuType && (
+                        <span className="text-muted-foreground text-xs">
+                          ({profile.gpuCount}x {profile.gpuType})
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedComputeInfo && (
+              <p className="text-xs text-muted-foreground">
+                {selectedComputeInfo.description}
               </p>
             )}
           </div>
@@ -220,7 +348,7 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
                     </span>
                   </div>
                   <Slider
-                    value={[config.epochs]}
+                    value={[config.epochs || 50 ]}
                     onValueChange={([value]) => updateConfig("epochs", value)}
                     min={10}
                     max={200}
@@ -241,7 +369,7 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
                     </span>
                   </div>
                   <Slider
-                    value={[config.batchSize]}
+                    value={[config.batchSize || 32]}
                     onValueChange={([value]) => updateConfig("batchSize", value)}
                     min={8}
                     max={128}
@@ -324,12 +452,22 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
               <div className="font-medium">{model.name}</div>
               <div className="text-muted-foreground">Type:</div>
               <div className="font-medium capitalize">{model.task.replace("-", " ")}</div>
-              <div className="text-muted-foreground">Base Version:</div>
+              <div className="text-muted-foreground">Mode:</div>
               <div className="font-medium">
-                v{sortedVersions.find(v => v.id === selectedBaseVersion)?.version_number || "-"}
+                {trainingMode === "scratch" ? "From Scratch" : "Transfer Learning"}
               </div>
+              {trainingMode === "transfer" && selectedBaseVersion && (
+                <>
+                  <div className="text-muted-foreground">Base Version:</div>
+                  <div className="font-medium">
+                    v{sortedVersions.find(v => v.id === selectedBaseVersion)?.version_number || "-"}
+                  </div>
+                </>
+              )}
               <div className="text-muted-foreground">New Version:</div>
-              <div className="font-medium">v{model.versions.length + 1}</div>
+              <div className="font-medium">v{nextVersionNumber}</div>
+              <div className="text-muted-foreground">Compute:</div>
+              <div className="font-medium">{selectedComputeInfo?.name || "Default"}</div>
             </div>
           </div>
         </div>

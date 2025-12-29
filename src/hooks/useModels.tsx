@@ -6,140 +6,14 @@ import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
-
-// ============================================
-// TYPES
-// ============================================
-
-export type ModelTask = 
-  | 'classification' 
-  | 'object-detection' 
-  | 'segmentation' 
-  | 'llm' 
-  | 'vlm';
-
-export interface ModelFormData {
-  name: string;
-  description: string;
-  task: ModelTask | "";
-  framework: string;
-  tags: string[];
-  config: {
-    batchSize: number;
-    learningRate: number;
-    epochs: number;
-    optimizer: string;
-    scheduler: string;
-  };
-}
-
-export type VersionTag = 
-  | 'production' 
-  | 'staging' 
-  | 'baseline' 
-  | 'experimental';
-
-export interface ModelCreateRequest {
-  name: string;
-  description?: string;
-  task: string;
-  framework: string;
-  tags?: string[];
-  config: {
-    batchSize: number;
-    learningRate: number;
-    epochs: number;
-    optimizer: string;
-    scheduler: string;
-  };
-}
-
-export interface ModelUpdateRequest {
-  name?: string;
-  description?: string;
-  tags?: string[];
-  config?: Record<string, any>;
-}
-
-export interface ModelArtifact {
-  checkpoint?: string;
-  onnx?: string;
-  logs?: string;
-}
-
-export interface DatasetInfo {
-  id: string;
-  name: string;
-  version: string;
-  item_count: number;
-  created_at: string;
-}
-
-export interface ModelVersion {
-  id: string;
-  version_number: number;
-  version_name?: string;
-  status: string;
-  deployment_status: string;
-  metrics: Record<string, any>;
-  config: Record<string, any>;
-  dataset?: DatasetInfo;
-  artifacts: ModelArtifact;
-  tags: VersionTag[];
-  created_by?: string;
-  created_at: string;
-  deployed_at?: string;
-}
-
-export interface ModelDetail {
-  id: string;
-  name: string;
-  description: string;
-  task: ModelTask;
-  framework: string;
-  tags: string[];
-  project_id: string;
-  project_name: string;
-  versions: ModelVersion[];
-  latest_version?: ModelVersion;
-  production_version?: ModelVersion;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ModelListItem {
-  id: string;
-  name: string;
-  description: string;
-  task: ModelTask;
-  framework: string;
-  tags: string[];
-  version_count: number;
-  latest_version_number?: number;
-  latest_status?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TrainingTriggerRequest {
-  dataset_version_id: string;
-  parent_version_id?: string;
-  config?: Record<string, any>;
-  version_name?: string;
-  compute_profile_id?: string;
-}
-
-export interface TrainingTriggerResponse {
-  model_version_id: string;
-  version_number: number;
-  training_session_id: string;
-  task_id: string;
-  status: string;
-  message: string;
-  compute_provider: string;
-  instance_type: string;
-}
+import { 
+  ModelCreateRequest,
+  ModelListItem,
+  ModelDetail,
+  TrainingTriggerRequest,
+  TrainingTriggerResponse,
+  ModelUpdateRequest
+} from "@/types/models";
 
 // ============================================
 // API FUNCTIONS

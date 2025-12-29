@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ModelListItem } from "@/hooks/useModels";
+import { ModelListItem } from "@/types/models";
 import { DeleteConfirmDialog } from "../common/DeleteConfirmDialog";
 
 interface DeleteModelDialogProps {

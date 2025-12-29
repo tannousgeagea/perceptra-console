@@ -41,14 +41,14 @@ import {
 } from "@/components/ui/ui/select";
 import { Switch } from "@/components/ui/ui/switch";
 import { Label } from "@/components/ui/ui/label";
-import { Model, Dataset } from "@/types/models";
+import { Model, Dataset, ModelDetail } from "@/types/models";
 import { ModelService } from "./ModelService";
 import { mockDatasets } from "./mockModels";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 
 interface TrainingFormProps {
-  model: Model;
+  model: ModelDetail;
   projectId: string;
 }
 
@@ -202,7 +202,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ model, projectId }) => {
   };
 
   const getModelTypeSpecificParams = () => {
-    switch(model.type) {
+    switch(model.task) {
       case "classification":
         return (
           <>
@@ -365,10 +365,10 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ model, projectId }) => {
                             <SelectItem value="start-new">Start from scratch</SelectItem>
                             {model.versions
                               .filter(v => v.status === "trained")
-                              .sort((a, b) => b.versionNumber - a.versionNumber)
+                              .sort((a, b) => b.version_number - a.version_number)
                               .map(version => (
                                 <SelectItem key={version.id} value={version.id}>
-                                  v{version.versionNumber}
+                                  v{version.version_number}
                                   {version.tags.includes("production") ? " (Production)" : ""}
                                 </SelectItem>
                               ))}

@@ -23,13 +23,12 @@ import { ModelType } from "@/types/models";
 import { Skeleton } from "@/components/ui/ui/skeleton";
 import { 
   useProjectModels, 
-  ModelListItem, 
   useUpdateModel, 
   useDeleteModel, 
   useDuplicateModel,
   useTriggerTraining,
-  ModelDetail,
 } from "@/hooks/useModels";
+import { ModelListItem, ModelDetail, ModelVersion, TrainingTriggerRequest } from "@/types/models";
 
 import { toast } from "sonner";
 import EditModelDialog from "@/components/models/EditModelDialog";
@@ -211,18 +210,12 @@ const ModelsList: React.FC = () => {
   // Handle confirm training
   const handleConfirmTraining = (
     model: ModelDetail,
-    config: { batchSize: number; learningRate: number; epochs: number; optimizer: string; scheduler: string },
-    datasetId: string,
-    baseVersionId?: string,
+    request: TrainingTriggerRequest,
   ) => {
 
     triggerTraining.mutate({
       modelId: model.id,
-      request: {
-        dataset_version_id: datasetId,
-        parent_version_id: baseVersionId || undefined,
-        config,
-      },
+      request
     });
 
     toast.success("Training started!", {

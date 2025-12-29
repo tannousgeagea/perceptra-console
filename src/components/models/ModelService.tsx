@@ -1,5 +1,5 @@
 
-import { Model, ModelType, ModelVersion, Dataset } from "@/types/models";
+import { ModelListItem, Model, ModelType, ModelVersion, Dataset } from "@/types/models";
 import { getModelById, getModelsByProjectId, mockModels, mockDatasets, getDatasetById } from "./mockModels";
 
 // Service for fetching and managing models
@@ -72,7 +72,7 @@ export const ModelService = {
         }
 
         // Create a new version
-        const newVersionNumber = Math.max(...model.versions.map(v => v.versionNumber), 0) + 1;
+        const newVersionNumber = Math.max(...model.versions.map(v => v.version_number), 0) + 1;
         const newVersionId = `v${newVersionNumber}-${modelId}`;
         
         // Get dataset if provided
@@ -85,14 +85,17 @@ export const ModelService = {
 
         const newVersion: ModelVersion = {
           id: newVersionId,
-          versionNumber: newVersionNumber,
-          createdAt: new Date().toISOString(),
-          createdBy: "current.user@example.com", // In a real app, get from auth context
+          version_number: newVersionNumber,
+          created_at: new Date().toISOString(),
+          created_by: "current.user@example.com", // In a real app, get from auth context
           status: "training",
           metrics: {},
           tags: [],
           config,
-          datasetUsed
+          dataset: datasetUsed,
+          deployment_status: "not_deployed",
+          artifacts: {},
+          
         };
 
         // In a real app, this would be added to the model in the database

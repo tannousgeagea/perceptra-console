@@ -14,8 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/ui/select";
-import { Model } from "@/types/models";
-import { ModelDetail } from "@/hooks/useModels";
+import { ModelDetail } from "@/types/models";
 
 // Placeholder components for different visualization types
 const ClassificationVisual: React.FC = () => (
