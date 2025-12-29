@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, Check, TagIcon, Database } from "lucide-react";
 import { VersionTag } from "@/types/models";
-import { ModelArtifact, ModelDetail, ModelVersion } from "@/hooks/useModels";
+import { ModelArtifact, ModelDetail, ModelVersion } from "@/types/models";
 import { ModelService } from "./ModelService";
 import { Button } from "@/components/ui/ui/button";
 import {

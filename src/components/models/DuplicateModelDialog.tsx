@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/ui/button";
 import { Input } from "@/components/ui/ui/input";
 import { Label } from "@/components/ui/ui/label";
 import { Copy, Loader2 } from "lucide-react";
-import { ModelListItem } from "@/hooks/useModels";
+import { ModelListItem } from "@/types/models";
 
 interface DuplicateModelDialogProps {
   model: ModelListItem | null;

@@ -9,8 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/ui/card";
 import { Button } from "@/components/ui/ui/button";
-import { Model } from "@/types/models";
-import { ModelDetail } from "@/hooks/useModels";
+import { ModelDetail } from "@/types/models";
 import { Badge } from "@/components/ui/ui/badge";
 import { Switch } from "@/components/ui/ui/switch";
 import { Label } from "@/components/ui/ui/label";

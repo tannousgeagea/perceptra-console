@@ -15,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
-import { Model } from "@/types/models";
 import { ModelService } from "./ModelService";
 import {
   BarChart,
@@ -28,7 +27,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { ModelDetail } from "@/hooks/useModels";
+import { ModelDetail } from "@/types/models";
 
 const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
   const [selectedVersions, setSelectedVersions] = useState<string[]>(
