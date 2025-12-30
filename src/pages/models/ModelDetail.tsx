@@ -162,7 +162,7 @@ const ModelDetail: React.FC = () => {
             <Database className="h-4 w-4" />
             <span className="text-sm font-medium">Created By</span>
           </div>
-          <p className="text-sm font-medium truncate">{model.created_at}</p>
+          <p className="text-sm font-medium truncate">{model.created_by}</p>
         </div>
       </div>
 
