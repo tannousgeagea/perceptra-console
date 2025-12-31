@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AccountSettings } from '@/components/settings/AccountSettings';
 import { OrganizationSettings } from '@/components/settings/OrganizationSettings';
 import { StorageSettings } from '@/components/storage/StorageSettings';
+import { ComputeSettings } from '@/components/compute/ComputeSettings';
 import { UserManagement } from '@/components/users/UserManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from 'next-themes';
@@ -49,6 +50,14 @@ export default function Settings() {
                           ? <StorageSettings />
                           : <Navigate to="/settings/account" replace />
                       } 
+                  />
+                  <Route 
+                    path="/compute" 
+                    element={
+                      role === 'owner' || role === 'admin'
+                        ? <ComputeSettings />
+                        : <Navigate to="/settings/account" replace />
+                    } 
                   />
                   <Route 
                       path="/users" 

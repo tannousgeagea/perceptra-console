@@ -1,4 +1,4 @@
-import { Settings, Database, Users, Building2, User } from 'lucide-react';
+import { Settings, Database, Users, Building2, User, Cpu } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
   Sidebar,
@@ -29,6 +29,12 @@ const navigationItems = [
     title: 'Storage',
     url: '/settings/storage',
     icon: Database,
+    roles: ['owner', 'admin']
+  },
+  {
+    title: 'Compute',
+    url: '/settings/compute',
+    icon: Cpu,
     roles: ['owner', 'admin']
   },
   {
