@@ -8,7 +8,7 @@ import { Slider } from '@/components/ui/ui/slider';
 import { Switch } from '@/components/ui/ui/switch';
 import { toast } from 'sonner';
 import { api } from './api';
-import { ComputeProvider, ComputeStrategy, ComputeCredentials, CredentialField } from '@/types/compute';
+import { ComputeProvider, ComputeStrategy, ComputeCredentials, CredentialField, ComputeProfile, ComputeProfileUpdateRequest } from '@/types/compute';
 import { Cpu, Cloud, Server, Zap, CheckCircle2, XCircle, Loader2, Eye, EyeOff, Key } from 'lucide-react';
 import { ComputeProfileCard } from './ComputeProfileCard';
 import { 
@@ -16,7 +16,7 @@ import {
   useComputeProviders,
   useCreateComputeProfile,
   useUpdateComputeProfile,
-  useDeleteComputeProfile,
+  useDeleteComputeProfile
 } from '@/hooks/useCompute';
 
 
@@ -194,6 +194,16 @@ export function ComputeSettings() {
     // ));
 
     console.log("Credential: ", id, hasCredentials)
+  };
+
+  const handleProfileUpdate = (
+    id: string,
+    updates: ComputeProfileUpdateRequest
+  ) => {
+    updateComputeProfileMutation.mutate({
+      profileId: id,
+      request: updates,
+    });
   };
 
   if (loadingProfiles || loadingProviders) {
@@ -490,6 +500,7 @@ export function ComputeSettings() {
                 onDelete={handleDeleteProfile}
                 onSetDefault={handleSetDefault}
                 onCredentialsUpdate={handleCredentialsUpdate}
+                onProfileUpdate={handleProfileUpdate}
               />
             ))}
           </div>
