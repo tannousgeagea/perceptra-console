@@ -1,5 +1,7 @@
 import { ComputeProvider, ComputeProfile, ComputeProfileCreateData } from '@/types/compute';
 
+import { Agent, AgentListItem, RegisterAgentResponse, AgentJob } from '@/types/agent'
+
 // Mock API responses for development
 export const api = {
 
@@ -194,6 +196,166 @@ export const api = {
         ? 'Successfully connected to compute provider'
         : 'Failed to connect: Please verify your credentials',
     };
+  },
+  // Agent APIs
+  async getAgents(status?: string): Promise<Agent[]> {
+    await delay(800);
+    const agents: Agent[] = [
+      {
+        agent_id: 'agent-001',
+        name: 'GPU Workstation 1',
+        status: 'ready',
+        is_online: true,
+        gpu_count: 2,
+        gpu_info: [
+          { name: 'NVIDIA RTX 4090', memory_total: 24576, memory_free: 20480, uuid: 'GPU-001', cuda_compute_capability: '8.9' },
+          { name: 'NVIDIA RTX 4090', memory_total: 24576, memory_free: 22000, uuid: 'GPU-002', cuda_compute_capability: '8.9' },
+        ],
+        system_info: {
+          os: 'Ubuntu 22.04',
+          cpu_count: 32,
+          memory_total: 131072,
+          python_version: '3.10.12',
+          cuda_version: '12.1',
+          docker_version: '24.0.5',
+        },
+        active_jobs: 0,
+        max_concurrent_jobs: 4,
+        completed_jobs: 45,
+        failed_jobs: 2,
+        last_heartbeat: new Date(Date.now() - 15000).toISOString(),
+        uptime_seconds: 86400 * 3,
+        created_at: '2024-01-15T10:00:00Z',
+      },
+      {
+        agent_id: 'agent-002',
+        name: 'Training Server',
+        status: 'busy',
+        is_online: true,
+        gpu_count: 4,
+        gpu_info: [
+          { name: 'NVIDIA A100 80GB', memory_total: 81920, memory_free: 40960, uuid: 'GPU-003', cuda_compute_capability: '8.0' },
+          { name: 'NVIDIA A100 80GB', memory_total: 81920, memory_free: 81920, uuid: 'GPU-004', cuda_compute_capability: '8.0' },
+          { name: 'NVIDIA A100 80GB', memory_total: 81920, memory_free: 81920, uuid: 'GPU-005', cuda_compute_capability: '8.0' },
+          { name: 'NVIDIA A100 80GB', memory_total: 81920, memory_free: 81920, uuid: 'GPU-006', cuda_compute_capability: '8.0' },
+        ],
+        system_info: {
+          os: 'Ubuntu 20.04',
+          cpu_count: 64,
+          memory_total: 524288,
+          python_version: '3.9.16',
+          cuda_version: '11.8',
+          docker_version: '23.0.6',
+        },
+        active_jobs: 2,
+        max_concurrent_jobs: 8,
+        completed_jobs: 128,
+        failed_jobs: 5,
+        last_heartbeat: new Date(Date.now() - 5000).toISOString(),
+        uptime_seconds: 86400 * 14,
+        created_at: '2024-02-01T08:00:00Z',
+      },
+      {
+        agent_id: 'agent-003',
+        name: 'Dev Machine',
+        status: 'offline',
+        is_online: false,
+        gpu_count: 1,
+        gpu_info: [
+          { name: 'NVIDIA RTX 3080', memory_total: 10240, memory_free: 0, uuid: 'GPU-007', cuda_compute_capability: '8.6' },
+        ],
+        system_info: {
+          os: 'Windows 11',
+          cpu_count: 16,
+          memory_total: 65536,
+          python_version: '3.11.4',
+          cuda_version: '12.0',
+          docker_version: '24.0.2',
+        },
+        active_jobs: 0,
+        max_concurrent_jobs: 2,
+        completed_jobs: 12,
+        failed_jobs: 1,
+        last_heartbeat: new Date(Date.now() - 3600000).toISOString(),
+        uptime_seconds: 0,
+        created_at: '2024-03-01T14:00:00Z',
+      },
+    ];
+
+    if (status) {
+      return agents.filter(a => a.status === status);
+    }
+    return agents;
+  },
+
+  async getAgentStats(agentId: string): Promise<Agent> {
+    await delay(500);
+    const agents = await this.getAgents();
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (!agent) throw new Error('Agent not found');
+    return agent;
+  },
+
+  async getAgentJobs(agentId: string): Promise<AgentJob[]> {
+    await delay(400);
+    if (agentId === 'agent-002') {
+      return [
+        {
+          job_id: 'job-001',
+          training_session_id: 'ts-001',
+          model_version_id: 'mv-001',
+          status: 'running',
+          progress: 67.5,
+          framework: 'PyTorch',
+          task: 'Object Detection',
+          started_at: new Date(Date.now() - 3600000).toISOString(),
+        },
+        {
+          job_id: 'job-002',
+          training_session_id: 'ts-002',
+          model_version_id: 'mv-002',
+          status: 'running',
+          progress: 23.1,
+          framework: 'PyTorch',
+          task: 'Image Classification',
+          started_at: new Date(Date.now() - 1800000).toISOString(),
+        },
+      ];
+    }
+    return [];
+  },
+
+  async registerAgent(data: { name: string; gpu_info: any[]; system_info: any }): Promise<RegisterAgentResponse> {
+    await delay(1200);
+    const agentId = `agent-${Math.random().toString(36).substr(2, 9)}`;
+    return {
+      agent_id: agentId,
+      name: data.name,
+      api_key: `key_${Math.random().toString(36).substr(2, 16)}`,
+      secret_key: `secret_${Math.random().toString(36).substr(2, 32)}`,
+      install_command: `curl -fsSL https://platform.example.com/agents/install.sh | bash -s -- --api-url https://api.platform.example.com --key key_abc123 --secret secret_xyz789 --id ${agentId}`,
+      status: 'pending',
+    };
+  },
+
+  async deleteAgent(agentId: string): Promise<void> {
+    await delay(600);
+  },
+
+  async regenerateAgentKey(agentId: string): Promise<RegisterAgentResponse> {
+    await delay(800);
+    return {
+      agent_id: agentId,
+      name: 'Agent',
+      api_key: `key_${Math.random().toString(36).substr(2, 16)}`,
+      secret_key: `secret_${Math.random().toString(36).substr(2, 32)}`,
+      install_command: `curl -fsSL https://platform.example.com/agents/install.sh | bash -s -- --api-url https://api.platform.example.com --key key_newkey --secret secret_newsecret --id ${agentId}`,
+      status: 'ready',
+    };
+  },
+
+  async revokeAgentKey(keyId: string): Promise<void> {
+    await delay(500);
   },
 };
 
