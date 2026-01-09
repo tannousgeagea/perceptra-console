@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/ui/card';
 import { Button } from '@/components/ui/ui/button';
 import { Badge } from '@/components/ui/ui/badge';
@@ -29,7 +29,21 @@ const statusConfig = {
 export function AgentCard({ agent, jobs, onDelete, onRegenerateKey, onRefresh }: AgentCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showJobs, setShowJobs] = useState(false);
+  const [pulse, setPulse] = useState(false);
+  const prevStatusRef = useRef(agent.status);
+  const prevHeartbeatRef = useRef(agent.last_heartbeat);
   
+  // Detect status changes and trigger pulse animation
+  useEffect(() => {
+    if (prevStatusRef.current !== agent.status || 
+        prevHeartbeatRef.current !== agent.last_heartbeat) {
+      setPulse(true);
+      const timer = setTimeout(() => setPulse(false), 1000);
+      prevStatusRef.current = agent.status;
+      prevHeartbeatRef.current = agent.last_heartbeat;
+      return () => clearTimeout(timer);
+    }
+  }, [agent.status, agent.last_heartbeat]);
   const statusInfo = statusConfig[agent.status];
   const StatusIcon = statusInfo.icon;
 
@@ -47,22 +61,42 @@ export function AgentCard({ agent, jobs, onDelete, onRegenerateKey, onRefresh }:
   };
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
+    <Card className={cn(
+      "overflow-hidden transition-all duration-300 hover:shadow-md",
+      pulse && "ring-2 ring-primary/50 shadow-lg shadow-primary/10"
+    )}>      
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-lg",
+              "relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-300",
               agent.is_online ? "bg-primary/10" : "bg-muted"
             )}>
-              <Server className={cn("h-5 w-5", agent.is_online ? "text-primary" : "text-muted-foreground")} />
+              <Server className={cn(
+                "h-5 w-5 transition-colors duration-300", 
+                agent.is_online ? "text-primary" : "text-muted-foreground"
+              )} />
+              {/* Live indicator */}
+              {agent.is_online && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+              )}
             </div>
             <div>
               <CardTitle className="text-base">{agent.name}</CardTitle>
               <p className="text-xs text-muted-foreground font-mono">{agent.agent_id}</p>
             </div>
           </div>
-          <Badge variant="outline" className={cn("gap-1", statusInfo.className)}>
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "gap-1 transition-all duration-300",
+              statusInfo.className,
+              pulse && "scale-110"
+            )}
+          >
             <StatusIcon className={cn("h-3 w-3", agent.status === 'busy' && "animate-spin")} />
             {statusInfo.label}
           </Badge>
@@ -92,9 +126,15 @@ export function AgentCard({ agent, jobs, onDelete, onRegenerateKey, onRefresh }:
 
         {/* Last Heartbeat */}
         {agent.last_heartbeat && (
-          <p className="text-xs text-muted-foreground">
-            Last seen: {formatDistanceToNow(new Date(agent.last_heartbeat), { addSuffix: true })}
-          </p>
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "h-1.5 w-1.5 rounded-full transition-colors duration-300",
+              agent.is_online ? "bg-emerald-500" : "bg-muted-foreground"
+            )} />
+            <p className="text-xs text-muted-foreground">
+              Last heartbeat: {formatDistanceToNow(new Date(agent.last_heartbeat), { addSuffix: true })}
+            </p>
+          </div>
         )}
 
         {/* Expandable Details */}
