@@ -41,9 +41,14 @@ export interface AgentListItem {
   status: AgentStatus;
   is_online: boolean;
   gpu_count: number;
+  gpu_info: GPUInfo[];
+  system_info: SystemInfo;
   active_jobs: number;
   max_concurrent_jobs: number;
   last_heartbeat?: string;
+  uptime_seconds?: number;
+  completed_jobs: number;
+  failed_jobs: number;
   created_at: string;
 }
 

@@ -10,10 +10,9 @@ import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
 import { Label } from '@/components/ui/ui/label';
 import { toast } from 'sonner';
-import { api } from '@/components/compute/api';
+import { useRegisterAgent } from '@/hooks/useAgents';
 import { RegisterAgentResponse, GPUInfo, SystemInfo } from '@/types/agent';
 import { Copy, Check, Terminal, Plus, Trash2, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface AgentRegistrationModalProps {
   open: boolean;
@@ -40,7 +39,13 @@ export function AgentRegistrationModal({ open, onOpenChange, onSuccess }: AgentR
   });
   
   const [result, setResult] = useState<RegisterAgentResponse | null>(null);
-
+  const registerAgent = useRegisterAgent({
+    onSuccess: (data) => {
+      setResult(data);
+      setStep('result');
+      onSuccess(data);
+    },
+  });
   const handleAddGpu = () => {
     setGpus([...gpus, { name: '', memory_total: 0, memory_free: 0, uuid: '', cuda_compute_capability: '' }]);
   };
@@ -63,14 +68,11 @@ export function AgentRegistrationModal({ open, onOpenChange, onSuccess }: AgentR
 
     setLoading(true);
     try {
-      const response = await api.registerAgent({
+      registerAgent.mutate({
         name: name.trim(),
         gpu_info: gpus.filter(g => g.name),
         system_info: systemInfo,
       });
-      setResult(response);
-      setStep('result');
-      onSuccess(response);
       toast.success('Agent registered successfully');
     } catch {
       toast.error('Failed to register agent');

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/ui/card';
+import { Card, CardContent } from '@/components/ui/ui/card';
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/ui/select';
 import { toast } from 'sonner';
-import { api } from '@/components/compute/api';
 import { Agent, AgentJob, RegisterAgentResponse, AgentStatus } from '@/types/agent';
-import { Plus, Search, Server, RefreshCw, Loader2 } from 'lucide-react';
+import { Plus, Search, Server, RefreshCw, Loader2, Radio, Pause, Play } from 'lucide-react';
 import { AgentCard } from './AgentCard';
 import { AgentRegistrationModal } from './AgentRegistrationModal';
 import {
@@ -19,65 +18,69 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/ui/alert-dialog';
+import { formatDistanceToNow } from 'date-fns';
+import QueryState from '@/components/common/QueryState';
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/ui/tooltip';
+
+import { 
+  useAgents,
+  useDeleteAgent,
+  useRegenerateAPIKey,
+} from '@/hooks/useAgents';
 
 export function AgentManagement() {
-  const [agents, setAgents] = useState<Agent[]>([]);
   const [jobs, setJobs] = useState<Record<string, AgentJob[]>>({});
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<AgentStatus | 'all'>('all');
+  const [isPolling, setIsPolling] = useState(true);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const [regenerateResult, setRegenerateResult] = useState<RegisterAgentResponse | null>(null);
+  const deleteAgentMutation = useDeleteAgent({
+    onSuccess: () => {
+      setDeleteAgentId(null);
+    },
+  });
 
-  useEffect(() => {
-    loadAgents();
-  }, []);
-
-  const loadAgents = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getAgents(statusFilter === 'all' ? undefined : statusFilter);
-      setAgents(data);
-      
-      // Load jobs for each agent
-      const jobsMap: Record<string, AgentJob[]> = {};
-      for (const agent of data) {
-        if (agent.active_jobs > 0) {
-          const agentJobs = await api.getAgentJobs(agent.agent_id);
-          jobsMap[agent.agent_id] = agentJobs;
-        }
-      }
-      setJobs(jobsMap);
-    } catch {
-      toast.error('Failed to load agents');
-    } finally {
-      setLoading(false);
+  const regenerateKey = useRegenerateAPIKey({
+    onSuccess: (data) => {
+      // Show new secret key to user (only shown once!)
+      setRegenerateResult(data);
     }
-  };
+  });
 
-  const handleRefresh = async (agentId: string) => {
-    try {
-      const agent = await api.getAgentStats(agentId);
-      setAgents(prev => prev.map(a => a.agent_id === agentId ? agent : a));
-      
-      if (agent.active_jobs > 0) {
-        const agentJobs = await api.getAgentJobs(agentId);
-        setJobs(prev => ({ ...prev, [agentId]: agentJobs }));
-      }
-      
-      toast.success('Agent refreshed');
-    } catch {
-      toast.error('Failed to refresh agent');
+  const {
+    data: agents = [],
+    isLoading,
+    isError,
+    refetch,
+    dataUpdatedAt: lastUpdated,
+  } = useAgents(
+    { status: statusFilter === 'all' ? undefined : statusFilter },
+    {
+      pollingInterval: isPolling ? 10_000 : false,
     }
+  );
+
+  const startPolling = () => setIsPolling(true);
+  const stopPolling = () => setIsPolling(false);
+
+  const handleRefresh = async () => {
+    await refetch();
+    toast.success('Agents refreshed');
   };
 
   const handleDelete = async () => {
     if (!deleteAgentId) return;
     
     try {
-      await api.deleteAgent(deleteAgentId);
-      setAgents(prev => prev.filter(a => a.agent_id !== deleteAgentId));
+      deleteAgentMutation.mutate(deleteAgentId);
       toast.success('Agent deleted');
     } catch {
       toast.error('Failed to delete agent');
@@ -88,8 +91,7 @@ export function AgentManagement() {
 
   const handleRegenerateKey = async (agentId: string) => {
     try {
-      const result = await api.regenerateAgentKey(agentId);
-      setRegenerateResult(result);
+      regenerateKey.mutate(agentId)
       toast.success('API key regenerated');
     } catch {
       toast.error('Failed to regenerate key');
@@ -98,8 +100,24 @@ export function AgentManagement() {
 
   const handleRegistrationSuccess = (response: RegisterAgentResponse) => {
     // Reload agents to get the new one
-    loadAgents();
+    // loadAgents();
+    console.log(response)
   };
+
+
+  if (isLoading || isError || !agents) {
+    return (
+      <>
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          loadingMessage="Loading annotation classes..."
+          errorMessage="Failed to fetch annotation classes. Please try again."
+        />
+      </>
+    )
+  }
 
   const filteredAgents = agents.filter(agent => {
     const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -200,13 +218,68 @@ export function AgentManagement() {
             <SelectItem value="error">Error</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="icon" onClick={loadAgents}>
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
+        {/* Polling Controls */}
+        <TooltipProvider>
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2">
+                  <Radio className={`h-3.5 w-3.5 ${isPolling ? 'text-emerald-500 animate-pulse' : 'text-muted-foreground'}`} />
+                  <span className="text-xs text-muted-foreground">
+                    {isPolling ? 'Live' : 'Paused'}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isPolling ? 'Auto-refreshing every 10s' : 'Live updates paused'}
+              </TooltipContent>
+            </Tooltip>
+            
+            <div className="h-4 w-px bg-border" />
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  onClick={isPolling ? stopPolling : startPolling}
+                >
+                  {isPolling ? (
+                    <Pause className="h-3.5 w-3.5" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isPolling ? 'Pause live updates' : 'Resume live updates'}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" onClick={handleRefresh}>
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Refresh now</p>
+              {lastUpdated && (
+                <p className="text-xs text-muted-foreground">
+                  Last updated: {formatDistanceToNow(lastUpdated, { addSuffix: true })}
+                </p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Agent List */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
