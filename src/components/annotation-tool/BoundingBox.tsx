@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCoordinates } from '@/hooks/annotation/useCoordinates';
 
 interface Box {
@@ -25,13 +25,13 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
   const [resizing, setResizing] = useState<string | null>(null);
   const { getScaledCoordinates } = useCoordinates();
 
-  const handleMouseDown = (e: React.MouseEvent, type: string | null = null) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, type: string | null = null) => {
     if (tool !== 'move') return;
     
     e.stopPropagation();
     onSelect();
 
-    const { x, y} = getScaledCoordinates(e.clientX, e.clientY);
+    const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
 
     if (type) {
       setResizing(type);
@@ -43,15 +43,12 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
       x: x - box.x,
       y: y - box.y
     });
-  };
+  }, [tool, onSelect, getScaledCoordinates, box.x, box.y]);
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging && !resizing) return;
 
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
-
-    console.log("X ", x)
-    console.log("Y", y)
 
     if (isDragging) {
       onUpdate(box.id, {
@@ -90,12 +87,12 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
           break;
       }
     }
-  };
+  }, [isDragging, resizing, getScaledCoordinates, box.id, box.x, box.y, box.width, box.height, dragStart.x, dragStart.y, onUpdate]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setResizing(null);
-  };
+  }, []);
 
   useEffect(() => {
     if (isDragging || resizing) {
@@ -106,7 +103,11 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, resizing]);
+  }, [isDragging, resizing, handleMouseMove, handleMouseUp]);
+
+  useEffect(() => {
+    console.log(`Box ${box.id} rendered`);
+  });
 
   const boxClasses = [
     "absolute border-2 cursor-move",
@@ -154,16 +155,20 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
           />
         </>
       )}
-      {/* {box.label && (
-        <div 
-          className="absolute text-white py-[2px] px-[4px] rounded-[2px] text-[10px]"
-          style={{background: `${box.color}`}}
-        >
-          {box.label}
-        </div>
-      )} */}
     </div>
   );
 };
 
-export default BoundingBox;
+// CRITICAL: Memoization with proper comparison
+export default React.memo(BoundingBox, (prev, next) => {
+  return (
+    prev.box.id === next.box.id &&
+    prev.box.x === next.box.x &&
+    prev.box.y === next.box.y &&
+    prev.box.width === next.box.width &&
+    prev.box.height === next.box.height &&
+    prev.box.color === next.box.color &&
+    prev.isSelected === next.isSelected &&
+    prev.tool === next.tool
+  );
+});

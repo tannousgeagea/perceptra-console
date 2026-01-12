@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAnnotation, Box } from '@/contexts/AnnotationContext';
 import { useDraw } from '@/hooks/useDraw';
-import { useDeleteAnnotation } from '@/hooks/useAnnotations';
 import { toast } from 'sonner';
 import AnnotationEditor from './AnnotationEditor';
 import GuideLines from './GuideLines';
@@ -13,14 +12,8 @@ import { useZoom } from '@/hooks/useZoom';
 import { ProjectImageOut } from '@/types/image';
 import { useClasses } from '@/hooks/useClasses';
 import QueryState from '@/components/common/QueryState';
-import { useCreateAnnotation, useAnnotations } from '@/hooks/useAnnotations';
+import { useCreateAnnotation, useDeleteAnnotation, useAnnotations } from '@/hooks/useAnnotations';
 import { useSAMSession } from '@/hooks/useSAMSession';
-
-interface Image {
-  image_id: string;
-  image_url: string;
-  project_id: string;
-}
 
 interface CanvasProps {
   image: ProjectImageOut;
@@ -40,7 +33,6 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     setBoxes,
     setSelectedBox,
     setSelectedPolygon,
-    addPointToCurrentPolygon,
   } = useAnnotation();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -70,7 +62,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   );
 
   const [annotationStartTime, setAnnotationStartTime] = useState<number | null>(null);
-  const { mutate: createAnnotation, isPending } = useCreateAnnotation(
+  const { mutate: createAnnotation } = useCreateAnnotation(
     projectId!,
     Number(image.image.id)
   );
@@ -78,6 +70,10 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   // Track if the control key is pressed
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isAltPressed, setIsAltPressed] = useState(false);
+
+  // CRITICAL FIX: Only sync data layer ONCE on initial mount
+  const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   const {
     isDragging,
@@ -94,7 +90,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   });
   
   useEffect(() => {
-    if (annotationsData?.annotations) {
+    if (annotationsData?.annotations && !hasSyncedInitial && !isDirty) {
       setBoxes(annotationsData.annotations.map(ann => ({
         id: ann.annotation_uid,
         x: ann.data.x,
@@ -105,8 +101,15 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
         color: ann.color,
         class_id: ann.class_id,
       })));
+      setHasSyncedInitial(true);
     }
-  }, [annotationsData, setBoxes]);
+  }, [annotationsData, hasSyncedInitial, isDirty, setBoxes]);
+
+  // Reset sync state when image changes
+  useEffect(() => {
+    setHasSyncedInitial(false);
+    setIsDirty(false);
+  }, [image.image.id]);
 
   const getRandomColor = (): string => {
     const letters = "0123456789ABCDEF";
@@ -147,7 +150,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
         });
 
         setAnnotationStartTime(null);
-        // await saveAnnotation(annotation, projectId!, image.image.image_id);
+        setIsDirty(false); // Mark as saved
       }
     }
   };
@@ -167,11 +170,13 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     }
   };
 
-  const updateBoxPosition = (id: string, updates: Partial<Box>) => {
+  // FIXED: Wrap in useCallback to prevent recreating on every render
+  const updateBoxPosition = useCallback((id: string, updates: Partial<Box>) => {
     setBoxes(boxes.map((box: Box) => 
       box.id === id ? { ...box, ...updates } : box
     ));
-  };
+    setIsDirty(true); // Mark as dirty when user edits
+  }, [boxes, setBoxes]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -199,7 +204,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [tool, currentPolygon, addPointToCurrentPolygon]);
+  }, [tool, currentPolygon]);
 
   // Combined mouse event handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -246,7 +251,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     );
   }
 
-  // ADD: Render SAM suggestions as overlays
+  // Render SAM suggestions as overlays
   const renderSAMSuggestions = () => {
     if (!samSession.suggestions.length) return null;
     
@@ -274,7 +279,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
       ));
   };
 
-  // ADD: Render SAM points being collected
+  // Render SAM points being collected
   const renderSAMPoints = () => {
     if (!samSession.isSessionActive || !samSession.points.length) return null;
     
@@ -346,10 +351,10 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
               updateBoxPosition={updateBoxPosition}
             />
 
-            {/* SAM Suggestions - ADD THIS */}
+            {/* SAM Suggestions */}
             {renderSAMSuggestions()}
             
-            {/* SAM Points - ADD THIS */}
+            {/* SAM Points */}
             {renderSAMPoints()}
             
             <DrawingBox currentBox={currentBox} />

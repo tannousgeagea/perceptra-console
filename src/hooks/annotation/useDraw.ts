@@ -1,23 +1,38 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useCoordinates } from '@/hooks/annotation/useCoordinates';
 import { useAnnotation } from '@/contexts/AnnotationContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import type { useSAMSession } from '@/hooks/useSAMSession';
 
-export const useDraw = (boxes, setBoxes, setSelectedBox) => {
+type AnnotationTool = 'draw' | 'move' | 'polygon';
+
+export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
   const [isDrawing, setIsDrawing] = useState(false);
-  const [currentBox, setCurrentBox] = useState(null);
+  const [currentBox, setCurrentBox] = useState<{
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+  } | null>(null);
   const { getScaledCoordinates } = useCoordinates();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showGuideLines, setShowGuideLines] = useState(true);
 
+  // Get state from context
   const {
+    boxes,
+    setBoxes,
+    setSelectedBox,
     currentPolygon,
     addPointToCurrentPolygon,
     finalizeCurrentPolygon
   } = useAnnotation();
 
-  const startDrawing = (e, tool) => {
+  const startDrawing = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (tool !== 'draw') return;
+    
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
 
     const newBox = {
@@ -31,10 +46,11 @@ export const useDraw = (boxes, setBoxes, setSelectedBox) => {
 
     setCurrentBox(newBox);
     setIsDrawing(true);
-  };
+  }, [getScaledCoordinates]);
 
-  const draw = (e, tool) => {
+  const draw = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (!isDrawing || !currentBox || tool !== 'draw') return;
+    
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
 
     setCurrentBox({
@@ -42,26 +58,26 @@ export const useDraw = (boxes, setBoxes, setSelectedBox) => {
       width: x - currentBox.x,
       height: y - currentBox.y,
     });
-  };
+  }, [isDrawing, currentBox, getScaledCoordinates]);
 
-  const handleMouseMove = (e, tool) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
     setMousePosition({ x, y });
     
     // Call draw for when drawing is in progress
     draw(e, tool);
-  };
+  }, [getScaledCoordinates, draw]);
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     setShowGuideLines(true);
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setShowGuideLines(false);
     stopDrawing();
-  };
+  }, []);
 
-  const stopDrawing = () => {
+  const stopDrawing = useCallback(() => {
     if (isDrawing && currentBox && Math.abs(currentBox.width) > 0.00625 && Math.abs(currentBox.height) > 0.00625) {
       const normalizedBox = {
         ...currentBox,
@@ -69,52 +85,46 @@ export const useDraw = (boxes, setBoxes, setSelectedBox) => {
         y: Math.min(currentBox.y, currentBox.y + currentBox.height),
         width: Math.abs(currentBox.width),
         height: Math.abs(currentBox.height),
+        color: '', // Will be set on save
+        class_id: 0, // Will be set when class is selected
       };
       setBoxes([...boxes, normalizedBox]);
       setSelectedBox(normalizedBox.id);
     }
     setIsDrawing(false);
     setCurrentBox(null);
-  };
+  }, [isDrawing, currentBox, boxes, setBoxes, setSelectedBox]);
 
-  const handleCanvasClick = (e, tool) => {
+  const handleCanvasClick = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (tool !== 'polygon') return;
     
     e.stopPropagation();
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
     
+    // Double-click to finalize
     if (e.detail === 2 && currentPolygon && currentPolygon.length >= 2) {
       finalizeCurrentPolygon();
       toast.success('Polygon created');
     } else {
       addPointToCurrentPolygon({ x, y });
     }
-  };
+  }, [getScaledCoordinates, currentPolygon, addPointToCurrentPolygon, finalizeCurrentPolygon]);
 
-  const handleContextMenu = (e, tool) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     e.preventDefault();
     
     if (tool === 'polygon' && currentPolygon) {
       if (currentPolygon.length >= 3) {
         finalizeCurrentPolygon();
-        toast({
-          title: 'Polygon created',
-          variant: "success"
-        });
+        toast.success('Polygon created');
       } else {
-        toast({
-          title: "Polygon Failed",
-          description: "Need at least 3 points",
-          variant: "warning",
-
-      });
+        toast.error('Need at least 3 points for polygon');
       }
     }
-  };
+  }, [currentPolygon, finalizeCurrentPolygon]);
 
   return { 
     startDrawing, 
-    draw, 
     stopDrawing, 
     currentBox,
     currentPolygon,

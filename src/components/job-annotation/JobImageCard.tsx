@@ -37,7 +37,7 @@ export function JobImageCard({ image, size, handleClick }: JobImageCardProps) {
 
   return (
     <Card onClick={handleClick} className={cn(
-      'overflow-hidden transition-all hover:shadow-lg group',
+      'overflow-hidden transition-all hover:shadow-lg group cursor-pointer',
       isUpdating && 'opacity-50 pointer-events-none'
     )}>
       <div className={cn(
