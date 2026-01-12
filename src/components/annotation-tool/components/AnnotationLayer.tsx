@@ -61,4 +61,33 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   );
 };
 
-export default AnnotationLayer;
+// CRITICAL: Memoize to prevent unnecessary rerenders
+// Only rerender when boxes/polygons array changes, not on every parent render
+export default React.memo(AnnotationLayer, (prev, next) => {
+  // Check if boxes array has same items
+  if (prev.boxes.length !== next.boxes.length) return false;
+  
+  // Check if any box has changed
+  for (let i = 0; i < prev.boxes.length; i++) {
+    const prevBox = prev.boxes[i];
+    const nextBox = next.boxes[i];
+    if (
+      prevBox.id !== nextBox.id ||
+      prevBox.x !== nextBox.x ||
+      prevBox.y !== nextBox.y ||
+      prevBox.width !== nextBox.width ||
+      prevBox.height !== nextBox.height ||
+      prevBox.color !== nextBox.color
+    ) {
+      return false;
+    }
+  }
+  
+  // Check other props
+  return (
+    prev.selectedBox === next.selectedBox &&
+    prev.selectedPolygon === next.selectedPolygon &&
+    prev.tool === next.tool &&
+    prev.polygons.length === next.polygons.length
+  );
+});
