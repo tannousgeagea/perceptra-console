@@ -1,80 +1,57 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useCoordinates } from '@/hooks/annotation/useCoordinates';
-import { useAnnotation } from '@/contexts/AnnotationContext';
-import { toast } from '@/hooks/use-toast';
-import type { UseSAMSessionReturn } from '@/hooks/useSAMSession'; // ADD THIS TYPE
+import { useAnnotationState } from '@/contexts/AnnotationStateContext';
+import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
+import { toast } from 'sonner';
+import type { useSAMSession } from '@/hooks/useSAMSession';
+import { AnnotationTool } from '@/types/annotation';
 
-
-export interface Box {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label: string;
-  color: string;
-}
-
-export interface Point {
-  x: number;
-  y: number;
-}
-
-type Tool = 'draw' | 'polygon' | 'move';
-
-interface UseDrawReturn {
-  startDrawing: (e: React.MouseEvent<HTMLElement>, tool: Tool) => void;
-  draw: (e: React.MouseEvent<HTMLElement>, tool: Tool) => void;
-  stopDrawing: () => void;
-  currentBox: Box | null;
-  currentPolygon: Point[] | null;
-  handleMouseMove: (e: React.MouseEvent<HTMLElement>, tool: Tool) => void;
-  handleMouseEnter: () => void;
-  handleMouseLeave: () => void;
-  mousePosition: Point;
-  showGuideLines: boolean;
-  handleCanvasClick: (e: React.MouseEvent<HTMLElement>, tool: Tool) => void;
-  handleContextMenu: (e: React.MouseEvent<HTMLElement>, tool: Tool) => void;
-}
-
-export const useDraw = (
-  samSession?: ReturnType<typeof import('@/hooks/useSAMSession').useSAMSession>
-): UseDrawReturn => {
-  const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const [currentBox, setCurrentBox] = useState<Box | null>(null);
+export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentBox, setCurrentBox] = useState<{
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+  } | null>(null);
+  
   const { getScaledCoordinates } = useCoordinates();
-  const [mousePosition, setMousePosition] = useState<Point>({ x: 0, y: 0 });
-  const [showGuideLines, setShowGuideLines] = useState<boolean>(true);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [showGuideLines, setShowGuideLines] = useState(true);
 
-  const { 
-    boxes,
+  // Split context usage
+  const {
+    setSelectedBox,
     currentPolygon,
-    setBoxes,
-    setSelectedBox, 
-    addPointToCurrentPolygon, 
-    finalizeCurrentPolygon 
-  } = useAnnotation();
+    addPointToCurrentPolygon,
+    finalizeCurrentPolygon
+  } = useAnnotationState();
 
-  const startDrawing = (e: React.MouseEvent<HTMLElement>, tool: Tool) => {
+  const { addBox, getBoxesArray } = useAnnotationGeometry();
+
+  const startDrawing = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (tool !== 'draw') return;
+    
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
 
-    const newBox: Box = {
+    const newBox = {
       id: Date.now().toString(),
       x,
       y,
       width: 0,
       height: 0,
       label: '',
-      color: '',
     };
 
     setCurrentBox(newBox);
     setIsDrawing(true);
-  };
+  }, [getScaledCoordinates]);
 
-  const draw = (e: React.MouseEvent<HTMLElement>, tool: Tool) => {
+  const draw = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (!isDrawing || !currentBox || tool !== 'draw') return;
+    
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
 
     setCurrentBox({
@@ -82,113 +59,75 @@ export const useDraw = (
       width: x - currentBox.x,
       height: y - currentBox.y,
     });
-  };
+  }, [isDrawing, currentBox, getScaledCoordinates]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>, tool: Tool) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
     setMousePosition({ x, y });
-    // Update drawing if in progress
+    
+    // Call draw for when drawing is in progress
     draw(e, tool);
-  };
+  }, [getScaledCoordinates, draw]);
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     setShowGuideLines(true);
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setShowGuideLines(false);
     stopDrawing();
-  };
+  }, []);
 
-  const stopDrawing = () => {
-    if (
-      isDrawing &&
-      currentBox &&
-      Math.abs(currentBox.width) > 0.00625 &&
-      Math.abs(currentBox.height) > 0.00625
-    ) {
-      const normalizedBox: Box = {
+  const stopDrawing = useCallback(() => {
+    if (isDrawing && currentBox && Math.abs(currentBox.width) > 0.00625 && Math.abs(currentBox.height) > 0.00625) {
+      const normalizedBox = {
         ...currentBox,
         x: Math.min(currentBox.x, currentBox.x + currentBox.width),
         y: Math.min(currentBox.y, currentBox.y + currentBox.height),
         width: Math.abs(currentBox.width),
         height: Math.abs(currentBox.height),
+        color: '', // Will be set on save
+        class_id: 0, // Will be set when class is selected
       };
-
-      if (samSession?.isSessionActive) {
-        samSession.segmentWithBox({
-          x: normalizedBox.x,
-          y: normalizedBox.y,
-          width: normalizedBox.width,
-          height: normalizedBox.height,
-        });
-
-      } else {
-        setBoxes([...boxes, normalizedBox]);
-        setSelectedBox(normalizedBox.id);
-      };
-    };
+      addBox(normalizedBox);
+      setSelectedBox(normalizedBox.id);
+    }
     setIsDrawing(false);
     setCurrentBox(null);
-    setShowGuideLines(true);
-  };
+  }, [isDrawing, currentBox, addBox, setSelectedBox]);
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLElement>, tool: Tool) => {
-    // SAM point click mode (when session active and using draw tool)
-
-    console.log(tool)
-    console.log(samSession?.isSessionActive)
-    if (tool === 'draw' && samSession?.isSessionActive) {
-      e.stopPropagation();
-      const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
-      const isRightClick = e.button === 2;
-      
-      samSession.addPoint({
-        x,
-        y,
-        label: isRightClick ? 0 : 1, // 0 = negative, 1 = positive
-      });
-      return;
-    }
-
+  const handleCanvasClick = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (tool !== 'polygon') return;
+    
     e.stopPropagation();
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
-
+    
+    // Double-click to finalize
     if (e.detail === 2 && currentPolygon && currentPolygon.length >= 2) {
       finalizeCurrentPolygon();
-      toast({title: 'Polygon created'});
+      toast.success('Polygon created');
     } else {
       addPointToCurrentPolygon({ x, y });
     }
-  };
+  }, [getScaledCoordinates, currentPolygon, addPointToCurrentPolygon, finalizeCurrentPolygon]);
 
-  const handleContextMenu = (e: React.MouseEvent<HTMLElement>, tool: Tool) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     e.preventDefault();
-
+    
     if (tool === 'polygon' && currentPolygon) {
       if (currentPolygon.length >= 3) {
         finalizeCurrentPolygon();
-        toast({
-          title: 'Polygon created',
-          variant: 'success',
-        });
+        toast.success('Polygon created');
       } else {
-        toast({
-          title: 'Polygon Failed',
-          description: 'Need at least 3 points',
-          variant: 'warning',
-        });
+        toast.error('Need at least 3 points for polygon');
       }
     }
-  };
+  }, [currentPolygon, finalizeCurrentPolygon]);
 
   return { 
     startDrawing, 
-    draw, 
     stopDrawing, 
     currentBox,
-    currentPolygon,
     handleMouseMove, 
     handleMouseEnter, 
     handleMouseLeave, 

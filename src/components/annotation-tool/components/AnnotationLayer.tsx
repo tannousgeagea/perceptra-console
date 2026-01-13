@@ -1,7 +1,7 @@
 import React from 'react';
 import BoundingBox from '../BoundingBox';
 import PolygonAnnotation from './PolygonAnnotation';
-import { Box } from '@/contexts/AnnotationContext';
+import { Box } from '@/types/annotation';
 
 interface Point {
   x: number;

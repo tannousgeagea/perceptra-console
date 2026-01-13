@@ -1,5 +1,5 @@
 import React from "react";
-import { useAnnotation } from "@/contexts/AnnotationContext";
+import { useAnnotationState } from "@/contexts/AnnotationStateContext";
 import ApproveButton from "./ButtonApprove";
 import DeleteButton from "./ButtonDelete";
 import MarkAsNullButton from "./ButtonMarkNull";
@@ -44,10 +44,9 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
   hasPreviousImage,
 }) => {
 
-  const { selectedBox } = useAnnotation();
+  const { selectedBox } = useAnnotationState();
   // const samSession = useSAMSession(projectId!, currentImage?.id || "");
   
-  console.log(selectedBox)
   return (
     <aside className="h-full flex flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white border-l border-slate-800 flex-shrink-0">
       <div className="py-4 border-b border-slate-800 flex justify-center">

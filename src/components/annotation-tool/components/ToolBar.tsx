@@ -1,12 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/ui/button';
 import { Move, Square, Hexagon } from 'lucide-react';
-import { useAnnotation } from '@/contexts/AnnotationContext';
+import { useAnnotationState } from "@/contexts/AnnotationStateContext";
 import KeyboardShortcuts from '../KeyboardShortcuts';
 import { Separator } from '@/components/ui/ui/separator';
 
 const ToolBar = () => {
-  const { tool, setTool } = useAnnotation();
+  const { tool, setTool } = useAnnotationState();
 
   return (
     <div className="p-4 border-b border-border bg-background">

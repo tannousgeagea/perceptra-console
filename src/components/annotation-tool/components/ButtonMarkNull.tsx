@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/ui/button';
 import { Ban, Loader } from 'lucide-react';
 import { ProjectImageOut } from '@/types/image';
 import { useMarkImageAsNull } from '@/hooks/useProjectImageUpdate';
-import { useAnnotation } from '@/contexts/AnnotationContext';
+import { useAnnotationState } from "@/contexts/AnnotationStateContext";
+import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { toast } from 'sonner';
 
 interface MarkAsNullButtonProps {
@@ -15,7 +16,8 @@ interface MarkAsNullButtonProps {
 
 const MarkAsNullButton:React.FC<MarkAsNullButtonProps> = ( {currentImage, projectId, goToNextImage, className} ) => {
   const { mutate: markNull, isPending } = useMarkImageAsNull(projectId);
-  const { setBoxes, setSelectedBox } = useAnnotation();
+  const { setSelectedBox } = useAnnotationState();
+  const { setAllBoxes } = useAnnotationGeometry();
 
   const handleMarkAsNull = async () => {
     try {
@@ -28,7 +30,7 @@ const MarkAsNullButton:React.FC<MarkAsNullButtonProps> = ( {currentImage, projec
         });
 
         // Reset the current annotations
-        setBoxes([]);
+        setAllBoxes([]);
         setSelectedBox(null);
         
         // Move to the next image
