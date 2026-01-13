@@ -11,8 +11,7 @@ import {
     Layers3
 } from "lucide-react"
 import { ProjectImageOut } from "@/types/image";
-import { Box } from "@/types/annotation";
-import { useAnnotation } from "@/contexts/AnnotationContext";
+import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { toast } from "sonner";
 
 
@@ -36,8 +35,8 @@ const InfoRow: React.FC<{ icon: React.ReactNode; label: string; value?: React.Re
 );
 
 export const AnnotationInfo: React.FC<AnnotationInfpProps>  = ({ image }) => {
-
-    const { boxes } = useAnnotation();
+    const { getBoxesArray } = useAnnotationGeometry();
+    const boxes = getBoxesArray();
     const handleCopy = async () => {
         await navigator.clipboard.writeText(image.image.image_id);
         toast.info("Copied image ID!");

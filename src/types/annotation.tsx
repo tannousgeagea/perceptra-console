@@ -1,16 +1,19 @@
 
-interface Point {
+export interface Point {
   x: number;
   y: number;
 }
 
-interface Polygon {
+export interface Polygon {
   id: string;
   points: Point[];
   label: string;
+  color?: string;
+  class_id?: number;
 }
 
-type AnnotationTool = 'draw' | 'move' | 'polygon';
+
+export type AnnotationTool = 'draw' | 'move' | 'polygon';
 
 export interface Box {
   id: string;

@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAnnotation } from "@/contexts/AnnotationContext";
+import { useAnnotationState } from "@/contexts/AnnotationStateContext";
+import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { useNavigate } from "react-router-dom";
 
 interface AnnotationControlsProps {
@@ -33,7 +34,8 @@ const AnnotationControls = memo(
     backTo = "/projects",
   }: AnnotationControlsProps) => {
     const navigate = useNavigate();
-    const { setBoxes, setSelectedBox } = useAnnotation();
+    const { setSelectedBox } = useAnnotationState();
+    const { setAllBoxes } = useAnnotationGeometry();
     const [transitionKey, setTransitionKey] = useState<number>(0);
 
     useEffect(() => {
@@ -47,7 +49,7 @@ const AnnotationControls = memo(
 
     const handlePrev = () => {
       if (current > 1) {
-        setBoxes([]);
+        setAllBoxes([]);
         setSelectedBox(null);
         setTransitionKey((k) => k + 1);
         onPrevious();
@@ -58,7 +60,7 @@ const AnnotationControls = memo(
       if (current < total) {
 
         console.log(current, total)
-        setBoxes([]);
+        setAllBoxes([]);
         setSelectedBox(null);
         setTransitionKey((k) => k + 1);
         onNext();

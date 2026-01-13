@@ -1,11 +1,12 @@
 import React from 'react';
 
 import { Card } from '@/components/ui/ui/card';
-import { useAnnotation } from '@/contexts/AnnotationContext';
+import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 
 
 const LabelPanel: React.FC = () => {
-  const { boxes } = useAnnotation();
+  const { getBoxesArray } = useAnnotationGeometry();
+  const boxes = getBoxesArray();
 
   // 1. Group boxes by label
   const labelGroups = boxes.reduce((acc, box) => {

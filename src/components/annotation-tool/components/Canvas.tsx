@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAnnotation, Box } from '@/contexts/AnnotationContext';
+import { useAnnotationState } from '@/contexts/AnnotationStateContext';
+import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
+import { Box } from '@/types/annotation';
 import { useDraw } from '@/hooks/useDraw';
 import { toast } from 'sonner';
 import AnnotationEditor from './AnnotationEditor';
@@ -23,17 +25,24 @@ interface CanvasProps {
   
 
 const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
+
+
+  // Split context usage - only subscribe to what you need
   const {
-    boxes,
-    polygons,
     selectedBox,
     selectedPolygon,
     tool,
     currentPolygon,
-    setBoxes,
     setSelectedBox,
     setSelectedPolygon,
-  } = useAnnotation();
+  } = useAnnotationState();
+
+   const {
+    updateBox,
+    setAllBoxes,
+    getBoxesArray,
+    getPolygonsArray,
+  } = useAnnotationGeometry(); 
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -91,7 +100,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   
   useEffect(() => {
     if (annotationsData?.annotations && !hasSyncedInitial && !isDirty) {
-      setBoxes(annotationsData.annotations.map(ann => ({
+      const boxes = annotationsData.annotations.map(ann => ({
         id: ann.annotation_uid,
         x: ann.data.x,
         y: ann.data.y,
@@ -100,10 +109,11 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
         label: ann.class_name,
         color: ann.color,
         class_id: ann.class_id,
-      })));
+      }));
+      setAllBoxes(boxes);
       setHasSyncedInitial(true);
     }
-  }, [annotationsData, hasSyncedInitial, isDirty, setBoxes]);
+  }, [annotationsData, hasSyncedInitial, isDirty, setAllBoxes]);
 
   // Reset sync state when image changes
   useEffect(() => {
@@ -121,22 +131,23 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   };
 
   const handleSave = async () => {
-    if (image) {
+    if (image && selectedBox) {
+      const boxes = getBoxesArray();
       const annotation = boxes.find((b: Box) => b.id === selectedBox);
+      
       if (annotation) {
         if (!annotation.color) {
           const color = getRandomColor();
-          annotation.color = color;
+          updateBox(annotation.id, { color });
         }
       
-        // Calculate annotation time
         const annotationTimeSeconds = annotationStartTime 
           ? (Date.now() - annotationStartTime) / 1000 
           : null;
 
         createAnnotation({
           annotation_type: 'box',
-          annotation_class_name: annotation.label, // person class
+          annotation_class_name: annotation.label,
           data: [
             annotation.x, 
             annotation.y, 
@@ -150,7 +161,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
         });
 
         setAnnotationStartTime(null);
-        setIsDirty(false); // Mark as saved
+        setIsDirty(false);
       }
     }
   };
@@ -170,13 +181,11 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     }
   };
 
-  // FIXED: Wrap in useCallback to prevent recreating on every render
+  // CRITICAL: Now uses Map.set internally - O(1) operation
   const updateBoxPosition = useCallback((id: string, updates: Partial<Box>) => {
-    setBoxes(boxes.map((box: Box) => 
-      box.id === id ? { ...box, ...updates } : box
-    ));
-    setIsDirty(true); // Mark as dirty when user edits
-  }, [boxes, setBoxes]);
+    updateBox(id, updates);
+    setIsDirty(true);
+  }, [updateBox]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -341,8 +350,8 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
             />
 
             <AnnotationLayer
-              boxes={boxes}
-              polygons={polygons}
+              boxes={getBoxesArray()}
+              polygons={getPolygonsArray()}
               selectedBox={selectedBox}
               selectedPolygon={selectedPolygon}
               tool={tool}

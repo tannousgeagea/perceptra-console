@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useCoordinates } from '@/hooks/annotation/useCoordinates';
-import { useAnnotation } from '@/contexts/AnnotationContext';
+import { useAnnotationState } from '@/contexts/AnnotationStateContext';
+import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
 import { toast } from 'sonner';
 import type { useSAMSession } from '@/hooks/useSAMSession';
 
@@ -22,13 +23,13 @@ export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
 
   // Get state from context
   const {
-    boxes,
-    setBoxes,
     setSelectedBox,
     currentPolygon,
     addPointToCurrentPolygon,
     finalizeCurrentPolygon
-  } = useAnnotation();
+  } = useAnnotationState();
+
+  const { addBox, getBoxesArray } = useAnnotationGeometry();
 
   const startDrawing = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (tool !== 'draw') return;
@@ -88,12 +89,12 @@ export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
         color: '', // Will be set on save
         class_id: 0, // Will be set when class is selected
       };
-      setBoxes([...boxes, normalizedBox]);
+      addBox(normalizedBox);;
       setSelectedBox(normalizedBox.id);
     }
     setIsDrawing(false);
     setCurrentBox(null);
-  }, [isDrawing, currentBox, boxes, setBoxes, setSelectedBox]);
+  }, [isDrawing, currentBox, addBox, setSelectedBox]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
     if (tool !== 'polygon') return;

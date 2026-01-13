@@ -1,15 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Trash2, Save } from "lucide-react";
-import { useAnnotation } from "@/contexts/AnnotationContext";
+import { useAnnotationState } from "@/contexts/AnnotationStateContext";
+import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { AnnotationClass } from "@/types/classes";
-
-// interface AnnotationClass {
-//   id: string;
-//   label: string;
-//   color: string;
-//   name: string;
-// }
 
 interface AnnotationEditorProps {
   classes: AnnotationClass[];
@@ -23,19 +17,30 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
   onSaveClass,
 }) => {
   const [originalBox, setOriginalBox] = useState<any | null>(null);
+  const [isNewBox, setIsNewBox] = useState(false);
   const [className, setClassName] = useState<string>('');
   const [selectedClass, setSelectedClass] = useState<AnnotationClass | null>(null);
   const [visible, setVisible] = useState<boolean>(true);
-  const { boxes, selectedBox, setSelectedBox, setBoxes } = useAnnotation();
+  const { selectedBox, setSelectedBox } = useAnnotationState();
+  const { getBoxesArray, updateBox, deleteBox: removeBoxLocal } = useAnnotationGeometry();
 
   useEffect(() => {
     if (selectedBox) {
-      const box = boxes.find((box) => box.id === selectedBox);
-      if (!originalBox) {
-        setOriginalBox({ ...box });
-      }
+      const boxes = getBoxesArray(); // Get inside effect      
+      const box = boxes.find((b) => b.id === selectedBox);
+      
 
       if (box) {
+        if (!originalBox) {
+          setOriginalBox({ ...box });
+
+          if (!box.label || box.label.trim() === "") {
+            setIsNewBox(true);
+          } else {
+            setIsNewBox(false);
+          }
+        }
+
         setClassName(box.label);
         setSelectedClass({
           id: box.id,
@@ -50,7 +55,7 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
     } else {
       setClassName('');
     }
-  }, [selectedBox, boxes]);
+  }, [selectedBox]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,7 +65,7 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBox, boxes]);
+  }, [selectedBox]);
 
   const handleSaveClass = () => {
     if (selectedClass) {
@@ -74,37 +79,37 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
   };
 
   const updateLabel = (id: string, label: string) => {
-    setBoxes(
-      boxes.map((box) =>
-        box.id === id ? { ...box, label } : box
-      )
-    );
+    updateBox(id, { label });
+    setClassName(label);
   };
 
   const updateLabelAndColor = (id: string, label: string, color: string) => {
-    setBoxes(
-      boxes.map((box) =>
-        box.id === id ? { ...box, label, color } : box
-      )
-    );
+    updateBox(id, { label, color });
+    setClassName(label);
+    setSelectedClass({          // ADD THIS
+      id,
+      color,
+      name: label,
+      count: 0,
+    });
   };
 
 
   const handleClose = () => {
-    if (originalBox) {
-      const updatedBoxes = boxes.map((b) =>
-        b.id === originalBox.id ? originalBox : b
-      );
-      setBoxes(updatedBoxes);
+
+    if (isNewBox && selectedBox) {
+      removeBoxLocal(selectedBox)
+    } else if (originalBox) {
+      updateBox(originalBox.id, originalBox);
     }
-    
-    setOriginalBox(null)
+    setOriginalBox(null);
     setVisible(false);
+    setIsNewBox(false);
     setSelectedBox(null);
   };
 
   const deleteBox = (id: string) => {
-    setBoxes(boxes.filter((box) => box.id !== id));
+    // Don't manipulate boxes here - deletion handled by parent
     onDeleteClass(id);
     setSelectedBox(null);
     setVisible(false);

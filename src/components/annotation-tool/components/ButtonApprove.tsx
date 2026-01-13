@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/ui/button';
 import { CheckCircle, Loader } from 'lucide-react';
 import { useReviewProjectImage } from '@/hooks/useProjectImageUpdate';
-import { useAnnotation } from '@/contexts/AnnotationContext';
 import { toast } from '@/hooks/use-toast';
 import { ProjectImageOut } from '@/types/image';
+import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
 
 interface ApproveButtonProps {
   currentImage: ProjectImageOut;
@@ -15,7 +15,8 @@ interface ApproveButtonProps {
 
 const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, goToNextImage, className} ) => {
   const { mutate: reviewImage, isPending } = useReviewProjectImage(projectId!);
-  const { boxes, setBoxes, setSelectedBox } = useAnnotation();
+  const { getBoxesArray } = useAnnotationGeometry();
+  const boxes = getBoxesArray();
 
   const handleApprove = async () => {
     if (boxes.length === 0) {

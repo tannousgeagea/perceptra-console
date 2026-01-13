@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { AnnotationProvider } from '@/contexts/AnnotationContext';
+import { AnnotationProvider } from '@/contexts/AnnotationProvider';
 import ToolBar from './components/ToolBar';
 import Canvas from './components/Canvas';
 import LabelPanel from './LabelPanel';
