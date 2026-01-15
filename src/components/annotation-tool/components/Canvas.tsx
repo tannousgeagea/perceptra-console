@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAnnotationState } from '@/contexts/AnnotationStateContext';
 import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
 import { Box } from '@/types/annotation';
@@ -10,12 +11,19 @@ import GuideLines from './GuideLines';
 import CurrentPolygon from './CurrentPolygon';
 import DrawingBox from './DrawingBox';
 import AnnotationLayer from './AnnotationLayer';
+import SAMOverlay from './SAMOverlay';
 import { useZoom } from '@/hooks/useZoom';
 import { ProjectImageOut } from '@/types/image';
 import { useClasses } from '@/hooks/useClasses';
 import QueryState from '@/components/common/QueryState';
-import { useCreateAnnotation, useDeleteAnnotation, useAnnotations } from '@/hooks/useAnnotations';
+import { 
+  useCreateAnnotation, 
+  useDeleteAnnotation, 
+  useAnnotations,
+  CreateAnnotationPayload, 
+} from '@/hooks/useAnnotations';
 import { useSAMSession } from '@/hooks/useSAMSession';
+import { useDirtyStateGuard } from '@/hooks/useDirtyStateGuard';
 
 interface CanvasProps {
   image: ProjectImageOut;
@@ -26,6 +34,7 @@ interface CanvasProps {
 
 const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
 
+  const queryClient = useQueryClient();
 
   // Split context usage - only subscribe to what you need
   const {
@@ -73,7 +82,70 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   const [annotationStartTime, setAnnotationStartTime] = useState<number | null>(null);
   const { mutate: createAnnotation } = useCreateAnnotation(
     projectId!,
-    Number(image.image.id)
+    Number(image.image.id),
+    {
+      // Optimistically update cache before server responds
+      onMutate: async (newAnnotation: CreateAnnotationPayload) => {
+        // Cancel outgoing refetches
+        await queryClient.cancelQueries({ 
+          queryKey: ['annotations', projectId, Number(image.image.id)] 
+        });
+
+        // Snapshot previous value
+        const previousAnnotations = queryClient.getQueryData([
+          'annotations', 
+          projectId, 
+          Number(image.image.id)
+        ]);
+
+        // Optimistically update cache
+        queryClient.setQueryData(
+          ['annotations', projectId, Number(image.image.id)],
+          (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              annotations: [
+                ...old.annotations,
+                {
+                  annotation_uid: newAnnotation.annotation_uid,
+                  class_name: newAnnotation.annotation_class_name,
+                  color: getBoxesArray().find(b => b.id === newAnnotation.annotation_uid)?.color || '#888',
+                  class_id: getBoxesArray().find(b => b.id === newAnnotation.annotation_uid)?.class_id || 0,
+                  data: {
+                    x: newAnnotation.data[0],
+                    y: newAnnotation.data[1],
+                    width: newAnnotation.data[2] - newAnnotation.data[0],
+                    height: newAnnotation.data[3] - newAnnotation.data[1],
+                  },
+                  annotation_source: newAnnotation.annotation_source,
+                  confidence: newAnnotation.confidence,
+                }
+              ]
+            };
+          }
+        );
+
+        return { previousAnnotations };
+      },
+      
+      // On error, rollback
+      onError: (err, newAnnotation, context) => {
+        if (context?.previousAnnotations) {
+          queryClient.setQueryData(
+            ['annotations', projectId, Number(image.image.id)],
+            context.previousAnnotations
+          );
+        }
+        toast.error('Failed to save annotation');
+      },
+      
+      // On success, just mark as synced (no refetch needed)
+      onSuccess: () => {
+        toast.success('Annotation saved');
+        setIsDirty(false);
+      },
+    }
   );
 
   // Track if the control key is pressed
@@ -83,6 +155,11 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   // CRITICAL FIX: Only sync data layer ONCE on initial mount
   const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+
+  useDirtyStateGuard({ 
+    isDirty,
+    message: 'You have unsaved annotations. Leave without saving?' 
+  });
 
   const {
     isDragging,
@@ -98,6 +175,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     initialScale: 1,
   });
   
+  // Sync from server only once on initial load
   useEffect(() => {
     if (annotationsData?.annotations && !hasSyncedInitial && !isDirty) {
       const boxes = annotationsData.annotations.map(ann => ({
@@ -166,20 +244,60 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  // OPTIMISTIC DELETE
+  const handleDelete = useCallback(async (id: string) => {
     if (!projectId) {
-      toast.warning("Project ID is undefined")
+      toast.warning("Project ID is undefined");
       return;
     }
 
     if (id) {
-      deleteAnnotation({
-        projectId,
-        annotationId: id,
-        hardDelete: false
+      // Cancel queries
+      await queryClient.cancelQueries({ 
+        queryKey: ['annotations', projectId, Number(image.image.id)] 
       });
+
+      // Snapshot
+      const previousAnnotations = queryClient.getQueryData([
+        'annotations', 
+        projectId, 
+        Number(image.image.id)
+      ]);
+
+      // Optimistically remove from cache
+      queryClient.setQueryData(
+        ['annotations', projectId, Number(image.image.id)],
+        (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            annotations: old.annotations.filter((a: any) => a.annotation_uid !== id)
+          };
+        }
+      );
+
+      deleteAnnotation(
+        {
+          projectId,
+          annotationId: id,
+          hardDelete: false
+        },
+        {
+          onError: () => {
+            // Rollback on error
+            queryClient.setQueryData(
+              ['annotations', projectId, Number(image.image.id)],
+              previousAnnotations
+            );
+            toast.error('Failed to delete annotation');
+          },
+          onSuccess: () => {
+            toast.success('Annotation deleted');
+          }
+        }
+      );
     }
-  };
+  }, [projectId, image.image.id, deleteAnnotation, queryClient]);
 
   // CRITICAL: Now uses Map.set internally - O(1) operation
   const updateBoxPosition = useCallback((id: string, updates: Partial<Box>) => {
@@ -361,10 +479,19 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
             />
 
             {/* SAM Suggestions */}
-            {renderSAMSuggestions()}
+            {/* {renderSAMSuggestions()} */}
             
             {/* SAM Points */}
-            {renderSAMPoints()}
+            {/* {renderSAMPoints()} */}
+
+            <SAMOverlay
+              suggestions={samSession.suggestions}
+              points={samSession.points}
+              isSessionActive={samSession.isSessionActive}
+              onAcceptSuggestion={(id) => 
+                samSession.acceptSuggestions({ suggestionIds: [id] })
+              }
+            />
             
             <DrawingBox currentBox={currentBox} />
             <CurrentPolygon currentPolygon={currentPolygon} mousePosition={mousePosition} />

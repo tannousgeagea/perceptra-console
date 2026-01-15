@@ -1,6 +1,6 @@
 // hooks/useAnnotations.ts
 
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, UseMutationOptions, useQueryClient, useQuery } from "@tanstack/react-query";
 import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
@@ -90,17 +90,22 @@ export const createAnnotation = async (
 export const useCreateAnnotation = (
   projectId: string,
   projectImageId: number,
-  options?: {
-    onSuccess?: (data: AnnotationResponse) => void;
-    onError?: (error: Error) => void;
-    showToast?: boolean;
-  }
+  options?: UseMutationOptions<
+    AnnotationResponse,
+    Error,
+    CreateAnnotationPayload,
+    { previousAnnotations: any }
+  >
 ) => {
   const queryClient = useQueryClient();
   const { currentOrganization } = useCurrentOrganization();
-  const { onSuccess, onError, showToast = true } = options || {};
 
-  return useMutation({
+  return useMutation<
+    AnnotationResponse,
+    Error,
+    CreateAnnotationPayload,
+    { previousAnnotations: any }
+  >({
     mutationFn: (payload: CreateAnnotationPayload) => {
       if (!currentOrganization) {
         throw new Error("No organization selected");
@@ -113,7 +118,7 @@ export const useCreateAnnotation = (
       );
     },
 
-    onSuccess: (data) => {
+    onSuccess: (data, variables, context) => {
       // Invalidate image annotations query
       queryClient.invalidateQueries({ 
         queryKey: ['annotations', projectId, projectImageId] 
@@ -125,19 +130,11 @@ export const useCreateAnnotation = (
         queryKey: ["projectImages", currentOrganization?.id, projectId] 
       });
 
-      if (showToast) {
-        toast.success(data.message);
-      }
-
-      onSuccess?.(data);
+      options?.onSuccess?.(data, variables, context);
     },
 
-    onError: (error: Error) => {
-      if (showToast) {
-        toast.error(error.message || 'Failed to create annotation');
-      }
-
-      onError?.(error);
+    onError: (error, variables, context) => {
+      options?.onError?.(error, variables, context);
     },
   });
 };
