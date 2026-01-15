@@ -111,7 +111,7 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <footer className="fixed w-72 bottom-0 bg-slate-900/90 backdrop-blur-md border-t border-indigo-500/50 shadow-[0_-1px_4px_rgba(0,0,0,0.4)]">
+      <footer className="fixed w-80 bottom-0 bg-slate-900/90 backdrop-blur-md border-t border-indigo-500/50 shadow-[0_-1px_4px_rgba(0,0,0,0.4)]">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="px-4 py-3 text-center backdrop-blur-md">
           <p className="text-[11px] text-slate-300 tracking-wide">
