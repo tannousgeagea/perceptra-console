@@ -58,8 +58,6 @@ const AnnotationControls = memo(
 
     const handleNext = () => {
       if (current < total) {
-
-        console.log(current, total)
         setAllBoxes([]);
         setSelectedBox(null);
         setTransitionKey((k) => k + 1);

@@ -13,6 +13,7 @@ import QueryState from '../common/QueryState';
 import { AnnotationInfo } from './AnnotationInfo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
 import { useSAMSession } from '@/hooks/useSAMSession';
+import { useImagePreload } from '@/hooks/useImagePreload';
 
 const AnnotationTool = () => {
   const { projectId, imageId } = useParams<{ projectId: string; imageId: string }>();
@@ -47,6 +48,16 @@ const AnnotationTool = () => {
     const idx = imageIds.indexOf(imageId!);
     return idx !== -1 ? idx : indexParam;
   }, [imageIds, imageId, indexParam]);
+
+  // PRELOAD: Adjacent images for instant navigation
+  useImagePreload({
+    projectId: projectId!,
+    imageIds,
+    currentIndex,
+    prefetchNext: true,
+    prefetchPrev: true,
+    prefetchCount: 1, // Preload 1 image in each direction
+  });
 
   const updateUrl = (newIndex: number, newImageId: string) => {
     const params = new URLSearchParams(window.location.search);
