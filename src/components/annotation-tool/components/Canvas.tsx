@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAnnotationState } from '@/contexts/AnnotationStateContext';
@@ -27,12 +27,17 @@ import { useDirtyStateGuard } from '@/hooks/useDirtyStateGuard';
 
 interface CanvasProps {
   image: ProjectImageOut;
-  samSession: ReturnType<typeof useSAMSession>; // ADD THIS
+  samSession: ReturnType<typeof useSAMSession>;
+  preserveZoom?: boolean; // Control zoom behavior
+}
+ 
+export interface CanvasHandle {
+  loadImage: (image: ProjectImageOut) => void;
+  resetZoom: () => void;
+  saveCurrentAnnotation: () => void;
 }
 
-  
-
-const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
+const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, preserveZoom = true }, ref) => {
 
   const queryClient = useQueryClient();
 
@@ -71,15 +76,38 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
   const { projectId } = useParams<{projectId: string}>()
   const { data: classes, isLoading, isError, refetch } = useClasses(projectId);
   const { mutate: deleteAnnotation } = useDeleteAnnotation();
-  const { 
-    data: annotationsData, 
-    isLoading: isLoadingAnnotations 
-  } = useAnnotations(
-    projectId!,
-    Number(image.image.id)
-  );
+  // const { 
+  //   data: annotationsData, 
+  //   isLoading: isLoadingAnnotations 
+  // } = useAnnotations(
+  //   projectId!,
+  //   Number(image.image.id)
+  // );
 
   const [annotationStartTime, setAnnotationStartTime] = useState<number | null>(null);
+  const [isCtrlPressed, setIsCtrlPressed] = useState(false);
+  const [isAltPressed, setIsAltPressed] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isLoadingAnnotations, setIsLoadingAnnotation] = useState(false);
+  const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
+  const [currentImageId, setCurrentImageId] = useState(image.image.id);
+  
+  // CRITICAL: Stable zoom instance (persists across image changes)
+  const {
+    isDragging,
+    handleWheel,
+    handleMouseDown: handleZoomMouseDown,
+    handleMouseMove: handleZoomMouseMove,
+    handleMouseUp,
+    getTransformStyle,
+    resetZoom: resetZoomInternal,
+  } = useZoom({
+    minScale: 0.25,
+    maxScale: 10,
+    scaleStep: 0.25,
+    initialScale: 1,
+  });
+
   const { mutate: createAnnotation } = useCreateAnnotation(
     projectId!,
     Number(image.image.id),
@@ -148,56 +176,79 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     }
   );
 
-  // Track if the control key is pressed
-  const [isCtrlPressed, setIsCtrlPressed] = useState(false);
-  const [isAltPressed, setIsAltPressed] = useState(false);
-
-  // CRITICAL FIX: Only sync data layer ONCE on initial mount
-  const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-
   useDirtyStateGuard({ 
     isDirty,
     message: 'You have unsaved annotations. Leave without saving?' 
   });
 
-  const {
-    isDragging,
-    handleWheel,
-    handleMouseDown: handleZoomMouseDown,
-    handleMouseMove: handleZoomMouseMove,
-    handleMouseUp,
-    getTransformStyle,
-  } = useZoom({
-    minScale: 0.25,
-    maxScale: 10,
-    scaleStep: 0.25,
-    initialScale: 1,
-  });
-  
-  // Sync from server only once on initial load
-  useEffect(() => {
-    if (annotationsData?.annotations && !hasSyncedInitial && !isDirty) {
-      const boxes = annotationsData.annotations.map(ann => ({
+  // IMPERATIVE API: Load new image without remounting
+  useImperativeHandle(ref, () => ({
+    loadImage: (newImage: ProjectImageOut) => {
+      setCurrentImageId(newImage.image.id);
+      
+      // Reset zoom if configured
+      if (!preserveZoom) {
+        resetZoomInternal();
+      }
+      
+      // Clear selection (but keep tool)
+      setSelectedBox(null);
+      setSelectedPolygon(null);
+      
+      // Load annotations for new image
+      const annotations = newImage.annotations || [];
+      const boxes = annotations.map(ann => ({
         id: ann.annotation_uid,
-        x: ann.data.x,
-        y: ann.data.y,
-        width: ann.data.width,
-        height: ann.data.height,
+        x: ann.data[0],
+        y: ann.data[1],
+        width: ann.data[2] - ann.data[0],
+        height: ann.data[3] - ann.data[1],
         label: ann.class_name,
         color: ann.color,
-        class_id: ann.class_id,
+        class_id: parseInt(ann.class_id),
       }));
       setAllBoxes(boxes);
-      setHasSyncedInitial(true);
-    }
-  }, [annotationsData, hasSyncedInitial, isDirty, setAllBoxes]);
+      setIsDirty(false);
+    },
+    
+    resetZoom: () => {
+      resetZoomInternal();
+    },
+    
+    saveCurrentAnnotation: async () => {
+      if (selectedBox) {
+        await handleSave();
+      }
+    },
+  }));
 
-  // Reset sync state when image changes
+  // Auto-load on mount and when image prop changes
   useEffect(() => {
-    setHasSyncedInitial(false);
-    setIsDirty(false);
-  }, [image.image.id]);
+    // Load on: (1) image change OR (2) first mount
+    if (image.image.id !== currentImageId || !hasSyncedInitial) {
+      setIsLoadingAnnotation(true);
+      const annotations = image.annotations || [];
+      const boxes = annotations.map(ann => ({
+        id: ann.annotation_uid,
+        x: ann.data[0],
+        y: ann.data[1],
+        width: ann.data[2] - ann.data[0],
+        height: ann.data[3] - ann.data[1],
+        label: ann.class_name,
+        color: ann.color,
+        class_id: parseInt(ann.class_id),
+      }));
+      setAllBoxes(boxes);
+      setCurrentImageId(image.image.id);
+      setHasSyncedInitial(true);
+      setIsDirty(false);
+      setIsLoadingAnnotation(false);
+      
+      if (!preserveZoom) {
+        resetZoomInternal();
+      }
+    }
+  }, [image.image.id, currentImageId, hasSyncedInitial, preserveZoom, resetZoomInternal, setAllBoxes, image.annotations]);
 
   const getRandomColor = (): string => {
     const letters = "0123456789ABCDEF";
@@ -268,7 +319,7 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
       queryClient.setQueryData(
         ['annotations', projectId, Number(image.image.id)],
         (old: any) => {
-          if (!old) return old;
+          Canvas.displayName = 'Canvas';if (!old) return old;
           return {
             ...old,
             annotations: old.annotations.filter((a: any) => a.annotation_uid !== id)
@@ -424,7 +475,6 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
     ));
   };
 
-
   return (
     <div className="flex relative p-4 flex-1 justify-center items-center w-full h-full">
       {selectedBox && (
@@ -460,7 +510,8 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
           onContextMenu={(e) => handleContextMenu(e, tool)}
         >
           <div className="annotation-canvas relative bg-[beige] justify-center items-center">
-            <img 
+            <img
+              key={image.image.id}
               src={image.image.download_url}
               alt="Sample image"
               className="object-contain select-none w-full max-h-[800px]"
@@ -501,6 +552,8 @@ const Canvas: React.FC<CanvasProps> = ({ image, samSession }) => {
       </div>
     </div>
   );
-};
+});
+
+Canvas.displayName = 'Canvas';
 
 export default Canvas;
