@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { AnnotationProvider } from '@/contexts/AnnotationProvider';
 import ToolBar from './components/ToolBar';
-import Canvas from './components/Canvas';
+import Canvas, { CanvasHandle }  from './components/Canvas';
 import LabelPanel from './LabelPanel';
 import AnnotationControls from './components/AnnotationControl';
 import ActionSidebar from './components/ActionSidebar';
@@ -25,7 +25,10 @@ const AnnotationTool = () => {
   const navigate = useNavigate();
   const samSession = useSAMSession(projectId!, image?.id || "");
 
-  // query parameters
+  // CRITICAL: Stable ref to Canvas (never recreated)
+  const canvasRef = useRef<CanvasHandle>(null);
+
+  // query parametersconst canvasRef = useRef<CanvasHandle>(null);
   const jobId = searchParams.get("jobId") || "";
   const status = searchParams.get("status") || "";
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -73,6 +76,9 @@ const AnnotationTool = () => {
 
   const handleNext = () => {
     if (currentIndex < imageIds.length - 1) {
+      // Auto-save current annotation if editing
+      canvasRef.current?.saveCurrentAnnotation();
+      
       const nextImageId = imageIds[currentIndex + 1];
       updateUrl(currentIndex + 1, nextImageId);
     }
@@ -80,6 +86,9 @@ const AnnotationTool = () => {
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
+      // Auto-save current annotation if editing
+      canvasRef.current?.saveCurrentAnnotation();
+
       const prevImageId = imageIds[currentIndex - 1];
       updateUrl(currentIndex - 1, prevImageId);
     }
@@ -125,8 +134,10 @@ const AnnotationTool = () => {
 
           <div className='flex flex-1'>
             <Canvas 
+              ref={canvasRef}
               image={image}
               samSession={samSession}
+              preserveZoom={true}
             />
 
             <div className="w-80 border-l border-border flex flex-col">
