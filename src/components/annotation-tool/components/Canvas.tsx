@@ -53,6 +53,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
 
    const {
     updateBox,
+    deleteBox,
     setAllBoxes,
     getBoxesArray,
     getPolygonsArray,
@@ -347,6 +348,8 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
           }
         }
       );
+
+      deleteBox(id)
     }
   }, [projectId, image.image.id, deleteAnnotation, queryClient]);
 

@@ -19,6 +19,41 @@ interface Props {
   onUpdate: (id: string, updates: Partial<Box>) => void;
 }
 
+// Clamp box resize by calculating from anchor point
+const clampBoxResize = (
+  anchorX: number, 
+  anchorY: number, 
+  cursorX: number, 
+  cursorY: number,
+  minSize: number = 0.01
+) => {
+  // Clamp cursor to bounds first
+  const clampedCursorX = Math.max(0, Math.min(1, cursorX));
+  const clampedCursorY = Math.max(0, Math.min(1, cursorY));
+  
+  // Calculate box from anchor to cursor
+  const x = Math.min(anchorX, clampedCursorX);
+  const y = Math.min(anchorY, clampedCursorY);
+  const width = Math.max(minSize, Math.abs(clampedCursorX - anchorX));
+  const height = Math.max(minSize, Math.abs(clampedCursorY - anchorY));
+  
+  return { x, y, width, height };
+};
+// Clamp box to stay within image bounds [0, 1]
+const clampBox = (x: number, y: number, width: number, height: number) => {
+  const clampedX = Math.max(0, Math.min(1 - width, x));
+  const clampedY = Math.max(0, Math.min(1 - height, y));
+  const clampedWidth = Math.max(0.01, Math.min(1 - clampedX, width));
+  const clampedHeight = Math.max(0.01, Math.min(1 - clampedY, height));
+  
+  return { 
+    x: clampedX, 
+    y: clampedY, 
+    width: clampedWidth, 
+    height: clampedHeight 
+  };
+};
+
 const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -51,41 +86,37 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
 
     if (isDragging) {
+      const newX = x - dragStart.x;
+      const newY = y - dragStart.y;
+      
+      // Clamp position to keep box in bounds
+      const clamped = clampBox(newX, newY, box.width, box.height);
+
       onUpdate(box.id, {
-        x: x - dragStart.x,
-        y: y - dragStart.y
+        x: clamped.x,
+        y: clamped.y
       });
     } else if (resizing) {
+      let updates: Partial<Box> = {};
       switch (resizing) {
         case 'nw':
-          onUpdate(box.id, {
-            x: x,
-            y: y,
-            width: box.width + (box.x - x),
-            height: box.height + (box.y - y)
-          });
+          // Anchor: bottom-right
+          updates = clampBoxResize(box.x + box.width, box.y + box.height, x, y);
           break;
         case 'ne':
-          onUpdate(box.id, {
-            y: y,
-            width: x - box.x,
-            height: box.height + (box.y - y)
-          });
+          // Anchor: bottom-left
+          updates = clampBoxResize(box.x, box.y + box.height, x, y);
           break;
         case 'sw':
-          onUpdate(box.id, {
-            x: x,
-            width: box.width + (box.x - x),
-            height: y - box.y
-          });
+          // Anchor: top-right
+          updates = clampBoxResize(box.x + box.width, box.y, x, y);
           break;
         case 'se':
-          onUpdate(box.id, {
-            width: x - box.x,
-            height: y - box.y
-          });
+          // Anchor: top-left
+          updates = clampBoxResize(box.x, box.y, x, y);
           break;
       }
+      onUpdate(box.id, updates);
     }
   }, [isDragging, resizing, getScaledCoordinates, box.id, box.x, box.y, box.width, box.height, dragStart.x, dragStart.y, onUpdate]);
 

@@ -1,10 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useCoordinates } from '@/hooks/annotation/useCoordinates';
 import { useAnnotationState } from '@/contexts/AnnotationStateContext';
 import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
 import { toast } from 'sonner';
 import type { useSAMSession } from '@/hooks/useSAMSession';
-import { AnnotationTool } from '@/types/annotation';
+
+type AnnotationTool = 'draw' | 'move' | 'polygon';
+
+// Clamp value between 0 and 1
+const clamp = (value: number) => Math.max(0, Math.min(1, value));
 
 export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
   const [isDrawing, setIsDrawing] = useState(false);
@@ -38,8 +42,8 @@ export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
 
     const newBox = {
       id: Date.now().toString(),
-      x,
-      y,
+      x: clamp(x),
+      y: clamp(y),
       width: 0,
       height: 0,
       label: '',
@@ -49,25 +53,61 @@ export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
     setIsDrawing(true);
   }, [getScaledCoordinates]);
 
-  const draw = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
+  const draw = useCallback((e: React.MouseEvent | MouseEvent, tool: AnnotationTool) => {
     if (!isDrawing || !currentBox || tool !== 'draw') return;
     
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
+    
+    // Clamp cursor position to image bounds
+    const clampedX = clamp(x);
+    const clampedY = clamp(y);
 
     setCurrentBox({
       ...currentBox,
-      width: x - currentBox.x,
-      height: y - currentBox.y,
+      width: clampedX - currentBox.x,
+      height: clampedY - currentBox.y,
     });
   }, [isDrawing, currentBox, getScaledCoordinates]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent, tool: AnnotationTool) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent | MouseEvent, tool: AnnotationTool) => {
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
-    setMousePosition({ x, y });
+    setMousePosition({ x: clamp(x), y: clamp(y) });
     
     // Call draw for when drawing is in progress
     draw(e, tool);
   }, [getScaledCoordinates, draw]);
+
+  // CRITICAL: Window-level listeners during drawing to prevent edge stopping
+  useEffect(() => {
+    if (!isDrawing) return;
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (!currentBox) return;
+      
+      const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
+      const clampedX = clamp(x);
+      const clampedY = clamp(y);
+      
+      setMousePosition({ x: clampedX, y: clampedY });
+      setCurrentBox({
+        ...currentBox,
+        width: clampedX - currentBox.x,
+        height: clampedY - currentBox.y,
+      });
+    };
+
+    const handleWindowMouseUp = () => {
+      stopDrawing();
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, [isDrawing, currentBox, getScaledCoordinates]);
 
   const handleMouseEnter = useCallback(() => {
     setShowGuideLines(true);
@@ -75,7 +115,7 @@ export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
 
   const handleMouseLeave = useCallback(() => {
     setShowGuideLines(false);
-    stopDrawing();
+    // stopDrawing();
   }, []);
 
   const stopDrawing = useCallback(() => {
