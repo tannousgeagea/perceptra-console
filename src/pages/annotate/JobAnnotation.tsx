@@ -9,14 +9,12 @@ import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/ui/pagination-control';
-import { da } from 'zod/v4/locales';
 
 export default function JobAnnotation() {
   const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const initialStatus = query.get("status") as 'unannotated' | 'annotated' | 'reviewed' || 'unannotated';
-
 
   const [activeStatus, setActiveStatus] = useState<'unannotated' | 'annotated' | 'reviewed'>(initialStatus);
   const [searchText, setSearchText] = useState('');
@@ -34,7 +32,9 @@ export default function JobAnnotation() {
   const { data, isLoading, isError: error, refetch } = useJobImages(projectId, jobId, {
     skip: (currentPage - 1) * itemsPerPage,
     limit: itemsPerPage,
+    status: activeStatus,
   });
+  
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -43,11 +43,10 @@ export default function JobAnnotation() {
     setDatasetBuilderOpen(true);
   }, []);
 
-  const handleImageClick = (index: number, image_id:string): void => {
+  const handleImageClick = (index: number, image_id: string): void => {
     navigate(
       `/projects/${projectId}/images/${image_id}?jobId=${jobId}&status=${activeStatus}&index=${index + 1}`);
   };
-
 
   const handleBack = (): void => {
     navigate(
@@ -55,13 +54,25 @@ export default function JobAnnotation() {
     )
   }
 
+  const handleStatusChange = (newStatus: 'unannotated' | 'annotated' | 'reviewed') => {
+    setActiveStatus(newStatus);
+    setCurrentPage(1); // Reset to first page when switching tabs
+  };
+
   // Filter images based on active tab and search
   const filteredImages = data?.images.filter(img => {
-    const matchesStatus = img.status === activeStatus;
     const matchesSearch = searchText.trim() === '' || 
       img.name.toLowerCase().includes(searchText.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesSearch;
   }) || [];
+
+  // Get the count for the current active status
+  const getCurrentStatusCount = () => {
+    if (activeStatus === 'unannotated') return data?.unannotated || 0;
+    if (activeStatus === 'annotated') return data?.annotated || 0;
+    if (activeStatus === 'reviewed') return data?.reviewed || 0;
+    return 0;
+  };
 
   return (
     <div className="min-h-screen w-full bg-background">
@@ -78,7 +89,7 @@ export default function JobAnnotation() {
 
         <JobAnnotationTabs
           activeStatus={activeStatus}
-          onStatusChange={setActiveStatus}
+          onStatusChange={handleStatusChange}
           unannotatedCount={data?.unannotated || 0}
           annotatedCount={data?.annotated || 0}
           reviewedCount={data?.reviewed || 0}
@@ -115,13 +126,13 @@ export default function JobAnnotation() {
             <JobImageGrid
               images={filteredImages}
               imageSize={imageSize}
-              onImageClick={(index: number, image_id:string) => handleImageClick(index, image_id)}
+              onImageClick={(index: number, image_id: string) => handleImageClick(index, image_id)}
             />
 
             <div className="fixed w-full bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
               <PaginationControls
                 currentPage={currentPage}
-                totalItems={data?.total || 0}
+                totalItems={getCurrentStatusCount()}
                 itemsPerPage={itemsPerPage}
                 onPageChange={(page) => {
                   setCurrentPage(page);
