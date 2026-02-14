@@ -1,4 +1,4 @@
-import { Settings, Database, Users, Building2, User, Cpu } from 'lucide-react';
+import { Settings, Database, Users, Building2, User, Cpu, Key } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
   Sidebar,
@@ -41,6 +41,12 @@ const navigationItems = [
     title: 'Users',
     url: '/settings/users',
     icon: Users,
+    roles: ['owner', 'admin']
+  },
+  {
+    title: 'API Keys',
+    url: '/settings/api-keys',
+    icon: Key,
     roles: ['owner', 'admin']
   },
 ];
