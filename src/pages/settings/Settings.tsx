@@ -5,6 +5,7 @@ import { OrganizationSettings } from '@/components/settings/OrganizationSettings
 import { StorageSettings } from '@/components/storage/StorageSettings';
 import { ComputeSettings } from '@/components/compute/ComputeSettings';
 import { UserManagement } from '@/components/users/UserManagement';
+import { APIKeysManagement } from '@/components/api-keys/APIKeysManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from 'next-themes';
 import { Loader2 } from 'lucide-react';
@@ -66,6 +67,14 @@ export default function Settings() {
                           ? <UserManagement />
                           : <Navigate to="/settings/account" replace />
                       } 
+                  />
+                  <Route 
+                    path="/api-keys" 
+                    element={
+                      role === 'owner' || role === 'admin'
+                        ? <APIKeysManagement />
+                        : <Navigate to="/settings/account" replace />
+                    } 
                   />
                 </Routes>
             </div>
