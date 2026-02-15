@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
 import { MousePointer, Box, Search, Copy, ArrowRight } from 'lucide-react';
 import { PointClickTool } from './tools/PointClickTool';
@@ -23,6 +23,7 @@ interface SegmentationToolsProps {
   selectedAnnotationId?: string;
   hasPreviousImage?: boolean;
   previousImageId?: string;
+  onToolChange?: (tool: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null) => void; // NEW
 }
 
 export const SegmentationTools: React.FC<SegmentationToolsProps> = ({
@@ -40,8 +41,18 @@ export const SegmentationTools: React.FC<SegmentationToolsProps> = ({
   selectedAnnotationId,
   hasPreviousImage,
   previousImageId,
+  onToolChange, // NEW
 }) => {
   const [activeTab, setActiveTab] = useState('points');
+
+  // Report active tool to parent
+  useEffect(() => {
+    if (sessionId && onToolChange) {
+      onToolChange(activeTab as any);
+    } else if (onToolChange) {
+      onToolChange(null);
+    }
+  }, [activeTab, sessionId, onToolChange]);
 
   if (!sessionId) {
     return (

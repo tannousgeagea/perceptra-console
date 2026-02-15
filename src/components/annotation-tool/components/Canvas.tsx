@@ -5,6 +5,7 @@ import { useAnnotationState } from '@/contexts/AnnotationStateContext';
 import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
 import { Box } from '@/types/annotation';
 import { useDraw } from '@/hooks/useDraw';
+import { useCoordinates } from '@/hooks/annotation/useCoordinates';
 import { toast } from 'sonner';
 import AnnotationEditor from './AnnotationEditor';
 import GuideLines from './GuideLines';
@@ -19,7 +20,6 @@ import QueryState from '@/components/common/QueryState';
 import { 
   useCreateAnnotation, 
   useDeleteAnnotation, 
-  useAnnotations,
   CreateAnnotationPayload, 
 } from '@/hooks/useAnnotations';
 import { useSAMSession } from '@/hooks/useSAMSession';
@@ -29,6 +29,7 @@ interface CanvasProps {
   image: ProjectImageOut;
   samSession: ReturnType<typeof useSAMSession>;
   preserveZoom?: boolean; // Control zoom behavior
+  activeSAMTool?: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null; // NEW
 }
  
 export interface CanvasHandle {
@@ -37,7 +38,7 @@ export interface CanvasHandle {
   saveCurrentAnnotation: () => void;
 }
 
-const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, preserveZoom = true }, ref) => {
+const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, preserveZoom = true, activeSAMTool = null }, ref) => {
 
   const queryClient = useQueryClient();
 
@@ -77,14 +78,8 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
   const { projectId } = useParams<{projectId: string}>()
   const { data: classes, isLoading, isError, refetch } = useClasses(projectId);
   const { mutate: deleteAnnotation } = useDeleteAnnotation();
-  // const { 
-  //   data: annotationsData, 
-  //   isLoading: isLoadingAnnotations 
-  // } = useAnnotations(
-  //   projectId!,
-  //   Number(image.image.id)
-  // );
-
+  const { getScaledCoordinates } = useCoordinates();
+  
   const [annotationStartTime, setAnnotationStartTime] = useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isAltPressed, setIsAltPressed] = useState(false);
@@ -389,6 +384,14 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
 
   // Combined mouse event handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // SAM Point Click Mode - intercept clicks
+    if (samSession.isSessionActive && activeSAMTool === 'points') {
+      const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
+      const label = e.button === 2 ? 0 : 1; // Right-click = negative, left = positive
+      samSession.addPoint({ x, y, label });
+      return; // Don't start drawing
+    }
+  
     // Allow panning with Alt key or middle mouse button
     if (e.altKey || e.button === 1) {
       handleZoomMouseDown(e);
@@ -417,6 +420,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
     if (isDragging) return 'grabbing';
     if (isAltPressed) return 'grab';
     if (isCtrlPressed) return 'zoom-in';
+    if (samSession.isSessionActive && activeSAMTool === 'points') return 'crosshair';
     return 'crosshair';
   };
 

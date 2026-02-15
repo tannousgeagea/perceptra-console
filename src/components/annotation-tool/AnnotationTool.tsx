@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo, useRef, useCallback, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { AnnotationProvider } from '@/contexts/AnnotationProvider';
 import ToolBar from './components/ToolBar';
@@ -27,6 +27,9 @@ const AnnotationTool = () => {
 
   // CRITICAL: Stable ref to Canvas (never recreated)
   const canvasRef = useRef<CanvasHandle>(null);
+
+  // Track active SAM tool
+  const [activeSAMTool, setActiveSAMTool] = useState<'points' | 'box' | 'text' | 'similar' | 'propagate' | null>(null);
 
   // query parametersconst canvasRef = useRef<CanvasHandle>(null);
   const jobId = searchParams.get("jobId") || "";
@@ -138,6 +141,7 @@ const AnnotationTool = () => {
               image={image}
               samSession={samSession}
               preserveZoom={true}
+              activeSAMTool={activeSAMTool}
             />
 
             <div className="w-80 border-l border-border flex flex-col">
@@ -163,6 +167,7 @@ const AnnotationTool = () => {
                     // isGenerating={isGenerating}
                     hasPreviousImage={hasPreviousImage}
                     previousImageId={previousImageId}
+                    onSAMToolChange={setActiveSAMTool}
 
                   />
                 </TabsContent>
