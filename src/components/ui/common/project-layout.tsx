@@ -22,7 +22,7 @@ const ProjectLayout: FC = () => {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/projects")}
-                className="w-fit mx-6 my-6"
+                className="w-fit mx-6 my-1"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Projects
