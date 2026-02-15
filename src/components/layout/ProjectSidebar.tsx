@@ -14,6 +14,7 @@ import {
   ChevronRight,
   CircleDot,
   Activity,
+  ChartCandlestick
 } from "lucide-react";
 
 interface Item {
@@ -44,6 +45,7 @@ const ProjectSideBar: FC = () => {
     { section: "Models", label: "Version", path: `/projects/${projectId}/versions`, icon: <Layers size={18} /> },
     { section: "Models", label: "Models", path: `/projects/${projectId}/models`, icon: <Brain size={18} /> },
     { section: "Models", label: "Training", path: `/projects/${projectId}/sessions`, icon: <ActivitySquare size={18} /> },
+    { section: "Models", label: "Evaluation", path: `/projects/${projectId}/evaluation`, icon: <ChartCandlestick size={18} /> },
 
     // Settings Section
     { section: "Settings", label: "Classes", path: `/projects/${projectId}/classes`, icon: <Tags size={18} /> },

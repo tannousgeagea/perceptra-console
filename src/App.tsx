@@ -46,6 +46,7 @@ import { AuthLayout } from './components/auth/AuthLayout';
 import { ProjectProvider } from './contexts/ProjectContext';
 import Billing from './pages/Billing';
 import BillingReport from './pages/BillingReport';
+import Evaluation from './pages/Evaluation';
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,7 @@ const App = () => {
                       <Route path="models/new" element={<CreateModel />} />
                       <Route path="models/:modelId" element={<ModelDetail />} />
                       <Route path="models/:modelId/train" element={<ModelTraining />} />
+                      <Route path="evaluation" element={<Evaluation />} />
                       <Route path="sessions" element={<SessionsPage />} />
                       <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
                       <Route path='annotate/job/:jobId' element={<JobAnnotation />} />
