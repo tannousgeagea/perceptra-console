@@ -14,6 +14,7 @@ import {
   ChevronRight,
   CircleDot,
   Activity,
+  Sparkle,
   ChartCandlestick
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ const ProjectSideBar: FC = () => {
     { section: "Data", label: "Upload Data", path: `/projects/${projectId}/upload`, icon: <Upload size={18} /> },
     { section: "Data", label: "Dataset", path: `/projects/${projectId}/dataset`, icon: <Images size={18}/>, count:true  },
     { section: "Data", label: "Annotate", path: `/projects/${projectId}/annotate`, icon: <Pencil size={18} /> },
+    { section: "Data", label: "Auto Annotate", path: `/projects/${projectId}/auto-annotate`, icon: <Sparkle size={18} /> },
 
     // Insights Section
     { section: "Insights", label: "Analysis", path: `/projects/${projectId}/analysis`, icon: <BarChart size={18} /> },
