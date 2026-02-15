@@ -5,6 +5,7 @@ import DeleteButton from "./ButtonDelete";
 import MarkAsNullButton from "./ButtonMarkNull";
 import { ProjectImageOut } from "@/types/image";
 import { AIAssistPanel } from "../sam/AIAssistPanel";
+import { SuggestionFloatingBar } from '../sam/SuggestionFloatingBar';
 import { useSAMSession } from "@/hooks/useSAMSession";
 
 
@@ -24,6 +25,7 @@ interface ActionSidebarProps {
   // isGenerating: boolean;
   previousImageId?: string;
   hasPreviousImage?: boolean;
+  onSAMToolChange?: (tool: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null) => void;
 }
 
 const ActionSidebar: React.FC<ActionSidebarProps> = ({
@@ -42,10 +44,25 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
   // isGenerating,
   previousImageId,
   hasPreviousImage,
+  onSAMToolChange,
 }) => {
 
   const { selectedBox } = useAnnotationState();
   // const samSession = useSAMSession(projectId!, currentImage?.id || "");
+
+  const handleAcceptAll = () => {
+    const allSuggestionIds = samSession.suggestions
+      .filter(s => s.status === 'pending')
+      .map(s => s.id);
+    
+    if (allSuggestionIds.length > 0) {
+      samSession.acceptSuggestions({ suggestionIds: allSuggestionIds });
+    }
+  };
+
+  const handleClearAll = () => {
+    samSession.clearSuggestions();
+  };
   
   return (
     <aside className="h-full flex flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white border-l border-slate-800 flex-shrink-0">
@@ -76,6 +93,12 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
         </div>
       </div>
 
+      <SuggestionFloatingBar
+        suggestions={samSession.suggestions}
+        onAcceptAll={handleAcceptAll}
+        onClearAll={samSession.clearSuggestions}
+      />
+
       <div className="w-80 border-l">
         <AIAssistPanel
           sessionId={samSession.sessionId}
@@ -99,14 +122,13 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
           suggestions={samSession.suggestions}
           onAcceptSuggestions={(ids) => samSession.acceptSuggestions({ suggestionIds: ids })}
           onRejectSuggestions={samSession.rejectSuggestions}
-          onAcceptAll={() => samSession.acceptSuggestions({ 
-            suggestionIds: samSession.suggestions.map(s => s.id) 
-          })}
-          onClearAll={samSession.clearSuggestions}
+          onAcceptAll={handleAcceptAll}
+          onClearAll={handleClearAll}
           
           selectedAnnotationId={selectedBox!}
           hasPreviousImage={hasPreviousImage}
           previousImageId={previousImageId}
+          onSAMToolChange={onSAMToolChange}
         />
       </div>
 
