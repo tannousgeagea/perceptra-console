@@ -55,6 +55,9 @@ const AnnotationTool = () => {
     return idx !== -1 ? idx : indexParam;
   }, [imageIds, imageId, indexParam]);
 
+  const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | undefined>();
+  const [hoveredSuggestionId, setHoveredSuggestionId] = useState<string | null>(null);
+
   // PRELOAD: Adjacent images for instant navigation
   useImagePreload({
     projectId: projectId!,
@@ -141,6 +144,10 @@ const AnnotationTool = () => {
               image={image}
               samSession={samSession}
               preserveZoom={true}
+              selectedSuggestionId={selectedSuggestionId}
+              onSelectSuggestion={setSelectedSuggestionId}
+              hoveredSuggestionId={hoveredSuggestionId!}
+              onHoverSuggestion={setHoveredSuggestionId}
               activeSAMTool={activeSAMTool}
             />
 
@@ -168,6 +175,8 @@ const AnnotationTool = () => {
                     hasPreviousImage={hasPreviousImage}
                     previousImageId={previousImageId}
                     onSAMToolChange={setActiveSAMTool}
+                    hoveredSuggestionId={hoveredSuggestionId}
+                    onHoverSuggestion={setHoveredSuggestionId}
 
                   />
                 </TabsContent>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAnnotationState } from "@/contexts/AnnotationStateContext";
 import ApproveButton from "./ButtonApprove";
 import DeleteButton from "./ButtonDelete";
@@ -25,6 +25,8 @@ interface ActionSidebarProps {
   // isGenerating: boolean;
   previousImageId?: string;
   hasPreviousImage?: boolean;
+  hoveredSuggestionId?: string | null;
+  onHoverSuggestion?: (id: string | null) => void;
   onSAMToolChange?: (tool: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null) => void;
 }
 
@@ -44,6 +46,8 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
   // isGenerating,
   previousImageId,
   hasPreviousImage,
+  hoveredSuggestionId,
+  onHoverSuggestion,
   onSAMToolChange,
 }) => {
 
@@ -128,6 +132,8 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
           selectedAnnotationId={selectedBox!}
           hasPreviousImage={hasPreviousImage}
           previousImageId={previousImageId}
+          hoveredSuggestionId={hoveredSuggestionId}
+          onHoverSuggestion={onHoverSuggestion}
           onSAMToolChange={onSAMToolChange}
         />
       </div>

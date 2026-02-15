@@ -13,6 +13,7 @@ import CurrentPolygon from './CurrentPolygon';
 import DrawingBox from './DrawingBox';
 import AnnotationLayer from './AnnotationLayer';
 import SAMOverlay from './SAMOverlay';
+import SAMSuggestionLayer from '../SAMSuggestionLayer';
 import { useZoom } from '@/hooks/useZoom';
 import { ProjectImageOut } from '@/types/image';
 import { useClasses } from '@/hooks/useClasses';
@@ -29,6 +30,10 @@ interface CanvasProps {
   image: ProjectImageOut;
   samSession: ReturnType<typeof useSAMSession>;
   preserveZoom?: boolean; // Control zoom behavior
+  selectedSuggestionId?: string;
+  onSelectSuggestion?: (suggestionId: string) => void;
+  hoveredSuggestionId?: string;
+  onHoverSuggestion?: (id: string | null) => void;
   activeSAMTool?: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null; // NEW
 }
  
@@ -38,7 +43,16 @@ export interface CanvasHandle {
   saveCurrentAnnotation: () => void;
 }
 
-const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, preserveZoom = true, activeSAMTool = null }, ref) => {
+const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ 
+  image, 
+  samSession, 
+  preserveZoom = true,
+  selectedSuggestionId,
+  onSelectSuggestion,
+  hoveredSuggestionId,
+  onHoverSuggestion,
+  activeSAMTool = null 
+}, ref) => {
 
   const queryClient = useQueryClient();
 
@@ -415,6 +429,15 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
     }
   };
 
+  const handleAcceptSuggestions = (suggestionIds: string[]) => {
+    // Accept with default class - can be enhanced to show class picker
+    samSession.acceptSuggestions({ 
+      suggestionIds, 
+      classId: undefined, 
+      className: 'object' 
+    });
+  };
+
   // Get appropriate cursor based on current state
   const getCursor = () => {
     if (isDragging) return 'grabbing';
@@ -436,6 +459,8 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
     );
   }
 
+
+  console.log(activeSAMTool)
   // Render SAM suggestions as overlays
   const renderSAMSuggestions = () => {
     if (!samSession.suggestions.length) return null;
@@ -542,13 +567,15 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ image, samSession, prese
             {/* SAM Points */}
             {/* {renderSAMPoints()} */}
 
-            <SAMOverlay
+            <SAMSuggestionLayer
               suggestions={samSession.suggestions}
               points={samSession.points}
-              isSessionActive={samSession.isSessionActive}
-              onAcceptSuggestion={(id) => 
-                samSession.acceptSuggestions({ suggestionIds: [id] })
-              }
+              selectedSuggestionId={selectedSuggestionId}
+              hoveredSuggestionId={hoveredSuggestionId}
+              onHoverSuggestion={onHoverSuggestion}
+              onSelect={onSelectSuggestion}
+              onAccept={(id: string) => handleAcceptSuggestions([id])}
+              onReject={(id: string) => samSession.rejectSuggestions([id])}
             />
             
             <DrawingBox currentBox={currentBox} />

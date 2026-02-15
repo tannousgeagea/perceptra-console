@@ -41,6 +41,8 @@ interface AIAssistPanelProps {
   selectedAnnotationId?: string;
   hasPreviousImage?: boolean;
   previousImageId?: string;
+  hoveredSuggestionId?: string | null;
+  onHoverSuggestion?: (id: string | null) => void;
   onSAMToolChange?: (tool: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null) => void;
 }
 
@@ -69,6 +71,8 @@ export const AIAssistPanel: React.FC<AIAssistPanelProps> = ({
   selectedAnnotationId,
   hasPreviousImage,
   previousImageId,
+  hoveredSuggestionId,
+  onHoverSuggestion,
   onSAMToolChange,
 }) => {
   const pendingCount = suggestions.filter(s => s.status === 'pending').length;
@@ -138,6 +142,8 @@ export const AIAssistPanel: React.FC<AIAssistPanelProps> = ({
           onReject={onRejectSuggestions}
           onAcceptAll={onAcceptAll}
           onClearAll={onClearAll}
+          hoveredSuggestionId={hoveredSuggestionId}
+          onHoverSuggestion={onHoverSuggestion}
         />
       </div>
     </div>

@@ -14,6 +14,8 @@ interface SuggestionsPanelProps {
   onReject: (suggestionIds: string[]) => void;
   onAcceptAll: () => void;
   onClearAll: () => void;
+  hoveredSuggestionId?: string | null;
+  onHoverSuggestion?: (id: string | null) => void;
 }
 
 const typeConfig: Record<SAMSuggestion['type'], { label: string; icon: React.ReactNode; color: string }> = {
@@ -31,6 +33,8 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
   onReject,
   onAcceptAll,
   onClearAll,
+  hoveredSuggestionId,
+  onHoverSuggestion,
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
@@ -157,10 +161,14 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
                   "relative border rounded-lg p-2.5 transition-all duration-300 cursor-pointer",
                   isSelected
                     ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
-                    : "border-border bg-card hover:bg-accent/30",
+                    : hoveredSuggestionId === suggestion.id
+                      ? "border-primary/40 bg-primary/10 ring-1 ring-primary/15"
+                      : "border-border bg-card hover:bg-accent/30",
                   isNew && "animate-in slide-in-from-right-5 fade-in duration-500"
                 )}
                 onClick={() => toggleSelection(suggestion.id)}
+                onMouseEnter={() => onHoverSuggestion?.(suggestion.id)}
+                onMouseLeave={() => onHoverSuggestion?.(null)}
               >
                 {/* New indicator pulse */}
                 {isNew && (
