@@ -9,6 +9,7 @@ import type { JobImagesResponse } from "@/types/image";
 interface JobImagesParams {
   skip?: number;
   limit?: number;
+  q?: string;
   status?: string;
   annotated?: boolean;
 }
@@ -22,15 +23,20 @@ export const fetchJobImages = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const { skip = 0, limit = 100, status, annotated } = params;
+  const { skip = 0, limit = 100, q,  status, annotated } = params;
 
   const queryParams = new URLSearchParams({
     skip: skip.toString(),
     limit: limit.toString(),
   });
 
-  if (status) queryParams.append("status", status);
-  if (annotated !== undefined) queryParams.append("annotated", annotated.toString());
+  if (q) {
+    queryParams.append("q", q);
+  } else {
+    if (status) queryParams.append("status", status);
+    if (annotated !== undefined) queryParams.append("annotated", annotated.toString());
+  }
+
 
   const response = await fetch(
     `${baseURL}/api/v1/projects/${projectId}/jobs/${jobId}/images?${queryParams}`,

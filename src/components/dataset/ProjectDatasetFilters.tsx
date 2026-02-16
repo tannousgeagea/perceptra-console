@@ -63,7 +63,7 @@ export function ProjectDatasetFilters({
   useEffect(() => {
     const timer = setTimeout(() => {
       onSearchChange(localSearch);
-    }, 300);
+    }, 600);
     return () => clearTimeout(timer);
   }, [localSearch, onSearchChange]);
 

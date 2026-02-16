@@ -1,3 +1,5 @@
+
+import { useParams } from 'react-router-dom';
 import { useAutoAnnotate } from '@/hooks/useAutoAnnotate';
 import { ImageSelectionStep } from '@/components/auto-annotate/ImageSelectionStep';
 import { ConfigureStep } from '@/components/auto-annotate/ConfigureStep';
@@ -11,7 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tab
 import { Wand2, ScrollText } from 'lucide-react';
 
 export default function AutoAnnotate() {
-  const state = useAutoAnnotate();
+  const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
+  const state = useAutoAnnotate(projectId!, jobId);
 
   const stepLabel: Record<string, string> = {
     select: 'Select Images',

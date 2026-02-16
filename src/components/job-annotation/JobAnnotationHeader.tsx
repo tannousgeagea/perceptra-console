@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
-import { ArrowLeft, RefreshCw, Search, List } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, RefreshCw, Search, List, Sparkle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface JobAnnotationHeaderProps {
   jobName: string;
@@ -23,7 +23,9 @@ export function JobAnnotationHeader({
   onBuildDataset,
 }: JobAnnotationHeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
+  console.log(location.pathname)
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
@@ -59,6 +61,11 @@ export function JobAnnotationHeader({
             className="pl-10"
           />
         </div>
+
+        <Button variant="outline" size="sm" onClick={() => navigate(`${location.pathname}/auto-annotate`)}>
+          <Sparkle className="w-4 h-4" />
+          AI Label
+        </Button>
 
         <Button onClick={onBuildDataset} className="gap-2">
           <List className="h-4 w-4" />

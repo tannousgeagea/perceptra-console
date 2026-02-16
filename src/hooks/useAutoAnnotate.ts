@@ -8,6 +8,11 @@ import {
   ActivityLogEntry,
   AutoAnnotateStep,
 } from '@/types/auto-annotate';
+import { useJobImages } from '@/hooks/useJobImages';
+import { useProjectImages } from '@/hooks/useProjectImages';
+import { useSearchParser } from '@/hooks/useSearchParser';
+import { buildImageQuery } from '@/hooks/useImages';
+import { da } from 'zod/v4/locales';
 
 // ── Mock AI Models ──
 const MOCK_MODELS: AIModel[] = [
@@ -58,41 +63,6 @@ const LABEL_PRESETS: LabelConfig[] = [
   { name: 'cat', color: '#a855f7' },
 ];
 
-// ── Mock images for selection ──
-function generateSelectableImages(): ProjectImage[] {
-  const tags = ['training', 'validation', 'test', 'urban', 'highway', 'night', 'rain'];
-  return Array.from({ length: 60 }, (_, i) => ({
-    id: `auto-img-${i}`,
-    image_id: `img-${i}`,
-    name: `IMG_${String(i).padStart(4, '0')}.jpg`,
-    original_filename: `IMG_${String(i).padStart(4, '0')}.jpg`,
-    width: 1920,
-    height: 1080,
-    aspect_ratio: 16 / 9,
-    file_format: 'JPEG',
-    file_size: 2048000 + i * 5000,
-    file_size_mb: +(2.0 + i * 0.005).toFixed(3),
-    megapixels: 2.07,
-    storage_key: `images/auto-${i}.jpg`,
-    checksum: `chk-${i}`,
-    source_of_origin: 'upload',
-    created_at: new Date(Date.now() - i * 86400000).toISOString(),
-    updated_at: new Date(Date.now() - i * 43200000).toISOString(),
-    uploaded_by: i % 3 === 0 ? 'user-1' : 'user-2',
-    tags: [tags[i % tags.length], ...(i % 4 === 0 ? [tags[(i + 2) % tags.length]] : [])],
-    storage_profile: { id: 'profile-1', name: 'Primary', backend: 's3' },
-    download_url: `https://picsum.photos/seed/auto-${i}/400/300`,
-    status: i % 3 === 0 ? 'unannotated' as const : i % 3 === 1 ? 'annotated' as const : 'reviewed' as const,
-    annotated: i % 3 !== 0,
-    reviewed: i % 3 === 2,
-    marked_as_null: false,
-    priority: Math.floor(Math.random() * 100),
-    job_assignment_status: i % 2 === 0 ? 'assigned' as const : 'waiting' as const,
-    added_at: new Date(Date.now() - i * 86400000).toISOString(),
-    annotations: [],
-  }));
-}
-
 const MOCK_ACTIVITY_LOG: ActivityLogEntry[] = [
   {
     id: 'log-1',
@@ -129,9 +99,8 @@ const MOCK_ACTIVITY_LOG: ActivityLogEntry[] = [
   },
 ];
 
-export function useAutoAnnotate() {
+export function useAutoAnnotate(projectId: string, jobId?: string) {
   const [step, setStep] = useState<AutoAnnotateStep>('select');
-  const [availableImages] = useState<ProjectImage[]>(generateSelectableImages);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
@@ -143,6 +112,23 @@ export function useAutoAnnotate() {
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const parsedQuery = useSearchParser(searchQuery);
+  const _query = buildImageQuery(parsedQuery);
+
+  const projectImagesQuery = useProjectImages(projectId, {
+    q: _query,
+    limit: 200,
+  });
+
+  const jobImagesQuery = useJobImages(projectId, jobId!, {
+    q: _query,
+    limit: 200,
+  });
+
+  const activeQuery = jobId ? jobImagesQuery : projectImagesQuery;
+  const { data, isLoading, error, refetch } = activeQuery;
+
+  const availableImages = data?.images || []
   const processingRef = useRef<NodeJS.Timeout | null>(null);
   const pausedRef = useRef(false);
 
@@ -153,7 +139,6 @@ export function useAutoAnnotate() {
   const allTags = Array.from(new Set(availableImages.flatMap((img) => img.tags)));
 
   const filteredImages = availableImages.filter((img) => {
-    if (searchQuery && !img.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (tagFilter.length > 0 && !tagFilter.some((t) => img.tags.includes(t))) return false;
     if (statusFilter !== 'all' && img.status !== statusFilter) return false;
     return true;
