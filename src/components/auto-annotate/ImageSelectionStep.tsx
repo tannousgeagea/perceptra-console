@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ProjectImage } from '@/types/dataset';
 import { Input } from '@/components/ui/ui/input';
 import { Button } from '@/components/ui/ui/button';
@@ -6,6 +7,8 @@ import { Checkbox } from '@/components/ui/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/ui/select';
 import { Card, CardContent } from '@/components/ui/ui/card';
 import { Search, CheckSquare, Square, ImageIcon, HardDrive } from 'lucide-react';
+import { ProjectDatasetFilters } from '../dataset/ProjectDatasetFilters';
+import { ProjectImageTable } from '../dataset/ProjectImageTable';
 
 interface Props {
   images: ProjectImage[];
@@ -40,45 +43,23 @@ export function ImageSelectionStep({
   onDeselectAll,
   onNext,
 }: Props) {
+
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [showAnnotations, setShowAnnotations] = useState(true);
+
   return (
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search images..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
+          <ProjectDatasetFilters
+            searchText={searchQuery}
+            onSearchChange={onSearchChange}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showAnnotations={showAnnotations}
+            onShowAnnotationsChange={setShowAnnotations}
           />
-        </div>
-        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="unannotated">Unannotated</SelectItem>
-            <SelectItem value="annotated">Annotated</SelectItem>
-            <SelectItem value="reviewed">Reviewed</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex flex-wrap gap-1">
-          {allTags.slice(0, 8).map((tag) => (
-            <Badge
-              key={tag}
-              variant={tagFilter.includes(tag) ? 'default' : 'outline'}
-              className="cursor-pointer text-xs"
-              onClick={() =>
-                onTagFilterChange(
-                  tagFilter.includes(tag) ? tagFilter.filter((t) => t !== tag) : [...tagFilter, tag]
-                )
-              }
-            >
-              {tag}
-            </Badge>
-          ))}
         </div>
       </div>
 
@@ -105,44 +86,54 @@ export function ImageSelectionStep({
       </div>
 
       {/* Image grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-h-[480px] overflow-y-auto pr-1">
-        {images.map((img) => {
-          const selected = selectedIds.has(img.id);
-          return (
-            <Card
-              key={img.id}
-              className={`cursor-pointer transition-all overflow-hidden ${
-                selected ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-sm'
-              }`}
-              onClick={() => onToggle(img.id)}
-            >
-              <div className="relative">
-                <img
-                  src={img.download_url}
-                  alt={img.name}
-                  className="w-full h-28 object-cover"
-                  loading="lazy"
-                />
-                <div className="absolute top-2 left-2">
-                  <Checkbox checked={selected} className="bg-background/80" />
+
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-h-[480px] overflow-y-auto px-6 pr-1">
+          {images.map((img) => {
+            const selected = selectedIds.has(img.id);
+            return (
+              <Card
+                key={img.id}
+                className={`cursor-pointer transition-all overflow-hidden ${
+                  selected ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-sm'
+                }`}
+                onClick={() => onToggle(img.id)}
+              >
+                <div className="relative">
+                  <img
+                    src={img.download_url}
+                    alt={img.name}
+                    className="w-full h-28 object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <Checkbox checked={selected} className="bg-background/80" />
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="absolute bottom-1 right-1 text-[10px] px-1 py-0"
+                  >
+                    {img.status}
+                  </Badge>
                 </div>
-                <Badge
-                  variant="secondary"
-                  className="absolute bottom-1 right-1 text-[10px] px-1 py-0"
-                >
-                  {img.status}
-                </Badge>
-              </div>
-              <CardContent className="p-2">
-                <p className="text-xs truncate font-medium">{img.name}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {img.width}×{img.height} · {img.file_size_mb.toFixed(1)} MB
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                <CardContent className="p-2">
+                  <p className="text-xs truncate font-medium">{img.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {img.width}×{img.height} · {img.file_size_mb.toFixed(1)} MB
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <ProjectImageTable
+          images={images}
+          selectedIds={selectedIds}
+          onSelect={onToggle}
+          onSelectAll={onSelectAll}
+        />
+      )}
 
       {/* Next */}
       <div className="flex justify-end pt-2">

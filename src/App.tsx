@@ -108,6 +108,7 @@ const App = () => {
                       <Route path="sessions" element={<SessionsPage />} />
                       <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
                       <Route path='annotate/job/:jobId' element={<JobAnnotation />} />
+                      <Route path='annotate/job/:jobId/auto-annotate' element={<AutoAnnotate />} />
                       <Route path="no-permission" element={<NoPermissionPage />} />
                       <Route path="*" element={<NotFound />} />
                     </Route>
