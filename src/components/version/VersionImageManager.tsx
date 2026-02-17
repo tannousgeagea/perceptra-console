@@ -95,6 +95,8 @@ export function VersionImagesManager({ versionId, projectId, versionName }: Vers
                   src={image.download_url}
                   alt={image.name}
                   className="w-full h-full object-cover"
+                  onContextMenu={(e) => e.preventDefault()}
+                  draggable={false}
                 />
               </div>
               <div className="space-y-2">

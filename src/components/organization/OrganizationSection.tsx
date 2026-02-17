@@ -50,7 +50,7 @@ export const OrganizationSection = ({ organization, isExpanded }: OrgSectionProp
         </Link>
       </div>
 
-      <div className={cn("w-full", isExpanded ? "px-2" : "flex justify-center")}>
+      {/* <div className={cn("w-full", isExpanded ? "px-2" : "flex justify-center")}>
         <Link
           to={`/organizations/${organization.id}/progress`}
           className={cn(
@@ -61,7 +61,7 @@ export const OrganizationSection = ({ organization, isExpanded }: OrgSectionProp
           <CircleDashed size={18} />
           {isExpanded && <span className="truncate max-w-[120px]">Progress</span>}
         </Link>
-      </div>
+      </div> */}
 
       <div className={cn("w-full", isExpanded ? "px-2" : "flex justify-center")}>
         <Link

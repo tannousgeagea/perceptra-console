@@ -105,6 +105,8 @@ export function ImageSelectionStep({
                     alt={img.name}
                     className="w-full h-28 object-cover"
                     loading="lazy"
+                    onContextMenu={(e) => e.preventDefault()}
+                    draggable={false}
                   />
                   <div className="absolute top-2 left-2">
                     <Checkbox checked={selected} className="bg-background/80" />
