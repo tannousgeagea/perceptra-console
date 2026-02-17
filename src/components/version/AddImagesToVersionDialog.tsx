@@ -173,6 +173,8 @@ export function AddImagesToVersionDialog({
                         src={image.download_url}
                         alt={image.name}
                         className="w-full h-full object-cover"
+                        onContextMenu={(e) => e.preventDefault()}
+                        draggable={false}
                       />
                     </div>
                     <div className="absolute top-2 left-2">

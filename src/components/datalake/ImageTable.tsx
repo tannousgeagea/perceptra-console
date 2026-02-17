@@ -63,6 +63,8 @@ export function ImageTable({ images, selectedIds, onSelect, onSelectAll }: Image
                   alt={image.name}
                   className="w-16 h-12 object-cover rounded"
                   loading="lazy"
+                  onContextMenu={(e) => e.preventDefault()}
+                  draggable={false}
                 />
               </TableCell>
               <TableCell className="font-medium max-w-[200px] truncate" title={image.name}>

@@ -32,6 +32,8 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
           <img
             src={image.download_url}
             alt={image.name}
+            onContextMenu={(e) => e.preventDefault()}
+            draggable={false}
             className="w-full h-full object-fit brightness-50"
           />
           {showAnnotations && image.annotations.length > 0 && (

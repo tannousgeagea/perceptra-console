@@ -185,6 +185,8 @@ export function ReviewStep({
                   src={currentGroup[1][0]?.imageUrl}
                   alt={currentGroup[1][0]?.imageName}
                   className="w-full rounded-lg border object-cover max-h-[320px]"
+                  onContextMenu={(e) => e.preventDefault()}
+                  draggable={false}
                 />
               </div>
               {/* Annotations */}

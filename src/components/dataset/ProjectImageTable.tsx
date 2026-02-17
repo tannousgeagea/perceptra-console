@@ -81,6 +81,8 @@ export function ProjectImageTable({
                     src={image.download_url}
                     alt={image.original_filename}
                     className="w-16 h-16 object-cover rounded"
+                    onContextMenu={(e) => e.preventDefault()}
+                    draggable={false}
                   />
                 </TableCell>
                 <TableCell className="font-medium">

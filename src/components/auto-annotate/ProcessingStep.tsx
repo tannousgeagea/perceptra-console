@@ -57,6 +57,8 @@ export function ProcessingStep({ session, onPause, onResume, onCancel }: Props) 
                 src={session.currentImageUrl}
                 alt={session.currentImageName}
                 className="h-16 w-24 rounded object-cover border"
+                onContextMenu={(e) => e.preventDefault()}
+                draggable={false}
               />
               <div>
                 <p className="text-sm font-medium">{session.currentImageName}</p>

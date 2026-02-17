@@ -92,6 +92,8 @@ export function ConfirmStep({ selectedImages, model, labels, totalSizeMb, onBack
                 src={img.download_url}
                 alt={img.name}
                 className="h-12 w-16 rounded object-cover border"
+                onContextMenu={(e) => e.preventDefault()}
+                draggable={false}
               />
             ))}
             {selectedImages.length > 10 && (

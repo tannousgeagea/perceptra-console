@@ -34,6 +34,8 @@ export function ImageCard({ image, selected, onSelect }: ImageCardProps) {
           alt={image.name}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
           loading="lazy"
+          onContextMenu={(e) => e.preventDefault()}
+          draggable={false}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
