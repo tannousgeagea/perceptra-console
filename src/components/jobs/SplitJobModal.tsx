@@ -30,7 +30,7 @@ const SplitJobModal = ({ isOpen, onClose, job, users, onSplitJob }: SplitJobModa
   
   // Calculate minimum slices based on image count
   const minSlices = 2;
-  const maxSlices = Math.min(job.imageCount, 10);
+  const maxSlices = Math.min(job.image_count, 10);
   
 
   console.log(typeof users[0].id)
@@ -63,7 +63,7 @@ const SplitJobModal = ({ isOpen, onClose, job, users, onSplitJob }: SplitJobModa
   };
 
   // Check if job can be split (must have at least 2 images)
-  const canSplit = job.imageCount >= 2;
+  const canSplit = job.image_count >= 2;
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -108,7 +108,7 @@ const SplitJobModal = ({ isOpen, onClose, job, users, onSplitJob }: SplitJobModa
                   </span>
                 </div>
                 <p className="text-sm text-slate-500">
-                  Each slice will contain approximately {Math.floor(job.imageCount / numberOfSlices)} images.
+                  Each slice will contain approximately {Math.floor(job.image_count / numberOfSlices)} images.
                 </p>
               </div>
               
