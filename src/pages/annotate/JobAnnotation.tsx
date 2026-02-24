@@ -1,14 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { JobAnnotationHeader } from '@/components/job-annotation/JobAnnotationHeader';
 import { JobAnnotationTabs } from '@/components/job-annotation/JobAnnotationTabs';
 import { JobImageGrid } from '@/components/job-annotation/JobImageGrid';
+import { JobSelectionHeader, BulkOperation } from '@/components/job-annotation/JobSelectionHeader';
 import { DatasetBuilder } from '@/components/dataset-builder/DatasetBuilder';
 import { useJobImages } from '@/hooks/useJobImages';
 import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/ui/pagination-control';
+import { useToast } from '@/hooks/use-toast';
 
 export default function JobAnnotation() {
   const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
@@ -20,6 +22,10 @@ export default function JobAnnotation() {
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOperation, setBulkOperation] = useState<BulkOperation | null>(null);
+  const cancelRef = useRef(false);
+  const { toast } = useToast();
 
   const [imageSize, setImageSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [datasetBuilderOpen, setDatasetBuilderOpen] = useState(false);
@@ -66,6 +72,89 @@ export default function JobAnnotation() {
     return matchesSearch;
   }) || [];
 
+  const selectionMode = selectedIds.size > 0;
+  
+  const handleToggleSelect = useCallback((imageId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(imageId)) next.delete(imageId);
+      else next.add(imageId);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(new Set(filteredImages.map(img => img.id)));
+  }, [filteredImages]);
+  
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+  
+  const handleBulkReview = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    cancelRef.current = false;
+    setBulkOperation({ type: 'review', total: ids.length, processed: 0, failed: 0, status: 'running' });
+    let processed = 0;
+    let failed = 0;
+    for (const id of ids) {
+      if (cancelRef.current) {
+        setBulkOperation(prev => prev ? { ...prev, status: 'cancelled' } : null);
+        break;
+      }
+      try {
+        console.log(id, 'reviewed')
+      } catch {
+        failed++;
+      }
+      processed++;
+      setBulkOperation(prev => prev ? { ...prev, processed, failed } : null);
+    }
+    if (!cancelRef.current) {
+      setBulkOperation(prev => prev ? { ...prev, status: 'done' } : null);
+      toast({
+        title: 'Review Complete',
+        description: `${processed - failed} of ${ids.length} images reviewed successfully.`,
+      });
+      setSelectedIds(new Set());
+      setTimeout(() => setBulkOperation(null), 3000);
+    }
+  }, [selectedIds, toast]);
+
+  const handleBulkDelete = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    cancelRef.current = false;
+    setBulkOperation({ type: 'delete', total: ids.length, processed: 0, failed: 0, status: 'running' });
+    let processed = 0;
+    let failed = 0;
+    for (const id of ids) {
+      if (cancelRef.current) {
+        setBulkOperation(prev => prev ? { ...prev, status: 'cancelled' } : null);
+        break;
+      }
+      try {
+        console.log(id, 'delete');
+      } catch {
+        failed++;
+      }
+      processed++;
+      setBulkOperation(prev => prev ? { ...prev, processed, failed } : null);
+    }
+    if (!cancelRef.current) {
+      setBulkOperation(prev => prev ? { ...prev, status: 'done' } : null);
+      toast({
+        title: 'Deletion Complete',
+        description: `${processed - failed} of ${ids.length} images deleted successfully.`,
+      });
+      setSelectedIds(new Set());
+      setTimeout(() => setBulkOperation(null), 3000);
+    }
+  }, [selectedIds, toast]);
+
+  const handleCancelOperation = useCallback(() => {
+    cancelRef.current = true;
+  }, []);
+
   // Get the count for the current active status
   const getCurrentStatusCount = () => {
     if (activeStatus === 'unannotated') return data?.unannotated || 0;
@@ -85,6 +174,17 @@ export default function JobAnnotation() {
           onSearchChange={setSearchText}
           onBack={handleBack}
           onBuildDataset={handleBuildDataset}
+        />
+
+        <JobSelectionHeader
+          selectedCount={selectedIds.size}
+          totalCount={filteredImages.length}
+          onSelectAll={handleSelectAll}
+          onClearSelection={handleClearSelection}
+          onBulkReview={handleBulkReview}
+          onBulkDelete={handleBulkDelete}
+          bulkOperation={bulkOperation}
+          onCancelOperation={handleCancelOperation}
         />
 
         <JobAnnotationTabs
@@ -126,6 +226,9 @@ export default function JobAnnotation() {
             <JobImageGrid
               images={filteredImages}
               imageSize={imageSize}
+              selectedIds={selectedIds}
+              selectionMode={selectionMode}
+              onToggleSelect={handleToggleSelect}
               onImageClick={(index: number, image_id: string) => handleImageClick(index, image_id)}
             />
 

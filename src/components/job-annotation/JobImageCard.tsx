@@ -1,28 +1,33 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/ui/card';
 import { Badge } from '@/components/ui/ui/badge';
+import { Checkbox } from '@/components/ui/ui/checkbox';
 import { Button } from '@/components/ui/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/ui/dropdown-menu';
+
 import { ProjectImage } from '@/types/dataset';
-import { CheckCircle2, Circle, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import BoundingBox from "@/components/image/BoundingBox";
 
 interface JobImageCardProps {
   image: ProjectImage;
   size: 'sm' | 'md' | 'lg';
+  selected?: boolean;
+  selectionMode?: boolean;
+  onToggleSelect?: (imageId: string) => void;
   handleClick: () => void;
 }
 
-export function JobImageCard({ image, size, handleClick }: JobImageCardProps) {
+export function JobImageCard({ image, size, selected, selectionMode, onToggleSelect, handleClick }: JobImageCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const handleCardClick = () => {
+    if (selectionMode && onToggleSelect) {
+      onToggleSelect(image.id);
+    } else {
+      handleClick()
+    }
+  };
 
   const getStatusBadge = () => {
     const statusConfig = {
@@ -36,9 +41,10 @@ export function JobImageCard({ image, size, handleClick }: JobImageCardProps) {
   };
 
   return (
-    <Card onClick={handleClick} className={cn(
+    <Card onClick={handleCardClick} className={cn(
       'overflow-hidden transition-all hover:shadow-lg group cursor-pointer',
-      isUpdating && 'opacity-50 pointer-events-none'
+      isUpdating && 'opacity-50 pointer-events-none',
+      selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
     )}>
       <div className={cn(
         'relative bg-accent/50',
@@ -51,6 +57,8 @@ export function JobImageCard({ image, size, handleClick }: JobImageCardProps) {
           alt={image.name}
           className="w-full h-full object-fit brightness-75"
           loading="lazy"
+          onContextMenu={(e) => e.preventDefault()}
+          draggable={false}
           onLoad={() => setIsLoaded(true)}
         />
         
@@ -65,13 +73,31 @@ export function JobImageCard({ image, size, handleClick }: JobImageCardProps) {
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         
+        {/* Checkbox */}
+        <div className="absolute top-2 left-2 z-10">
+          <Checkbox
+            checked={selected}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.(image.id);
+            }}
+            className={cn(
+              'bg-background/80 backdrop-blur border-border transition-opacity',
+              !selectionMode && !selected && 'opacity-0 group-hover:opacity-100'
+            )}
+          />
+        </div>
+
         <div className="absolute top-2 right-2 flex gap-2">
           {getStatusBadge()}
         </div>
 
         {image.annotations && image.annotations.length > 0 && (
           <div className="absolute bottom-2 left-2">
-            <Badge variant="secondary" className="bg-background/80 backdrop-blur">
+            <Badge 
+              variant="secondary" 
+              className="bg-background/80 backdrop-blur"
+            >
               {image.annotations.length} {image.annotations.length === 1 ? 'annotation' : 'annotations'}
             </Badge>
           </div>
