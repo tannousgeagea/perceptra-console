@@ -5,6 +5,9 @@ import { cn } from '@/lib/utils';
 interface JobImageGridProps {
   images: ProjectImage[];
   imageSize: 'sm' | 'md' | 'lg';
+  selectedIds: Set<string>;
+  selectionMode: boolean;
+  onToggleSelect: (imageId: string) => void;
   onImageClick: (index: number, image_id: string) => void;
 }
 
@@ -14,7 +17,7 @@ const gridClasses = {
   lg: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6',
 };
 
-export function JobImageGrid({ images, imageSize,  onImageClick }: JobImageGridProps) {
+export function JobImageGrid({ images, imageSize, selectedIds, selectionMode, onToggleSelect,  onImageClick }: JobImageGridProps) {
   return (
     <div className={cn('grid', gridClasses[imageSize])}>
       {images.map((image, index) => (
@@ -22,6 +25,9 @@ export function JobImageGrid({ images, imageSize,  onImageClick }: JobImageGridP
           key={image.id}
           image={image}
           size={imageSize}
+          selected={selectedIds.has(image.id)}
+          selectionMode={selectionMode}
+          onToggleSelect={onToggleSelect}
           handleClick={() => onImageClick(index, image.image_id)}
         />
       ))}
