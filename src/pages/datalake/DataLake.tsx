@@ -1,22 +1,36 @@
 
 import React, { useState, useCallback } from "react";
-import { toast } from "@/components/ui/ui/use-toast";
 import { useImages, buildImageQuery } from "@/hooks/useImages";
 import { ImageGrid } from "@/components/datalake/ImageGrid";
 import { ImageTable } from "@/components/datalake/ImageTable";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { ViewMode, ImagesParams } from "@/types/image";
 import { useAddImagesToProject } from '@/hooks/useAddImagesToProject';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { DataLakeHeader } from '@/components/datalake/DataLakeHeader';
 import { DataLakeFilters } from '@/components/datalake/DataLakeFilters';
-import { DataLakeSelectionHeader } from '@/components/datalake/DataLakeSelectionHeader';
+import { useBulkOperations } from '@/hooks/useBulkOperation';
 import { useUserProjects } from '@/hooks/useUserProjects';
 import { PaginationControls } from "@/components/ui/ui/pagination-control";
+import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
+import { Button } from '@/components/ui/ui/button';
+import { FolderPlus, Download } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/ui/select';
+
 
 const DataLake: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("");
+  const { toast } = useToast();
+
+  const { operation, runBulkDeleteImages, runBulkTag, cancelOperation, clearOperation } = useBulkOperations();
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchText, setSearchText] = useState('');
@@ -68,6 +82,37 @@ const DataLake: React.FC = () => {
     setSelectedIds(new Set());
   }, []);
 
+  const handleBulkDelete = useCallback(async () => {
+    const selectedImageUUIDs = data?.images
+      .filter((img) => selectedIds.has(String(img.id)))
+      .map((img) => img.image_id);
+
+    if (!selectedImageUUIDs) return null;
+    const ids = Array.from(selectedImageUUIDs)
+    try {
+      await runBulkDeleteImages(ids);
+      toast({ title: 'Deletion Complete', description: `${ids.length} images deleted.` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: 'Deletion Failed', variant: 'destructive' });
+    }
+  }, [selectedIds, runBulkDeleteImages, toast]);
+
+  const handleBulkTag = useCallback(async (tags: string[]) => {
+    const selectedImageUUIDs = data?.images
+      .filter((img) => selectedIds.has(String(img.id)))
+      .map((img) => img.image_id);
+
+    if (!selectedImageUUIDs) return null;
+    try {
+      await runBulkTag(selectedImageUUIDs, tags);
+      toast({ title: 'Tagging Complete', description: `Tags applied to ${selectedImageUUIDs.length} images.` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: 'Tagging Failed', variant: 'destructive' });
+    }
+  }, [selectedIds, runBulkTag, toast]);
+
 
   const handleAddToProject = () => {
     if (selectedIds.size === 0 || !selectedProject) {
@@ -118,12 +163,53 @@ const DataLake: React.FC = () => {
 
       <DataLakeFilters searchText={searchText} onSearchChange={setSearchText} />
 
-      <DataLakeSelectionHeader
+      <BulkOperationBar
         selectedCount={selectedIds.size}
+        totalCount={data?.images.length || 0}
+        onSelectAll={() => handleSelectAll(true)}
         onClearSelection={handleClearSelection}
-        onAddToProject={handleAddToProject}
-        projects={projects ?? []}
-        isLoadingProjects={false}
+        actions={[
+          {
+            id: 'delete',
+            label: 'Delete',
+            icon: <Trash2 className="w-4 h-4" />,
+            variant: 'destructive',
+            requiresConfirm: true,
+            confirmTitle: `Delete ${selectedIds.size} images?`,
+            confirmDescription: 'This action cannot be undone. The selected images will be permanently removed from the data lake.',
+            onClick: handleBulkDelete,
+          },
+        ]}
+        bulkOperation={operation}
+        onCancelOperation={cancelOperation}
+        onOperationComplete={clearOperation}
+        onBulkTag={handleBulkTag}
+        extraContent={
+          <div className="flex items-center gap-2">
+            <Select onValueChange={handleAddToProject}>
+              <SelectTrigger className="w-[180px] bg-primary-foreground text-foreground h-9 text-sm">
+                <FolderPlus className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Add to project..." />
+              </SelectTrigger>
+              <SelectContent>
+                {projects?.map((project) => (
+                  <SelectItem key={project.id} value={project.project_id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2"
+              onClick={() => toast({ title: 'Download started', description: `Downloading ${selectedIds.size} images...` })}
+            >
+              <Download className="w-4 h-4" />
+              Download
+            </Button>
+          </div>
+        }
       />
 
       {isLoading ? (

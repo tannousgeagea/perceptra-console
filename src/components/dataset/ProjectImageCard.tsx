@@ -7,6 +7,7 @@ import { Bike, ChartCandlestick, FlaskConical } from 'lucide-react';
 import { FileImage, Tag, CheckCircle2, AlertCircle, Clock, Database } from 'lucide-react';
 import BoundingBox from '../image/BoundingBox';
 import { getModeBadge } from '@/utils/split';
+import { cn } from '@/lib/utils';
 
 interface ProjectImageCardProps {
   image: ProjectImage;
@@ -26,7 +27,10 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
   const StatusIcon = statusConfig[image.status].icon;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow flex-1">
+    <Card className={cn(
+      "overflow-hidden hover:shadow-lg transition-shadow flex-1",
+      selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'  
+    )}>
       <div className="relative group">
         <div className="relative w-full aspect-[16/9] bg-muted">
           <img

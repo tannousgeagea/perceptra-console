@@ -1,14 +1,15 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { JobAnnotationHeader } from '@/components/job-annotation/JobAnnotationHeader';
 import { JobAnnotationTabs } from '@/components/job-annotation/JobAnnotationTabs';
 import { JobImageGrid } from '@/components/job-annotation/JobImageGrid';
-import { JobSelectionHeader, BulkOperation } from '@/components/job-annotation/JobSelectionHeader';
+import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
+import { useBulkOperations } from '@/hooks/useBulkOperation';
 import { DatasetBuilder } from '@/components/dataset-builder/DatasetBuilder';
 import { useJobImages } from '@/hooks/useJobImages';
 import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/ui/pagination-control';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,8 +24,6 @@ export default function JobAnnotation() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkOperation, setBulkOperation] = useState<BulkOperation | null>(null);
-  const cancelRef = useRef(false);
   const { toast } = useToast();
 
   const [imageSize, setImageSize] = useState<'sm' | 'md' | 'lg'>('md');
@@ -41,6 +40,8 @@ export default function JobAnnotation() {
     status: activeStatus,
   });
   
+
+  const { operation, runBulkReview, runBulkDeleteProject, runBulkTag, cancelOperation, clearOperation } = useBulkOperations(projectId)
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -60,11 +61,6 @@ export default function JobAnnotation() {
     )
   }
 
-  const handleStatusChange = (newStatus: 'unannotated' | 'annotated' | 'reviewed') => {
-    setActiveStatus(newStatus);
-    setCurrentPage(1); // Reset to first page when switching tabs
-  };
-
   // Filter images based on active tab and search
   const filteredImages = data?.images.filter(img => {
     const matchesSearch = searchText.trim() === '' || 
@@ -83,77 +79,43 @@ export default function JobAnnotation() {
     });
   }, []);
 
-  const handleSelectAll = useCallback(() => {
-    setSelectedIds(new Set(filteredImages.map(img => img.id)));
-  }, [filteredImages]);
-  
-  const handleClearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
-  
   const handleBulkReview = useCallback(async () => {
     const ids = Array.from(selectedIds);
-    cancelRef.current = false;
-    setBulkOperation({ type: 'review', total: ids.length, processed: 0, failed: 0, status: 'running' });
-    let processed = 0;
-    let failed = 0;
-    for (const id of ids) {
-      if (cancelRef.current) {
-        setBulkOperation(prev => prev ? { ...prev, status: 'cancelled' } : null);
-        break;
-      }
-      try {
-        console.log(id, 'reviewed')
-      } catch {
-        failed++;
-      }
-      processed++;
-      setBulkOperation(prev => prev ? { ...prev, processed, failed } : null);
-    }
-    if (!cancelRef.current) {
-      setBulkOperation(prev => prev ? { ...prev, status: 'done' } : null);
-      toast({
-        title: 'Review Complete',
-        description: `${processed - failed} of ${ids.length} images reviewed successfully.`,
-      });
+    try {
+      await runBulkReview(ids);
+      toast({ title: 'Review Complete', description: `${ids.length} images reviewed.` });
       setSelectedIds(new Set());
-      setTimeout(() => setBulkOperation(null), 3000);
+      refetch();
+    } catch {
+      toast({ title: 'Review Failed', variant: 'destructive' });
     }
-  }, [selectedIds, toast]);
+  }, [selectedIds, runBulkReview, toast, refetch]);
 
   const handleBulkDelete = useCallback(async () => {
     const ids = Array.from(selectedIds);
-    cancelRef.current = false;
-    setBulkOperation({ type: 'delete', total: ids.length, processed: 0, failed: 0, status: 'running' });
-    let processed = 0;
-    let failed = 0;
-    for (const id of ids) {
-      if (cancelRef.current) {
-        setBulkOperation(prev => prev ? { ...prev, status: 'cancelled' } : null);
-        break;
-      }
-      try {
-        console.log(id, 'delete');
-      } catch {
-        failed++;
-      }
-      processed++;
-      setBulkOperation(prev => prev ? { ...prev, processed, failed } : null);
-    }
-    if (!cancelRef.current) {
-      setBulkOperation(prev => prev ? { ...prev, status: 'done' } : null);
-      toast({
-        title: 'Deletion Complete',
-        description: `${processed - failed} of ${ids.length} images deleted successfully.`,
-      });
+    try {
+      await runBulkDeleteProject(ids);
+      toast({ title: 'Deletion Complete', description: `${ids.length} images deleted.` });
       setSelectedIds(new Set());
-      setTimeout(() => setBulkOperation(null), 3000);
+      refetch();
+    } catch {
+      toast({ title: 'Deletion Failed', variant: 'destructive' });
     }
-  }, [selectedIds, toast]);
+  }, [selectedIds, runBulkDeleteProject, toast, refetch]);
 
-  const handleCancelOperation = useCallback(() => {
-    cancelRef.current = true;
-  }, []);
+  const handleBulkTag = useCallback(async (tags: string[]) => {
+    const selectedImageUUIDs = filteredImages
+      .filter((img) => selectedIds.has(String(img.id)))
+      .map((img) => img.image_id);
+    try {
+      await runBulkTag(selectedImageUUIDs, tags);
+      toast({ title: 'Tagging Complete', description: `Tags applied to ${selectedImageUUIDs.length} images.` });
+      setSelectedIds(new Set());
+      refetch();
+    } catch {
+      toast({ title: 'Tagging Failed', variant: 'destructive' });
+    }
+  }, [selectedIds, runBulkTag, toast, refetch]);
 
   // Get the count for the current active status
   const getCurrentStatusCount = () => {
@@ -176,20 +138,39 @@ export default function JobAnnotation() {
           onBuildDataset={handleBuildDataset}
         />
 
-        <JobSelectionHeader
+        <BulkOperationBar
           selectedCount={selectedIds.size}
           totalCount={filteredImages.length}
-          onSelectAll={handleSelectAll}
-          onClearSelection={handleClearSelection}
-          onBulkReview={handleBulkReview}
-          onBulkDelete={handleBulkDelete}
-          bulkOperation={bulkOperation}
-          onCancelOperation={handleCancelOperation}
+          onSelectAll={() => setSelectedIds(new Set(filteredImages.map(img => img.id)))}
+          onClearSelection={() => setSelectedIds(new Set())}
+          actions={[
+            {
+              id: 'review',
+              label: 'Review',
+              icon: <CheckCircle2 className="w-4 h-4" />,
+              variant: 'secondary',
+              onClick: handleBulkReview,
+            },
+            {
+              id: 'delete',
+              label: 'Delete',
+              icon: <Trash2 className="w-4 h-4" />,
+              variant: 'destructive',
+              requiresConfirm: true,
+              confirmTitle: `Delete ${selectedIds.size} images?`,
+              confirmDescription: 'This action cannot be undone. The selected images and all their annotations will be permanently removed.',
+              onClick: handleBulkDelete,
+            },
+          ]}
+          bulkOperation={operation}
+          onCancelOperation={cancelOperation}
+          onOperationComplete={clearOperation}
+          onBulkTag={handleBulkTag}
         />
 
         <JobAnnotationTabs
           activeStatus={activeStatus}
-          onStatusChange={handleStatusChange}
+          onStatusChange={setActiveStatus}
           unannotatedCount={data?.unannotated || 0}
           annotatedCount={data?.annotated || 0}
           reviewedCount={data?.reviewed || 0}
