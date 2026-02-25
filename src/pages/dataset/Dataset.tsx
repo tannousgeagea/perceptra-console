@@ -8,13 +8,15 @@ import { ProjectImageGrid } from '@/components/dataset/ProjectImageGrid';
 import { ProjectImageTable } from '@/components/dataset/ProjectImageTable';
 import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
 import { PaginationControls } from '@/components/ui/ui/pagination-control';
+import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
+import { useBulkOperations } from '@/hooks/useBulkOperation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProjectDataset() {
-  
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const [searchText, setSearchText] = useState('');
@@ -23,6 +25,9 @@ export default function ProjectDataset() {
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const { toast } = useToast();
+
+  const { operation, runBulkReview, runBulkDeleteProject, runBulkTag, cancelOperation, clearOperation } = useBulkOperations(projectId);
 
   const parsedQuery = useSearchParser(searchText);
   const _query = buildImageQuery(parsedQuery)
@@ -49,9 +54,50 @@ export default function ProjectDataset() {
     refetch();
   }, [refetch]);
 
+  const handleBulkReview = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    try {
+      await runBulkReview(ids);
+      toast({ title: 'Review Complete', description: `${ids.length} images reviewed.` });
+      setSelectedIds(new Set());
+      refetch();
+    } catch {
+      toast({ title: 'Review Failed', variant: 'destructive' });
+    }
+  }, [selectedIds, runBulkReview, toast, refetch]);
+
+  const handleBulkDelete = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    try {
+      await runBulkDeleteProject(ids);
+      toast({ title: 'Deletion Complete', description: `${ids.length} images deleted.` });
+      setSelectedIds(new Set());
+      refetch();
+    } catch {
+      toast({ title: 'Deletion Failed', variant: 'destructive' });
+    }
+  }, [selectedIds, runBulkDeleteProject, toast, refetch]);
+
+  const handleBulkTag = useCallback(async (tags: string[]) => {
+    const selectedImageUUIDs = data?.images
+      .filter((img) => selectedIds.has(String(img.id)))
+      .map((img) => img.image_id);
+
+    if (!selectedImageUUIDs) return null;
+    
+    try {
+      await runBulkTag(selectedImageUUIDs, tags);
+      toast({ title: 'Tagging Complete', description: `Tags applied to ${selectedImageUUIDs.length} images.` });
+      setSelectedIds(new Set());
+      refetch();
+    } catch {
+      toast({ title: 'Tagging Failed', variant: 'destructive' });
+    }
+  }, [selectedIds, runBulkTag, toast, refetch]);
+
   return (
     <div className="min-h-screen w-full p-6 space-y-6 bg-background">
-      <div>
+      <div className='space-y-6'>
         <ProjectDatasetHeader
           projectId={projectId!}
           total={data?.total || 0}
@@ -70,6 +116,36 @@ export default function ProjectDataset() {
           onViewModeChange={setViewMode}
           showAnnotations={showAnnotations}
           onShowAnnotationsChange={setShowAnnotations}
+        />
+
+        <BulkOperationBar
+          selectedCount={selectedIds.size}
+          totalCount={data?.images.length || 0}
+          onSelectAll={() => setSelectedIds(new Set(data?.images.map(img => img.id) || []))}
+          onClearSelection={() => setSelectedIds(new Set())}
+          actions={[
+            {
+              id: 'review',
+              label: 'Review',
+              icon: <CheckCircle2 className="w-4 h-4" />,
+              variant: 'secondary',
+              onClick: handleBulkReview,
+            },
+            {
+              id: 'delete',
+              label: 'Delete',
+              icon: <Trash2 className="w-4 h-4" />,
+              variant: 'destructive',
+              requiresConfirm: true,
+              confirmTitle: `Delete ${selectedIds.size} images?`,
+              confirmDescription: 'This action cannot be undone. The selected images and all their annotations will be permanently removed.',
+              onClick: handleBulkDelete,
+            },
+          ]}
+          bulkOperation={operation}
+          onCancelOperation={cancelOperation}
+          onOperationComplete={clearOperation}
+          onBulkTag={handleBulkTag}
         />
 
         {error && (
