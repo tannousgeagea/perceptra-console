@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { JobAnnotationHeader } from '@/components/job-annotation/JobAnnotationHeader';
 import { JobAnnotationTabs } from '@/components/job-annotation/JobAnnotationTabs';
@@ -19,17 +19,36 @@ export default function JobAnnotation() {
   const query = new URLSearchParams(location.search);
   const initialStatus = query.get("status") as 'unannotated' | 'annotated' | 'reviewed' || 'unannotated';
 
+  const initialPage = parseInt(query.get("page") || "1");
+  const initialLimit = parseInt(query.get("limit") || "20");
+
   const [activeStatus, setActiveStatus] = useState<'unannotated' | 'annotated' | 'reviewed'>(initialStatus);
   const [searchText, setSearchText] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [itemsPerPage, setItemsPerPage] = useState(initialLimit);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const [imageSize, setImageSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [datasetBuilderOpen, setDatasetBuilderOpen] = useState(false);
   const navigate = useNavigate();
-  
+    
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    params.set("page", String(currentPage));
+    params.set("limit", String(itemsPerPage));
+    params.set("status", activeStatus);
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString(),
+      },
+      { replace: true }
+    );
+  }, [currentPage, itemsPerPage, activeStatus]);
+
   if (!projectId || !jobId) {
     return <p className="text-red-600 p-6">Invalid route: Missing project or job ID.</p>;
   }
@@ -51,8 +70,14 @@ export default function JobAnnotation() {
   }, []);
 
   const handleImageClick = (index: number, image_id: string): void => {
-    navigate(
-      `/projects/${projectId}/images/${image_id}?jobId=${jobId}&status=${activeStatus}&index=${index + 1}`);
+    const params = new URLSearchParams(location.search);
+    params.set("index", `${index + 1}`);
+    params.set("jobId", jobId)
+
+    navigate({
+      pathname: `/projects/${projectId}/images/${image_id}`,
+      search: params.toString(),
+    });
   };
 
   const handleBack = (): void => {

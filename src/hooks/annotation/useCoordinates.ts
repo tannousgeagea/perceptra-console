@@ -1,4 +1,11 @@
 export const useCoordinates = () => {
+  const getCanvasRect = () => {
+    const canvas = document.querySelector('.annotation-canvas') as HTMLElement;
+    if (!canvas) return null;
+
+    return canvas.getBoundingClientRect();
+  };
+
   const getScaledCoordinates = (clientX: number, clientY: number) => {
     const canvas = document.querySelector('.annotation-canvas') as HTMLDListElement;
     if (!canvas) return { x: 0, y: 0 };
@@ -12,5 +19,15 @@ export const useCoordinates = () => {
     return { x, y};
   };
 
-  return { getScaledCoordinates };
+  const getPixelSize = (width: number, height: number) => {
+    const rect = getCanvasRect();
+    if (!rect) return { width: 0, height: 0 };
+
+    return {
+      width: Math.floor(width * rect.width),
+      height: Math.floor(height * rect.height)
+    };
+  };
+
+  return { getScaledCoordinates, getCanvasRect, getPixelSize };
 };

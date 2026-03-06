@@ -1,5 +1,5 @@
 import { useMemo, useRef, useCallback, useState } from 'react';
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { AnnotationProvider } from '@/contexts/AnnotationProvider';
 import ToolBar from './components/ToolBar';
 import Canvas, { CanvasHandle }  from './components/Canvas';
@@ -23,6 +23,7 @@ const AnnotationTool = () => {
   );
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const samSession = useSAMSession(projectId!, image?.id || "");
 
   // CRITICAL: Stable ref to Canvas (never recreated)
@@ -35,13 +36,21 @@ const AnnotationTool = () => {
   const jobId = searchParams.get("jobId") || "";
   const status = searchParams.get("status") || "";
   const page = parseInt(searchParams.get("page") || "1", 10);
+  const itemsPerPage = parseInt(searchParams.get("limit") || "20");
   const indexParam = parseInt(searchParams.get("index") || "0", 10);
 
+  const params = new URLSearchParams(location.search);
+  params.delete("index");
+
+  const backUrl = `/projects/${projectId}/annotate/job/${jobId}?${params.toString()}`;
+
+
+  console.log(backUrl)
   // fetch job images for context
   const { data: jobImages } = useJobImages(projectId!, jobId, {
     status: status || undefined,
-    skip: (page - 1) * 50,
-    limit: 50,
+    skip: (page - 1) * itemsPerPage,
+    limit: itemsPerPage,
   });
 
   const imageIds = useMemo(
@@ -128,7 +137,7 @@ const AnnotationTool = () => {
           onNext={handleNext}
           onPrevious={handlePrevious}
           subtitle={`Filter: ${status || "all"} (Page ${page})`}
-          backTo={`/projects/${projectId}/annotate/job/${jobId}?status=${status}`}
+          backTo={backUrl}
         />
         <div className="flex h-full bg-card">
           <div className="w-56 p-4 border-r border-border flex flex-col gap-4">
