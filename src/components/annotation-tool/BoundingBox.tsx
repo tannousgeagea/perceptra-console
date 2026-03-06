@@ -58,7 +58,8 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizing, setResizing] = useState<string | null>(null);
-  const { getScaledCoordinates } = useCoordinates();
+  const [isHovered, setIsHovered] = useState(false);
+  const { getScaledCoordinates, getPixelSize } = useCoordinates();
 
   const handleMouseDown = useCallback((e: React.MouseEvent, type: string | null = null) => {
     if (tool !== 'move') return;
@@ -140,10 +141,22 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
     console.log(`Box ${box.id} rendered`);
   });
 
+  const { width: pixelWidth, height: pixelHeight } =
+    getPixelSize(box.width, box.height);
+
+  const isSmall = pixelWidth <= 20 && pixelHeight <= 20
+  const showSize = isSelected || isHovered;
+
+  // const boxClasses = [
+  //   "absolute border-2 cursor-move",
+  //   isSelected ? "bg-[rgba(128,0,255,0.281)]" : "",
+  //   tool !== 'move' ? "pointer-events-none" : ""
+  // ].filter(Boolean).join(' ');
+
+
   const boxClasses = [
     "absolute border-2 cursor-move",
-    isSelected ? "bg-[rgba(128,0,255,0.281)]" : "",
-    tool !== 'move' ? "pointer-events-none" : ""
+    isSelected ? "bg-[rgba(128,0,255,0.28)]" : ""
   ].filter(Boolean).join(' ');
 
   return (
@@ -157,6 +170,8 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
         borderColor: `${box.color}`,
       }}
       onMouseDown={handleMouseDown}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {isSelected && tool === 'move' && (
         <>
@@ -186,6 +201,22 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
           />
         </>
       )}
+
+      {/* Size label */}
+      {showSize && (
+        <div
+          className="absolute bottom-4 left-0 text-[10px] px-1.5 py-[1px] rounded-sm font-medium pointer-events-none"
+          style={{
+            transform: "translateY(100%)",
+            backgroundColor: isSmall ? "rgba(220,38,38,0.9)" : "rgba(0,0,0,0.75)",
+            color: "#fff",
+            whiteSpace: "nowrap"
+          }}
+        >
+          {pixelWidth} × {pixelHeight}px
+        </div>
+      )}
+
     </div>
   );
 };

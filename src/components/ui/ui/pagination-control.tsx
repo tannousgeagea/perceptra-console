@@ -30,7 +30,7 @@ export function PaginationControls({
   itemsPerPage,
   onPageChange,
   onItemsPerPageChange,
-  itemsPerPageOptions = [10, 20, 50, 100],
+  itemsPerPageOptions = [10, 20, 50, 100, 200, 250],
 }: PaginationControlsProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
