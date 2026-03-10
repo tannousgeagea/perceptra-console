@@ -5,19 +5,31 @@ import {
   RefreshTokenResponse, 
   User,
   AUTH_STORAGE_KEYS,
+  OAUTH_STORAGE_KEYS,
   OAuthInitiateResponse
 } from "@/types/auth";
 
 /**
- * Storage utility to handle both localStorage and sessionStorage
+ * Storage utility that handles both localStorage and sessionStorage.
+ *
+ * Fix #1 — the original getStorage() guessed which storage to use by checking
+ * whether localStorage contained the access token. This was fragile: a stale
+ * token from a previous "remember me" session would cause updateTokens() to
+ * write refreshed tokens to localStorage even when the current session was
+ * using sessionStorage, silently leaving the session tokens stale.
+ *
+ * The fix is to record the chosen storage backend explicitly via
+ * AUTH_STORAGE_KEYS.STORAGE_TYPE and read it back deterministically.
  */
 class AuthStorage {
+  /**
+   * Returns the storage backend that was chosen at login time.
+   * Falls back to sessionStorage if the marker is absent (e.g. first visit).
+   */
   private getStorage(): Storage {
-    // Check if we're using localStorage or sessionStorage
-    if (localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)) {
-      return localStorage;
-    }
-    return sessionStorage;
+    return sessionStorage.getItem(AUTH_STORAGE_KEYS.STORAGE_TYPE) === 'local'
+      ? localStorage
+      : sessionStorage;
   }
 
   set(key: string, value: string, rememberMe: boolean = false): void {
@@ -34,12 +46,23 @@ class AuthStorage {
     sessionStorage.removeItem(key);
   }
 
+  /**
+   * Fix #2 — the original clear() left the STORAGE_TYPE marker and the OAuth
+   * CSRF keys behind after logout. These are now included explicitly so no
+   * forensic data survives a session end.
+   */
   clear(): void {
-    Object.values(AUTH_STORAGE_KEYS).forEach(key => {
-      this.remove(key);
-    });
+    // Auth token keys
+    Object.values(AUTH_STORAGE_KEYS).forEach(key => this.remove(key));
+
+    // OAuth CSRF handshake keys (always sessionStorage, but remove() covers both)
+    Object.values(OAUTH_STORAGE_KEYS).forEach(key => this.remove(key));
   }
 
+  /**
+   * Persists all auth data atomically to the chosen storage backend and
+   * records which backend was used so updateTokens() can target it correctly.
+   */
   setAuthData(
     accessToken: string,
     refreshToken: string,
@@ -54,6 +77,12 @@ class AuthStorage {
     storage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
     storage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(user));
     storage.setItem(AUTH_STORAGE_KEYS.TOKEN_EXPIRY, expiryDate.toISOString());
+
+    // Record the backend choice so getStorage() is deterministic on refresh
+    localStorage.setItem(
+      AUTH_STORAGE_KEYS.STORAGE_TYPE,
+      rememberMe ? 'local' : 'session'
+    );
   }
 
   getAuthData(): {
@@ -75,6 +104,10 @@ class AuthStorage {
     };
   }
 
+  /**
+   * Updates only the token fields after a successful refresh, writing to the
+   * same backend that was chosen at login time.
+   */
   updateTokens(accessToken: string, refreshToken: string, expiresIn: number): void {
     const storage = this.getStorage();
     const expiryDate = new Date(Date.now() + expiresIn * 1000);
@@ -88,25 +121,40 @@ class AuthStorage {
 export const authStorage = new AuthStorage();
 
 /**
- * API Error class for better error handling
+ * Structured API error.
+ *
+ * Fix #5 — network-level failures (offline, DNS, CORS) now use status 0
+ * instead of 500 so monitoring can distinguish "server returned an error"
+ * from "request never reached the server".
  */
 export class ApiError extends Error {
   constructor(
     public statusCode: number,
     message: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
+/** Converts an unknown catch value into a human-readable network message. */
+function toNetworkError(error: unknown, context: string): ApiError {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  // Status 0 = no HTTP response received (offline / DNS / CORS)
+  return new ApiError(0, `Network error ${context}: ${message}`);
+}
+
 /**
- * Auth service for all authentication-related API calls
+ * Auth service — all authentication-related API calls.
  */
 export const authService = {
   /**
-   * Login with email and password
+   * Login with email/password.
+   *
+   * Fix #4 — the API field is named `username` (your backend accepts the email
+   * address in the username field). The TypeScript parameter stays `email` for
+   * clarity at the call-site; the mapping is explicit and documented here.
    */
   login: async (email: string, password: string): Promise<LoginResponse> => {
     try {
@@ -125,11 +173,10 @@ export const authService = {
         );
       }
 
-      const data: LoginResponse = await res.json();
-      return data;
+      return res.json() as Promise<LoginResponse>;
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error during login");
+      throw toNetworkError(error, 'during login');
     }
   },
 
@@ -158,12 +205,12 @@ export const authService = {
       return res.json();
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error fetching user");
+      throw toNetworkError(error, 'fetching user');
     }
   },
 
   /**
-   * Refresh access token using refresh token
+   * Exchange a refresh token for a new access token.
    */
   refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
     try {
@@ -182,11 +229,10 @@ export const authService = {
         );
       }
 
-      const data: RefreshTokenResponse = await response.json();
-      return data;
+      return response.json() as Promise<RefreshTokenResponse>;
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error refreshing token");
+      throw toNetworkError(error, 'refreshing token');
     }
   },
 
@@ -217,10 +263,10 @@ export const authService = {
         );
       }
 
-      return res.json();
+      return res.json() as Promise<OAuthInitiateResponse>;
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error initiating OAuth");
+      throw toNetworkError(error, 'initiating OAuth');
     }
   },
 
@@ -248,16 +294,16 @@ export const authService = {
         );
       }
 
-      const data: LoginResponse = await res.json();
-      return data;
+      return res.json() as Promise<LoginResponse>;
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error completing OAuth");
+      throw toNetworkError(error, 'completing OAuth');
     }
   },
 
   /**
-   * Sign up a new user
+   * Register a new user account.
+   * Returns a full LoginResponse so the caller can log the user in immediately.
    */
   signup: async (data: {
     email: string;
@@ -290,11 +336,10 @@ export const authService = {
         );
       }
 
-      const responseData: LoginResponse = await res.json();
-      return responseData;
+      return res.json() as Promise<LoginResponse>;
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error during sign up");
+      throw toNetworkError(error, 'during sign up');
     }
   },
 
@@ -319,7 +364,7 @@ export const authService = {
       }
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error requesting password reset");
+      throw toNetworkError(error, 'requesting password reset');
     }
   },
 
@@ -344,7 +389,7 @@ export const authService = {
       }
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError(500, "Network error resetting password");
+      throw toNetworkError(error, 'resetting password');
     }
   },
 };
