@@ -1,13 +1,21 @@
 // context/AuthContext.tsx
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { 
+  createContext, 
+  useContext, 
+  useState, 
+  useEffect, 
+  useCallback, 
+  useRef 
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService, authStorage, ApiError } from '@/services/authService';
-import { User, Organization, OAuthProviderType, UserCreate } from '@/types/auth';
+import { User, Organization, OAuthProviderType, UserCreate, OAUTH_STORAGE_KEYS, getPrimaryOrganization } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
+  /** True only during the initial boot check — NOT during login/signup actions */
+  isInitializing: boolean;
   setUser: (user: User) => void;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signup: (data: UserCreate) => Promise<{ success: boolean; error?: string }>;
@@ -26,95 +34,88 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  /**
+   * Fix #9 — split the single isLoading flag into two concerns:
+   *   isInitializing: the one-time boot check (drives ProtectedRoute spinner)
+   *   The login/signup forms own their own local isSubmitting state.
+   * This prevents the full-screen spinner from flashing on every login attempt.
+   */
+
+  const [isInitializing, setIsInitializing] = useState(true);
   const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
   const navigate = useNavigate();
   const refreshTimeoutRef = useRef<NodeJS.Timeout>();
 
   /**
-   * Setup automatic token refresh
+   * Fix — stable ref that always points to the latest refreshToken function.
+   * This breaks the stale-closure cycle: setupTokenRefresh can safely use an
+   * empty dependency array while still calling the current refreshToken.
    */
-  const setupTokenRefresh = useCallback((expiresIn: number) => {
-    // Clear existing timeout
+  const refreshTokenRef = useRef<() => Promise<boolean>>();
+
+  // ---------------------------------------------------------------------------
+  // Internal helpers
+  // ---------------------------------------------------------------------------
+  /**
+   * Fix #8 — extracted from login / signup / handleOAuthCallback to avoid
+   * duplicating the org-selection logic in three places.
+   */
+  const initializeUserSession = useCallback(
+    (sessionUser: User, expiresIn: number) => {
+      setUser(sessionUser);
+
+      // Use the shared helper from auth.ts (owner preferred, else first)
+      const primaryOrg = getPrimaryOrganization(sessionUser);
+      if (primaryOrg) {
+        setCurrentOrgId(primaryOrg.id);
+      }
+
+      // Timer is scheduled via the stable ref — no dep needed here
+      refreshTokenRef.current && setupTokenRefreshInternal(expiresIn);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [] // intentionally empty — setupTokenRefreshInternal is stable via ref
+  );
+
+  /**
+   * Fix (stale closure) — setupTokenRefresh reads refreshToken through the ref
+   * so it is safe to memoize with an empty dep array. The ref is always kept
+   * current by the effect below.
+   *
+   * Fix #4 — when refreshTime <= 0 (token is already too close to expiry on
+   * tab resume) we trigger a refresh immediately instead of silently returning.
+   */
+  const setupTokenRefreshInternal = useCallback((expiresIn: number) => {
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current);
     }
 
-    // Calculate when to refresh (5 minutes before expiry)
-    const bufferTime = 5 * 60 * 1000; // 5 minutes in ms
-    const refreshTime = (expiresIn * 1000) - bufferTime;
+    const BUFFER_MS = 5 * 60 * 1000; // refresh 5 minutes before expiry
+    const refreshTime = expiresIn * 1000 - BUFFER_MS;
 
     if (refreshTime <= 0) {
-      console.warn('Token already expired or too close to expiry');
+      // Token is already inside the buffer window — refresh now
+      refreshTokenRef.current?.();
       return;
     }
 
-    console.log(`Token refresh scheduled in ${refreshTime / 1000 / 60} minutes`);
-
-    refreshTimeoutRef.current = setTimeout(async () => {
+    refreshTimeoutRef.current = setTimeout(() => {
       console.log('Auto-refreshing token...');
-      await refreshToken();
+      refreshTokenRef.current?.();
     }, refreshTime);
-  }, []);
+  }, []); // safe — only touches refs, no closed-over state
 
-  /**
-   * Initialize auth state from storage
-   */
+  // Keep the ref in sync with the latest refreshToken implementation
+  // (the effect runs after every render in which refreshToken identity changes)
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const { accessToken, refreshToken: refreshTokenConst, user, tokenExpiry } = authStorage.getAuthData();
+    refreshTokenRef.current = refreshToken;
+  });
 
-        if (!accessToken || !refreshTokenConst || !user || !tokenExpiry) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Check if token is expired
-        const now = Date.now();
-        const expiryTime = new Date(tokenExpiry).getTime();
-
-        console.log(expiryTime)
-        if (expiryTime <= now) {
-          console.log('Token expired, attempting refresh...');
-          const refreshSuccess = await refreshToken();
-          if (!refreshSuccess) {
-            authStorage.clear();
-            setUser(null);
-          }
-        } else {
-          setUser(user);
-          // Set up refresh for existing token
-          const timeUntilExpiry = Math.floor((expiryTime - now) / 1000);
-          setupTokenRefresh(timeUntilExpiry);
-          
-          // Set primary organization as current
-          if (user.organizations.length > 0) {
-            const primaryOrg = user.organizations.find(org => org.role === 'owner') || user.organizations[0];
-            setCurrentOrgId(primaryOrg.id);
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        authStorage.clear();
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Cleanup on unmount
-    return () => {
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
-    };
-  }, [setupTokenRefresh]);
 
   /**
-   * Login user
+   * Fix #9 — removed setIsLoading(true/false). The login form should own its
+   * own isSubmitting state; the global flag is only for the boot check.
    */
   const login = async (
     email: string,
@@ -122,8 +123,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     rememberMe = false
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      setIsLoading(true);
-      
       const response = await authService.login(email, password);
       
       // Store auth data
@@ -135,29 +134,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         rememberMe
       );
 
-      setUser(response.user);
-      
-      // Set primary organization
-      if (response.user.organizations.length > 0) {
-        const primaryOrg = response.user.organizations.find(org => org.role === 'owner') || response.user.organizations[0];
-        setCurrentOrgId(primaryOrg.id);
-      }
-
-      // Setup auto-refresh
-      setupTokenRefresh(response.expires_in);
+      // Fix #8 — use shared helper instead of inline org-selection logic
+      initializeUserSession(response.user, response.expires_in);
 
       return { success: true };
     } catch (error) {
-      console.error('Login failed:', error);
-      
-      let errorMessage = 'Login failed. Please try again.';
-      if (error instanceof ApiError) {
-        errorMessage = error.message;
-      }
-      
+      const errorMessage =
+        error instanceof ApiError ? error.message : 'Login failed. Please try again.';
       return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -181,12 +165,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /**
    * Refresh access token
    */
-  const refreshToken = async (): Promise<boolean> => {
+  const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
       const { refreshToken: currentRefreshToken } = authStorage.getAuthData();
 
       if (!currentRefreshToken) {
-        console.error('No refresh token available');
+        logout();
         return false;
       }
 
@@ -202,7 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Token refreshed successfully');
 
       // Setup next refresh
-      setupTokenRefresh(response.expires_in);
+      setupTokenRefreshInternal(response.expires_in);
 
       return true;
     } catch (error) {
@@ -212,48 +196,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout();
       return false;
     }
-  };
+  }, [logout, setupTokenRefreshInternal])
 
-  /**
-   * Get current organization
-   */
+  // ---------------------------------------------------------------------------
+  // Boot — initialize auth state from storage on mount
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const { accessToken, refreshToken: refreshTokenConst, user: storedUser, tokenExpiry } = authStorage.getAuthData();
+
+        if (!accessToken || !refreshTokenConst || !storedUser || !tokenExpiry) {
+          return;
+        }
+
+        // Check if token is expired
+        const now = Date.now();
+        const expiryTime = new Date(tokenExpiry).getTime();
+
+        if (expiryTime <= now) {
+          console.log('Token expired, attempting refresh...');
+          await refreshTokenRef.current?.();
+        } else {
+          setUser(user);
+          // Set up refresh for existing token
+          const timeUntilExpiry = Math.floor((expiryTime - now) / 1000);
+          setupTokenRefreshInternal(timeUntilExpiry);
+
+          const primaryOrg = getPrimaryOrganization(storedUser);
+          if (primaryOrg) setCurrentOrgId(primaryOrg.id);
+          
+          // Set primary organization as current
+          // if (user.organizations.length > 0) {
+          //   const primaryOrg = user.organizations.find(org => org.role === 'owner') || user.organizations[0];
+          //   setCurrentOrgId(primaryOrg.id);
+          // }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        authStorage.clear();
+        setUser(null);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Cleanup on unmount
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, [setupTokenRefreshInternal]);
+
+  // ---------------------------------------------------------------------------
+  // Organization helpers
+  // ---------------------------------------------------------------------------
+
   const getCurrentOrganization = useCallback((): Organization | null => {
     if (!user || !currentOrgId) return null;
-    
     return user.organizations.find(org => org.id === currentOrgId) || null;
   }, [user, currentOrgId]);
 
-  /**
-   * Switch to a different organization
-   */
-  const switchOrganization = useCallback((organizationId: string): boolean => {
-    if (!user) return false;
-    
-    const org = user.organizations.find(o => o.id === organizationId);
-    if (!org) return false;
-    
-    setCurrentOrgId(organizationId);
-    return true;
-  }, [user]);
+  const switchOrganization = useCallback(
+    (organizationId: string): boolean => {
+      if (!user) return false;
+      const org = user.organizations.find(o => o.id === organizationId);
+      if (!org) return false;
+      setCurrentOrgId(organizationId);
+      return true;
+    },
+    [user]
+  );
 
-  /**
-   * Check if user has required permission in organization
-   */
   const hasPermission = useCallback(
     (organizationId: string, requiredRole: 'owner' | 'admin'): boolean => {
       if (!user) return false;
-
       const org = user.organizations.find(o => o.id === organizationId);
       if (!org) return false;
-
-      if (requiredRole === 'owner') {
-        return org.role === 'owner';
-      }
-
-      if (requiredRole === 'admin') {
-        return org.role === 'owner' || org.role === 'admin';
-      }
-
+      if (requiredRole === 'owner') return org.role === 'owner';
+      if (requiredRole === 'admin') return org.role === 'owner' || org.role === 'admin';
       return false;
     },
     [user]
@@ -266,12 +291,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authService.initiateOAuth(provider);
       
-      // Store state in sessionStorage for verification
-      sessionStorage.setItem('oauth_state', response.state);
-      sessionStorage.setItem('oauth_provider', provider);
-      
+      sessionStorage.setItem(OAUTH_STORAGE_KEYS.STATE, response.state);
+      sessionStorage.setItem(OAUTH_STORAGE_KEYS.PROVIDER, provider);
 
-      console.log(response.state)
       // Redirect to OAuth provider
       window.location.href = response.authorization_url;
     } catch (error) {
@@ -289,11 +311,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     state: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      setIsLoading(true);
+      setIsInitializing(true);
 
       // Verify state matches (CSRF protection)
-      const storedState = sessionStorage.getItem('oauth_state');
-      const storedProvider = sessionStorage.getItem('oauth_provider');
+      const storedState = sessionStorage.getItem(OAUTH_STORAGE_KEYS.STATE);
+      const storedProvider = sessionStorage.getItem(OAUTH_STORAGE_KEYS.PROVIDER);
       
       if (storedState !== state || storedProvider !== provider) {
         throw new Error('Invalid OAuth state - possible CSRF attack');
@@ -321,105 +343,119 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Setup auto-refresh
-      setupTokenRefresh(response.expires_in);
+      initializeUserSession(response.user, response.expires_in)
 
       // Clean up OAuth state
-      sessionStorage.removeItem('oauth_state');
-      sessionStorage.removeItem('oauth_provider');
-
+      authStorage.clear();
+      // Re-persist auth data cleared by the line above
+      authStorage.setAuthData(
+        response.access_token,
+        response.refresh_token,
+        response.user,
+        response.expires_in,
+        false
+      );
       return { success: true };
     } catch (error) {
       console.error('OAuth callback failed:', error);
       
       // Clean up on error
-      sessionStorage.removeItem('oauth_state');
-      sessionStorage.removeItem('oauth_provider');
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
       
-      let errorMessage = 'Authentication failed. Please try again.';
-      if (error instanceof ApiError) {
-        errorMessage = error.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
+      const errorMessage =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+          ? error.message
+          : 'Authentication failed. Please try again.';
       return { success: false, error: errorMessage };
     } finally {
-      setIsLoading(false);
+      setIsInitializing(false);
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // signup
+  // ---------------------------------------------------------------------------
+
   /**
-   * Sign up a new user
+   * Fix #6 — the original discarded the LoginResponse, forcing users to log in
+   * manually after signing up. We now persist the tokens and log them in
+   * immediately, matching standard UX expectations.
+   *
+   * Fix #9 — removed setIsLoading; form owns its own submission state.
    */
   const signup = async (data: UserCreate): Promise<{ success: boolean; error?: string }> => {
     try {
-      setIsLoading(true);
-      
       const response = await authService.signup(data);
-      
+
+      authStorage.setAuthData(
+        response.access_token,
+        response.refresh_token,
+        response.user,
+        response.expires_in,
+        false // OAuth and signup sessions use sessionStorage by default
+      );
+
+      initializeUserSession(response.user, response.expires_in);
+
       return { success: true };
     } catch (error) {
-      console.error('Signup failed:', error);
-      
-      let errorMessage = 'Sign up failed. Please try again.';
-      if (error instanceof ApiError) {
-        errorMessage = error.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
+      const errorMessage =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+          ? error.message
+          : 'Sign up failed. Please try again.';
       return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  /**
-   * Request password reset
-   */
-  const requestPasswordReset = async (email: string): Promise<{ success: boolean; error?: string }> => {
+  // ---------------------------------------------------------------------------
+  // Password reset
+  // ---------------------------------------------------------------------------
+
+  const requestPasswordReset = async (
+    email: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       await authService.requestPasswordReset(email);
       return { success: true };
     } catch (error) {
-      console.error('Password reset request failed:', error);
-      
-      let errorMessage = 'Failed to send reset email. Please try again.';
-      if (error instanceof ApiError) {
-        errorMessage = error.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
+      const errorMessage =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+          ? error.message
+          : 'Failed to send reset email. Please try again.';
       return { success: false, error: errorMessage };
     }
   };
 
-  /**
-   * Reset password with token
-   */
-  const resetPassword = async (token: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+  const resetPassword = async (
+    token: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       await authService.resetPassword(token, newPassword);
       return { success: true };
     } catch (error) {
-      console.error('Password reset failed:', error);
-      
-      let errorMessage = 'Failed to reset password. The link may have expired.';
-      if (error instanceof ApiError) {
-        errorMessage = error.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
+      const errorMessage =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+          ? error.message
+          : 'Failed to reset password. The link may have expired.';
       return { success: false, error: errorMessage };
     }
   };
+  
 
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
-    isLoading,
+    isInitializing,
     setUser,
     login,
     signup,

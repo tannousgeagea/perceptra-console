@@ -96,6 +96,21 @@ export const AUTH_STORAGE_KEYS = {
   REFRESH_TOKEN: 'refresh_token',
   USER: 'user',
   TOKEN_EXPIRY: 'token_expiry',
+  /** Tracks which storage backend (local vs session) was chosen at login */
+  STORAGE_TYPE: 'auth_storage_type',
+} as const;
+
+/**
+ * Storage keys for the OAuth CSRF state handshake.
+ * Kept separate from AUTH_STORAGE_KEYS because they are always written to
+ * sessionStorage regardless of the rememberMe preference, and are cleared
+ * as part of authStorage.clear() to prevent orphaned state.
+ *
+ * Fix #3 — previously these were magic strings duplicated across AuthContext.
+ */
+export const OAUTH_STORAGE_KEYS = {
+  STATE: 'oauth_state',
+  PROVIDER: 'oauth_provider',
 } as const;
 
 /**
