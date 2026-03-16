@@ -38,14 +38,11 @@ const AnnotationTool = () => {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const itemsPerPage = parseInt(searchParams.get("limit") || "20");
   const indexParam = parseInt(searchParams.get("index") || "0", 10);
-
   const params = new URLSearchParams(location.search);
   params.delete("index");
 
   const backUrl = `/projects/${projectId}/annotate/job/${jobId}?${params.toString()}`;
 
-
-  console.log(backUrl)
   // fetch job images for context
   const { data: jobImages } = useJobImages(projectId!, jobId, {
     status: status || undefined,
