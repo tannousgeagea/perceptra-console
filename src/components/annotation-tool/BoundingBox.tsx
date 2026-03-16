@@ -160,7 +160,7 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, isHighlighted, tool, onS
   const boxClasses = [
     "absolute border-2 cursor-move",
     isSelected ? "bg-[rgba(128,0,255,0.28)]" : "",
-    isHighlighted && !isSelected ? "bg-[rgba(128,0,255,0.15)] shadow-[0_0_12px_rgba(128,0,255,0.4)]" : "",
+    isHighlighted && !isSelected ? "bg-[rgba(128,0,255,0.5)] shadow-[0_0_12px_rgba(128,0,255,0.4)]" : "",
   ].filter(Boolean).join(' ');
 
   return (
