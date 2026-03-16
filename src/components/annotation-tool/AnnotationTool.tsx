@@ -9,6 +9,7 @@ import ActionSidebar from './components/ActionSidebar';
 import { useProjectImageDetails } from '@/hooks/useProjectImage';
 import { useJobImages } from "@/hooks/useJobImages";
 import QueryState from '../common/QueryState';
+import { useClasses } from '@/hooks/useClasses';
 
 import { AnnotationInfo } from './AnnotationInfo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
@@ -17,6 +18,7 @@ import { useImagePreload } from '@/hooks/useImagePreload';
 
 const AnnotationTool = () => {
   const { projectId, imageId } = useParams<{ projectId: string; imageId: string }>();
+  const { data: classes } = useClasses(projectId);
   const { data: image, isLoading, isError, refetch } = useProjectImageDetails(
     projectId!,
     imageId!
@@ -137,10 +139,12 @@ const AnnotationTool = () => {
           backTo={backUrl}
         />
         <div className="flex h-full bg-card">
-          <div className="w-56 p-4 border-r border-border flex flex-col gap-4">
+          <div className="w-56 border-r border-border flex flex-col h-full min-h-0">
             <ToolBar />
-            <div className="flex-1 overflow-y-auto p-4">
-              <LabelPanel />
+            <div className="flex-1 min-h-0">
+              <LabelPanel
+                classes={classes || []}
+              />
             </div>
           </div>
 

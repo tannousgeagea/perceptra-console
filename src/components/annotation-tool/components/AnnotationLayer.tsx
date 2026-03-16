@@ -19,6 +19,7 @@ interface AnnotationLayerProps {
   polygons: Polygon[];
   selectedBox: string | null;
   selectedPolygon: string | null;
+  hoveredBoxId?: string | null;
   tool: 'draw' | 'move' | 'polygon';
   setSelectedBox: (id: string | null) => void;
   setSelectedPolygon: (id: string | null) => void;
@@ -30,11 +31,17 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   polygons,
   selectedBox,
   selectedPolygon,
+  hoveredBoxId,
   tool,
   setSelectedBox,
   setSelectedPolygon,
   updateBoxPosition
 }) => {
+
+  console.log(
+    `AnnotationLayer -> value: ${hoveredBoxId}, type: ${typeof hoveredBoxId}`
+  );
+  console.log("AnnotationLayer: ", boxes)
   return (
     <>
       {boxes.map((box) => (
@@ -42,6 +49,7 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           key={box.id}
           box={box}
           isSelected={selectedBox === box.id}
+          isHighlighted={hoveredBoxId === box.id}
           tool={tool}
           onSelect={() => setSelectedBox(box.id)}
           onUpdate={updateBoxPosition}
@@ -87,6 +95,7 @@ export default React.memo(AnnotationLayer, (prev, next) => {
   return (
     prev.selectedBox === next.selectedBox &&
     prev.selectedPolygon === next.selectedPolygon &&
+    prev.hoveredBoxId === next.hoveredBoxId &&
     prev.tool === next.tool &&
     prev.polygons.length === next.polygons.length
   );

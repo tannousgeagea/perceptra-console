@@ -14,6 +14,7 @@ interface Box {
 interface Props {
   box: Box;
   isSelected: boolean;
+  isHighlighted?: boolean;
   tool: 'draw' | 'move' | 'polygon';
   onSelect: () => void;
   onUpdate: (id: string, updates: Partial<Box>) => void;
@@ -54,7 +55,7 @@ const clampBox = (x: number, y: number, width: number, height: number) => {
   };
 };
 
-const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate }) => {
+const BoundingBox: React.FC<Props> = ({ box,isSelected, isHighlighted, tool, onSelect, onUpdate }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizing, setResizing] = useState<string | null>(null);
@@ -154,9 +155,12 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, tool, onSelect, onUpdate
   // ].filter(Boolean).join(' ');
 
 
+  console.log("Bounding Box: ", box.id, isHighlighted)
+
   const boxClasses = [
     "absolute border-2 cursor-move",
-    isSelected ? "bg-[rgba(128,0,255,0.28)]" : ""
+    isSelected ? "bg-[rgba(128,0,255,0.28)]" : "",
+    isHighlighted && !isSelected ? "bg-[rgba(128,0,255,0.15)] shadow-[0_0_12px_rgba(128,0,255,0.4)]" : "",
   ].filter(Boolean).join(' ');
 
   return (
@@ -231,6 +235,7 @@ export default React.memo(BoundingBox, (prev, next) => {
     prev.box.height === next.box.height &&
     prev.box.color === next.box.color &&
     prev.isSelected === next.isSelected &&
+    prev.isHighlighted === next.isHighlighted &&
     prev.tool === next.tool
   );
 });
