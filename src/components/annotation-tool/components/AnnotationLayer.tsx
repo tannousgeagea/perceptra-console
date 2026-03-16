@@ -37,11 +37,6 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   setSelectedPolygon,
   updateBoxPosition
 }) => {
-
-  console.log(
-    `AnnotationLayer -> value: ${hoveredBoxId}, type: ${typeof hoveredBoxId}`
-  );
-  console.log("AnnotationLayer: ", boxes)
   return (
     <>
       {boxes.map((box) => (

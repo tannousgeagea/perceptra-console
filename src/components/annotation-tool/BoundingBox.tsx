@@ -154,9 +154,6 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, isHighlighted, tool, onS
   //   tool !== 'move' ? "pointer-events-none" : ""
   // ].filter(Boolean).join(' ');
 
-
-  console.log("Bounding Box: ", box.id, isHighlighted)
-
   const boxClasses = [
     "absolute border-2 cursor-move",
     isSelected ? "bg-[rgba(128,0,255,0.28)]" : "",
