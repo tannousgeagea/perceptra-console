@@ -25,7 +25,6 @@ export function JobAnnotationHeader({
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log(location.pathname)
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">

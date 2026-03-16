@@ -17,6 +17,7 @@ import SAMSuggestionLayer from '../SAMSuggestionLayer';
 import { useZoom } from '@/hooks/useZoom';
 import { ProjectImageOut } from '@/types/image';
 import { useClasses } from '@/hooks/useClasses';
+import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import QueryState from '@/components/common/QueryState';
 import { 
   useCreateAnnotation, 
@@ -101,6 +102,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   const [isLoadingAnnotations, setIsLoadingAnnotation] = useState(false);
   const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
   const [currentImageId, setCurrentImageId] = useState(image.image.id);
+  const { currentOrganization } = useCurrentOrganization();
   
   // CRITICAL: Stable zoom instance (persists across image changes)
   const {
@@ -182,6 +184,11 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
       onSuccess: () => {
         toast.success('Annotation saved');
         setIsDirty(false);
+
+        // CRITICAL: Invalidate cache so previous/next images reload fresh data
+        queryClient.invalidateQueries({ 
+          queryKey: ['projectImageDetails', currentOrganization?.id, projectId, image.image.image_id] 
+        });
       },
     }
   );
@@ -236,6 +243,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   useEffect(() => {
     // Load on: (1) image change OR (2) first mount
     if (image.image.id !== currentImageId || !hasSyncedInitial) {
+      console.log('loading annotation')
       setIsLoadingAnnotation(true);
       const annotations = image.annotations || [];
       const boxes = annotations.map(ann => ({
