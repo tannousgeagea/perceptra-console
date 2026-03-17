@@ -5,8 +5,10 @@ interface AnnotationStateContextType {
   // Selection state (cold - changes infrequently)
   selectedBox: string | null;
   selectedPolygon: string | null;
+  hoveredBoxId: string | null;
   setSelectedBox: (id: string | null) => void;
   setSelectedPolygon: (id: string | null) => void;
+  setHoveredBoxId: (id: string | null) => void;
   
   // Tool state (cold)
   tool: AnnotationTool;
@@ -30,8 +32,11 @@ export const AnnotationStateProvider: React.FC<{ children: React.ReactNode }> = 
   const [selectedPolygon, setSelectedPolygon] = useState<string | null>(null);
   const [tool, setTool] = useState<AnnotationTool>('draw');
   const [currentPolygon, setCurrentPolygon] = useState<Point[] | null>(null);
+  const [hoveredBoxId, setHoveredBoxId] = useState<string | null>(null);
   const [onPolygonFinalized, setOnPolygonFinalized] = useState<((points: Point[]) => void) | undefined>();
 
+
+  // console.log("Context: ", hoveredBoxId)
   const addPointToCurrentPolygon = useCallback((point: Point) => {
     setCurrentPolygon(prev => prev ? [...prev, point] : [point]);
   }, []);
@@ -48,8 +53,10 @@ export const AnnotationStateProvider: React.FC<{ children: React.ReactNode }> = 
       value={{
         selectedBox,
         selectedPolygon,
+        hoveredBoxId,
         setSelectedBox,
         setSelectedPolygon,
+        setHoveredBoxId,
         tool,
         setTool,
         currentPolygon,

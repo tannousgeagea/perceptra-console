@@ -60,6 +60,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   // Split context usage - only subscribe to what you need
   const {
     selectedBox,
+    hoveredBoxId,
     selectedPolygon,
     tool,
     currentPolygon,
@@ -67,7 +68,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     setSelectedPolygon,
   } = useAnnotationState();
 
-   const {
+  const {
     updateBox,
     deleteBox,
     setAllBoxes,
@@ -75,6 +76,8 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     getPolygonsArray,
   } = useAnnotationGeometry(); 
 
+
+  // console.log("Canvas: ", hoveredBoxId)
   const canvasRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { 
@@ -468,7 +471,6 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   }
 
 
-  console.log(activeSAMTool)
   // Render SAM suggestions as overlays
   const renderSAMSuggestions = () => {
     if (!samSession.suggestions.length) return null;
@@ -563,6 +565,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
               polygons={getPolygonsArray()}
               selectedBox={selectedBox}
               selectedPolygon={selectedPolygon}
+              hoveredBoxId={hoveredBoxId}
               tool={tool}
               setSelectedBox={setSelectedBox}
               setSelectedPolygon={setSelectedPolygon}
