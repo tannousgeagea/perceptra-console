@@ -57,6 +57,7 @@ export interface ProjectImagesResponse {
   annotated: number;
   unannotated: number;
   reviewed: number;
+  image_ids: number[];
   images: ProjectImage[];
 }
 

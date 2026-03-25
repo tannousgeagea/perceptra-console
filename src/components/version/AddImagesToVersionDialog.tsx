@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/ui/dialog';
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
@@ -7,12 +7,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/ui/radio-group';
 import { Checkbox } from '@/components/ui/ui/checkbox';
 import { ScrollArea } from '@/components/ui/ui/scroll-area';
 import { Badge } from '@/components/ui/ui/badge';
-import { Search, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/ui/select';
+import { Search, Plus, CheckSquare, Square, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useProjectImages } from '@/hooks/useProjectImages';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
 import { useAddImagesToVersion } from '@/hooks/useDatasetVersions';
 import { useToast } from '@/hooks/use-toast';
+import { string } from 'zod';
 
 interface AddImagesToVersionDialogProps {
   projectId:string;
@@ -32,33 +34,85 @@ export function AddImagesToVersionDialog({
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [split, setSplit] = useState<'train' | 'val' | 'test'>('train');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [allMatchingSelected, setAllMatchingSelected] = useState(false);
 
   const { toast } = useToast();
-
   const parsedQuery = useSearchParser(searchText);
   const _query = buildImageQuery(parsedQuery);
   const { data: availableImages, isLoading, error, refetch } = useProjectImages(projectId!, {
     q: _query,
+    skip: (page - 1) * pageSize,
+    limit: pageSize,
   });
   const { mutate: addImages, isPending: isAdding } = useAddImagesToVersion(projectId, versionId);
 
-  const handleToggleImage = (imageId: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(imageId)) {
-      newSelected.delete(imageId);
-    } else {
-      newSelected.add(imageId);
-    }
-    setSelectedIds(newSelected);
-  };
+  const skip = (page - 1) * pageSize;
+  const totalPages = availableImages ? Math.max(1, Math.ceil(availableImages.total / pageSize)) : 1;
 
-  const handleToggleAll = () => {
-    if (selectedIds.size === availableImages?.images.length) {
-      setSelectedIds(new Set());
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchText(value);
+    setPage(1);
+    setAllMatchingSelected(false);
+  }, []);
+
+  const handlePageSizeChange = useCallback((value: string) => {
+    setPageSize(Number(value));
+    setPage(1);
+  }, []);
+
+  const handleToggleImage = useCallback((imageId: string) => {
+    setAllMatchingSelected(false);
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(imageId)) {
+        next.delete(imageId);
+      } else {
+        next.add(imageId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleTogglePageAll = useCallback(() => {
+    if (!availableImages) return;
+    const pageIds = availableImages.images.map(img => img.id);
+    const allPageSelected = pageIds.every(id => selectedIds.has(id));
+
+    setAllMatchingSelected(false);
+    if (allPageSelected) {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        pageIds.forEach(id => next.delete(id));
+        return next;
+      });
     } else {
-      setSelectedIds(new Set(availableImages?.images.map(img => img.id)));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        pageIds.forEach(id => next.add(id));
+        return next;
+      });
     }
-  };
+  }, [availableImages, selectedIds]);
+
+  const handleSelectAllMatching = useCallback(() => {
+    if (!availableImages?.image_ids?.length) return;
+
+    setAllMatchingSelected(true);
+
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      availableImages.image_ids.forEach(id => next.add(String(id)));
+      return next;
+    });
+  }, [availableImages?.image_ids]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setAllMatchingSelected(false);
+  }, []);
 
   const handleSubmit = async () => {
     if (selectedIds.size === 0) {
@@ -94,13 +148,21 @@ export function AddImagesToVersionDialog({
     }
   };
 
+  const pageIds = availableImages?.images.map(img => img.id) || [];
+  const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id));
+  const effectiveSelectedCount = allMatchingSelected ? (availableImages?.total || 0) : selectedIds.size;
+
+  // Show "select all matching" banner when user selected full page but there are more
+  const showSelectAllBanner = allPageSelected && !allMatchingSelected && (availableImages?.total || 0) > pageSize;
+
+  console.log(selectedIds)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Images to {versionName}</DialogTitle>
           <DialogDescription>
-            Select images from your project to add to this dataset version.
+            Select images from your project to add to this availableImagesset version.
           </DialogDescription>
         </DialogHeader>
 
@@ -111,18 +173,10 @@ export function AddImagesToVersionDialog({
               <Input
                 placeholder="Search available images..."
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleToggleAll}
-              disabled={isLoading || availableImages?.images.length === 0}
-            >
-              {selectedIds.size === availableImages?.images.length ? 'Deselect All' : 'Select All'}
-            </Button>
           </div>
 
           <div className="space-y-2">
@@ -151,14 +205,71 @@ export function AddImagesToVersionDialog({
             </RadioGroup>
           </div>
 
+          {/* Selection toolbar */}
+          <div className="flex items-center justify-between py-2 border-b border-border shrink-0">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-2"
+                onClick={handleTogglePageAll}
+                disabled={isLoading || !availableImages?.images.length}
+              >
+                {allPageSelected ? (
+                  <CheckSquare className="h-4 w-4 text-primary" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                {allPageSelected ? 'Deselect Page' : 'Select Page'}
+              </Button>
+
+              {selectedIds.size > 0 && (
+                <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={handleClearSelection}>
+                  Clear selection
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant={effectiveSelectedCount > 0 ? 'default' : 'outline'} className="font-mono">
+                {
+              } selected
+              </Badge>
+              <span>of {availableImages?.total || 0} available</span>
+            </div>
+          </div>
+
+          {/* Select all matching banner */}
+          {showSelectAllBanner && (
+            <div className="flex items-center justify-center gap-2 py-2 bg-primary/5 border-b border-primary/20 text-sm shrink-0">
+              <span className="text-muted-foreground">
+                All {pageSize} images on this page are selected.
+              </span>
+              <Button variant="link" size="sm" className="h-auto p-0 text-primary font-medium" onClick={handleSelectAllMatching}>
+                Select all {availableImages?.total} matching images
+              </Button>
+            </div>
+          )}
+
+          {allMatchingSelected && (
+            <div className="flex items-center justify-center gap-2 py-2 bg-primary/10 border-b border-primary/20 text-sm shrink-0">
+              <span className="font-medium text-primary">
+                All {availableImages?.total} matching images are selected.
+              </span>
+              <Button variant="link" size="sm" className="h-auto p-0 text-muted-foreground" onClick={handleClearSelection}>
+                Clear selection
+              </Button>
+            </div>
+          )}
+
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading available images...</div>
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading available images...</div>
           ) : availableImages?.images.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
               No available images found. All project images may already be in this version.
             </div>
           ) : (
-            <ScrollArea className="flex-1 -mx-6 px-6">
+            <div className="flex-1 overflow-y-auto py-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {availableImages?.images.map((image) => (
                   <div
@@ -198,9 +309,51 @@ export function AddImagesToVersionDialog({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           )}
+
+          {/* Pagination */}
+          {availableImages && totalPages > 0 && (
+            <div className="flex items-center justify-between py-3 border-t border-border shrink-0">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Show</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[12, 20, 40, 60, 100, 200].map(n => (
+                      <SelectItem key={n} value={n.toString()}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>
+                  {Math.min(skip -1, availableImages.total)}–{Math.min(skip + pageSize, availableImages.total)} of {availableImages.total}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(1)}>
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm px-3 text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
         </div>
+
+
 
         <DialogFooter>
           <div className="flex items-center justify-between w-full">
