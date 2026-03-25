@@ -14,6 +14,7 @@ import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
 import { useAddImagesToVersion } from '@/hooks/useDatasetVersions';
 import { useToast } from '@/hooks/use-toast';
+import { string } from 'zod';
 
 interface AddImagesToVersionDialogProps {
   projectId:string;
@@ -97,16 +98,16 @@ export function AddImagesToVersionDialog({
   }, [availableImages, selectedIds]);
 
   const handleSelectAllMatching = useCallback(() => {
-    if (!availableImages) return;
+    if (!availableImages?.image_ids?.length) return;
+
     setAllMatchingSelected(true);
-    // When using real API, you'd track this as a flag and send it to backend
-    // For now we select all visible page IDs and mark the flag
+
     setSelectedIds(prev => {
       const next = new Set(prev);
-      availableImages.images.forEach(img => next.add(img.id));
+      availableImages.image_ids.forEach(id => next.add(String(id)));
       return next;
     });
-  }, [availableImages]);
+  }, [availableImages?.image_ids]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedIds(new Set());
