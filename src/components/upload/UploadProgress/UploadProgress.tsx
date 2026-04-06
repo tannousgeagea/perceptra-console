@@ -1,5 +1,5 @@
 import React from 'react';
-import { UploadedImage } from '@/contexts/UploadContext';
+import { UploadedImage } from '@/types/upload';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import './UploadProgress.css';
 
