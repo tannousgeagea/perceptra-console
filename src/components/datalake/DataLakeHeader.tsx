@@ -1,15 +1,16 @@
 import { ViewMode } from '@/types/image';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/ui/button';
-import { Grid3x3, Table2, Database, Upload } from 'lucide-react';
+import { Grid3x3, Table2, Database, Upload, Copy } from 'lucide-react';
 
 interface DataLakeHeaderProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   totalImages: number;
+  onFindDuplicates?: () => void;
 }
 
-export function DataLakeHeader({ viewMode, onViewModeChange, totalImages }: DataLakeHeaderProps) {
+export function DataLakeHeader({ viewMode, onViewModeChange, totalImages, onFindDuplicates }: DataLakeHeaderProps) {
   const navigate = useNavigate();
 
   return (
@@ -25,6 +26,15 @@ export function DataLakeHeader({ viewMode, onViewModeChange, totalImages }: Data
       </div>
 
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onFindDuplicates}
+          className="gap-2"
+        >
+          <Copy className="w-4 h-4" />
+          Find Duplicates
+        </Button>
         <Button
           variant="default"
           size="sm"
