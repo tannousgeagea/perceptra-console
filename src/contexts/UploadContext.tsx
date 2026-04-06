@@ -5,25 +5,8 @@ import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { v4 as uuidv4 } from 'uuid';
 import { useQueryClient } from '@tanstack/react-query';
-import { UploadedImage } from '@/types/upload';
+import { UploadedImage, AnnotationFile, Project, TaskType, ProjectSection } from '@/types/upload';
 
-export type TaskType = 'segmentation' | 'detection' | 'classification';
-export type ProjectSection = 'upload' | 'annotate' | 'dataset' | 'versions' | 'analytics';
-
-
-export interface AnnotationFile {
-  id: string;
-  file: File;
-  taskType: TaskType;
-  projectId?: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt: Date;
-}
 
 interface UploadContextType {
   currentSection: ProjectSection;
@@ -31,7 +14,12 @@ interface UploadContextType {
   annotationFiles: AnnotationFile[];
   uploadProgress: number;
   isUploading: boolean;
-  addImages: (files: File[]) => void;
+  /** Total images selected by the user, including those still being processed into the grid. */
+  pendingCount: number;
+  setPendingCount: (n: number) => void;
+  isProcessing: boolean;
+  setIsProcessing: (b: boolean) => void;
+  addImages: (files: File[], batchId?: string) => void;
   removeImage: (id: string) => void;
   addAnnotationFile: (file: File, taskType: TaskType) => void;
   removeAnnotationFile: (id: string) => void;
@@ -66,14 +54,18 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [annotationFiles, setAnnotationFiles] = useState<AnnotationFile[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [pendingCount, setPendingCount] = useState<number>(0);
 
   // ── addImages ──────────────────────────────────────────────────────────────
   // Accepts a chunk (or all) of files. Called repeatedly by FileUploader
   // as it iterates through chunks, so each call appends — never replaces.
-  const addImages = useCallback((files: File[]) => {
+  const addImages = useCallback((files: File[], batchId?: string) => {
     if (files.length === 0) return;
 
-    const batchId = `batch-${Date.now()}`;
+    if (!batchId) {
+      batchId = `batch-${Date.now()}`;
+    }
     const newImages: UploadedImage[] = files.map((file) => ({
       id: uuidv4(),
       file,
@@ -264,6 +256,10 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     annotationFiles,
     uploadProgress,
     isUploading,
+    pendingCount,
+    setPendingCount,
+    isProcessing,
+    setIsProcessing,
     addImages,
     removeImage,
     addAnnotationFile,

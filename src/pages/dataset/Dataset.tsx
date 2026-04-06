@@ -15,6 +15,10 @@ import { PaginationControls } from '@/components/ui/ui/pagination-control';
 import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
 import { useBulkOperations } from '@/hooks/useBulkOperation';
 import { useToast } from '@/hooks/use-toast';
+import { ScanConfigDrawer } from '@/components/similarity/ScanConfigDrawer';
+import { ScanResultsPanel } from '@/components/similarity/ScanResultsPanel';
+import { useSimilarityScan } from '@/hooks/useSimilarityScan';
+import { useSimilarityStore } from '@/stores/similarityStore';
 
 export default function ProjectDataset() {
   const navigate = useNavigate();
@@ -28,6 +32,23 @@ export default function ProjectDataset() {
   const { toast } = useToast();
 
   const { operation, runBulkReview, runBulkDeleteProject, runBulkTag, cancelOperation, clearOperation } = useBulkOperations(projectId);
+
+  // Similarity scan
+  const scan = useSimilarityScan();
+  const [scanDrawerOpen, setScanDrawerOpen] = useState(false);
+  const handleFindDuplicates = useCallback(() => {
+    setScanDrawerOpen(true);
+  }, []);
+
+  const handleStartScan = useCallback(() => {
+    scan.startScan(scan.scanConfig);
+  }, [scan]);
+  
+  const handleRerunScan = useCallback(() => {
+    scan.setResultsOpen(false);
+    scan.resetScan();
+    setScanDrawerOpen(true);
+  }, [scan]);
 
   const parsedQuery = useSearchParser(searchText);
   const _query = buildImageQuery(parsedQuery)
@@ -107,6 +128,7 @@ export default function ProjectDataset() {
           selectedCount={selectedIds.size}
           onRefresh={handleRefresh}
           onUpload={() => navigate(`/projects/${projectId}/upload`)}
+          onFindDuplicates={handleFindDuplicates}
         />
 
         <ProjectDatasetFilters
@@ -211,6 +233,44 @@ export default function ProjectDataset() {
                 }}
               />
             </div>
+            
+            {/* Similarity Scan Drawer */}
+            <ScanConfigDrawer
+              open={scanDrawerOpen}
+              onOpenChange={setScanDrawerOpen}
+              config={scan.scanConfig}
+              onConfigChange={(cfg) => useSimilarityStore.getState().setScanConfig(cfg)}
+              activeScan={scan.activeScan}
+              onStartScan={handleStartScan}
+              onCancelScan={scan.cancelScan}
+            />
+            {/* Scan Results Panel */}
+            {scan.activeScan?.status === 'complete' && (
+              <ScanResultsPanel
+                open={scan.resultsOpen}
+                onClose={() => scan.setResultsOpen(false)}
+                scan={scan.activeScan}
+                clusters={scan.scanResults}
+                totalClusters={scan.scanTotalClusters}
+                totalDuplicates={scan.scanTotalDuplicates}
+                selectedClusterIds={scan.selectedClusterIds}
+                reviewedClusterIds={scan.reviewedClusterIds}
+                filter={scan.scanFilters.filter}
+                sort={scan.scanFilters.sort}
+                onFilterChange={scan.setScanFilter}
+                onSortChange={scan.setScanSort}
+                onToggleCluster={scan.toggleClusterSelection}
+                onSelectAll={scan.selectAllClusters}
+                onClearSelection={scan.clearClusterSelection}
+                onArchiveDuplicates={scan.archiveDuplicates}
+                onDeleteDuplicates={scan.deleteDuplicates}
+                onMarkReviewed={scan.markReviewed}
+                onSetRepresentative={scan.setRepresentative}
+                onBulkAction={scan.bulkAction}
+                onRerunScan={handleRerunScan}
+              />
+            )}
+
           </>
         )}
       </div>

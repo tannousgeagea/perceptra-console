@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/ui/button';
 import { Badge } from '@/components/ui/ui/badge';
-import { Download, Upload, RefreshCw, GitBranch } from 'lucide-react';
+import { Download, Upload, RefreshCw, GitBranch, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ProjectDatasetHeaderProps {
@@ -12,6 +12,7 @@ interface ProjectDatasetHeaderProps {
   selectedCount: number;
   onRefresh: () => void;
   onUpload: () => void;
+  onFindDuplicates?: () => void;
 }
 
 export function ProjectDatasetHeader({
@@ -23,6 +24,7 @@ export function ProjectDatasetHeader({
   selectedCount,
   onRefresh,
   onUpload,
+  onFindDuplicates,
 }: ProjectDatasetHeaderProps) {
 
   const navigate = useNavigate();
@@ -50,6 +52,12 @@ export function ProjectDatasetHeader({
             <GitBranch className="w-4 h-4 mr-2" />
             Versions
           </Button>
+          {onFindDuplicates && (
+            <Button variant="outline" size="sm" onClick={onFindDuplicates}>
+              <Copy className="w-4 h-4 mr-2" />
+              Find Duplicates
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={onRefresh}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
