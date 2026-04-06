@@ -20,9 +20,10 @@ const CHUNK_SIZE = 50; // files processed per animation frame
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 function filterImageFiles(files: File[]): File[] {
-  return files.filter(
-    (f) => f.type.startsWith('image/') || ACCEPTED_TYPES.test(f.name)
-  );
+  // return files.filter(
+  //   (f) => f.type.startsWith('image/') || ACCEPTED_TYPES.test(f.name)
+  // );
+  return files;
 }
 
 /**
@@ -50,13 +51,12 @@ async function processInChunks(
 
 // ─── component ───────────────────────────────────────────────────────────────
 export const FileUploader: React.FC = () => {
-  const { uploadedImages, addImages, uploadProgress, isUploading, clearAllImages } =
+  const { uploadedImages, addImages, uploadProgress, isUploading, isProcessing, setIsProcessing, clearAllImages, setPendingCount } =
     useUploadContext();
 
   const similarity = useSimilarityAnalysis();
 
   const [isDragActive, setIsDragActive] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingCount, setProcessingCount] = useState({ total: 0, done: 0 });
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -86,7 +86,7 @@ export const FileUploader: React.FC = () => {
   const ingestFiles = useCallback(
     async (raw: File[]) => {
       const imageFiles = filterImageFiles(raw);
-
+      
       if (imageFiles.length === 0) {
         toast({
           title: 'No valid images',
@@ -96,14 +96,18 @@ export const FileUploader: React.FC = () => {
         return;
       }
 
+      // ↓ Set these SYNCHRONOUSLY before any await so ImageGrid renders
+      //   skeleton cards on the very next paint — zero perceived blank gap.
       setIsProcessing(true);
       setProcessingProgress(0);
       setProcessingCount({ total: imageFiles.length, done: 0 });
+      setPendingCount(uploadedImages.length + imageFiles.length);
 
+      const batchId = `batch-${Date.now()}`; // for potential future use in grouped uploads
       await processInChunks(
         imageFiles,
         (chunk) => {
-          addImages(chunk);
+          addImages(chunk, batchId);
           setProcessingCount((prev) => ({ ...prev, done: prev.done + chunk.length }));
         },
         setProcessingProgress
@@ -111,6 +115,7 @@ export const FileUploader: React.FC = () => {
 
       setIsProcessing(false);
       setProcessingProgress(0);
+      setPendingCount(0);
 
       toast({
         title: `${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added`,
@@ -127,6 +132,8 @@ export const FileUploader: React.FC = () => {
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
+
+      console.log("File input change, raw files:", files ? Array.from(files).map(f => f.name) : "No files");
       if (!files || files.length === 0) return;
       ingestFiles(Array.from(files));
       event.target.value = '';
@@ -184,7 +191,7 @@ export const FileUploader: React.FC = () => {
         <input
           type="file"
           ref={fileInputRef}
-          onChange={handleFileChange}
+          onChange={(handleFileChange)}
           accept=".png,.jpg,.jpeg,.gif,.webp"
           multiple
           className="hidden"
@@ -224,7 +231,10 @@ export const FileUploader: React.FC = () => {
             <Button
               variant="default"
               size="sm"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                setIsProcessing(true); // 🔥 show instantly
+                fileInputRef.current?.click();
+              }}
               disabled={isUploading}
             >
               <FileUp className="mr-1.5 h-3.5 w-3.5" />

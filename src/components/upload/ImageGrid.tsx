@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 
 interface ImageGridProps {
   tags?: string[];
-  /** Total number of images that will eventually be rendered (including those still processing) */
   pendingCount?: number;
 }
 
@@ -28,13 +27,13 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [], pendingCount = 0 }) => {
-  const { removeImage, uploadedImages, submitUpload, isUploading } = useUploadContext();
+  const { removeImage, uploadedImages, submitUpload, isUploading, isProcessing } = useUploadContext();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId?: string }>();
   const isInProject = Boolean(projectId);
 
   const imageCount = uploadedImages.length;
-  // Number of skeleton placeholders to show (files still being processed)
+  // Skeleton placeholders = total selected − already-rendered cards
   const skeletonCount = Math.max(0, pendingCount - imageCount);
 
   const handleUpload = async () => {
@@ -46,6 +45,18 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [], pendingCount = 
       redirect: isInProject,
     });
   };
+
+  if (isProcessing) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-12 text-center">
+        <Upload className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3 animate-spin" />
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing images...</h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          Preparing your images for upload. This may take a moment.
+        </p>
+      </div>
+    );
+  }
 
   // ── Empty state ──────────────────────────────────────────────────────────────
   if (imageCount === 0 && skeletonCount === 0) {

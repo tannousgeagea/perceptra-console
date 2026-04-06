@@ -118,7 +118,7 @@ export function SimilarityReviewModal({
           </div>
 
           {/* Cluster Grid */}
-          <ScrollArea className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-scroll">
             <div className="p-6 space-y-4">
               {clusters.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -145,7 +145,7 @@ export function SimilarityReviewModal({
                 ))
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t flex items-center justify-between">
