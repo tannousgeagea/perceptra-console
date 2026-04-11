@@ -46,8 +46,13 @@ import { AuthLayout } from './components/auth/AuthLayout';
 import { ProjectProvider } from './contexts/ProjectContext';
 import Billing from './pages/Billing';
 import BillingReport from './pages/BillingReport';
+import Invoices from "./pages/Invoices";
+import InvoiceDetails from "./pages/InvoiceDetails";
+import Contractors from "./pages/Contractors";
+import ContractorSummary from "./pages/ContractorSummary";
 import Evaluation from './pages/Evaluation';
 import AutoAnnotate from "./pages/AutoAnnotate";
+
 
 const queryClient = new QueryClient();
 
@@ -83,6 +88,10 @@ const App = () => {
                     <Route path='/activity' element={<OrgActivityPage />} />
                     <Route path="/billing" element={<Billing />} />
                     <Route path="/billing/report" element={<BillingReport />} />
+                    <Route path="/billing/invoices" element={<Invoices />} />
+                    <Route path="/billing/invoices/:invoiceId" element={<InvoiceDetails />} />
+                    <Route path="/billing/contractors" element={<Contractors />} />
+                    <Route path="/billing/contractors/:userId/summary" element={<ContractorSummary />} />
                     <Route path='/settings/*' element={<Settings />} />
                     <Route path='projects/:projectId' element={
                       <ProjectProvider>
