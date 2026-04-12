@@ -14,7 +14,7 @@ const SessionDetail: React.FC<SessionDetailProps> = ({ session }) => {
   
   if (!session) {
     return (
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         <div className="text-center py-8">
           <p className="text-gray-500">Session with ID {sessionId} not found</p>
           <Link to="/" className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800">
@@ -28,7 +28,7 @@ const SessionDetail: React.FC<SessionDetailProps> = ({ session }) => {
   const metricsData = session?.metricsData || []
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
         <div className="p-6">
           {metricsData.length > 0 && (
             <div className="mb-8">
@@ -41,7 +41,7 @@ const SessionDetail: React.FC<SessionDetailProps> = ({ session }) => {
 
           {session.metrics && Object.keys(session.metrics).length > 0 && (
             <div className="mb-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Metrics</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Metrics</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {session.metrics.accuracy && (
                   <MetricCard label="Accuracy" value={session.metrics.accuracy} suffix="%" />
@@ -60,7 +60,7 @@ const SessionDetail: React.FC<SessionDetailProps> = ({ session }) => {
           )}
         </div>
 
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-wrap gap-3">
             {session.status === 'failed' && (
               <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -72,7 +72,7 @@ const SessionDetail: React.FC<SessionDetailProps> = ({ session }) => {
                 <Download className="w-4 h-4 mr-1" /> Download Model
               </button>
             )}
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
               <Download className="w-4 h-4 mr-1" /> Export Logs
             </button>
           </div>

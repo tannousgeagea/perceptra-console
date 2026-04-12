@@ -179,7 +179,7 @@ export function StorageProfileCard({ profile }: StorageProfileCardProps) {
                     className={`${
                       isConfirmed
                         ? "bg-red-500 hover:bg-red-600 text-white"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     }`}
                   >
                     Delete

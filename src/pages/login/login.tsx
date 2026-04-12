@@ -66,7 +66,7 @@ const LoginPage: React.FC = () => {
       {/* Login Card with Glassmorphism */}
       <div className="relative z-10 p-8 rounded-xl shadow-lg bg-white/30 backdrop-blur-lg max-w-md w-full transform transition duration-500 hover:scale-105">
         <h1 className="text-4xl font-extrabold text-center text-white mb-6 drop-shadow-lg">
-          VisionNest
+          Malumetrix
         </h1>
         <p className="text-center text-white mb-8 tracking-wide">
           Sign in to your account

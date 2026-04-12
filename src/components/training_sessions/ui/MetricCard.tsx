@@ -10,7 +10,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ label, value, suffix = '' }) =>
   const formattedValue = suffix === '%' ? (value * 100).toFixed(1) : value.toFixed(2);
   
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800">
       <p className="text-sm text-gray-500 font-medium">{label}</p>
       <p className="text-2xl font-semibold mt-1">
         {formattedValue}

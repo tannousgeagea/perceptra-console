@@ -54,7 +54,7 @@ export function JobsHeader({
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
               <Input
                 placeholder="Search jobs, users..."
-                className="pl-9 bg-slate-100 border-slate-200 focus:bg-white"
+                className="pl-9 bg-slate-100 border-slate-200 focus:bg-white dark:bg-slate-800 dark:border-slate-700 dark:focus:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

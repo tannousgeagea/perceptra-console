@@ -57,7 +57,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
             viewBox="0 0 120 120"
             >
             <circle
-              className="text-gray-200"
+              className="text-gray-200 dark:text-gray-700"
               strokeWidth="6"
               stroke="currentColor"
               fill="transparent"
@@ -92,7 +92,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
             )}
           </div>
         </div>
-        <p className="mt-2 text-gray-600">{status}</p>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">{status}</p>
         {error && <p className="text-red-500 mt-1">{error}</p>}
       </div>
     );
@@ -103,7 +103,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       {title && <h3 className="text-lg font-semibold mb-2">{title}</h3>}
       <div className="relative">
         <div
-          className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizeClasses[size]}`}
+          className={`w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${sizeClasses[size]}`}
         >
           <motion.div
             className={`${barColor} h-full rounded-full`}
@@ -113,7 +113,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           />
         </div>
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-gray-600">{status}: {message}</span>
+          <span className="text-gray-600 dark:text-gray-400">{status}: {message}</span>
           <div className="flex items-center">
             {error ? (
               <AlertCircle className="h-5 w-5 text-red-500 mr-2" />

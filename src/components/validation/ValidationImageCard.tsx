@@ -11,7 +11,7 @@ interface ValidationImageCardProps {
 const ValidationImageCard = ({ image, showPredictions, showGroundTruth }: ValidationImageCardProps) => {
   return (
     <div className="space-y-3">
-      <div className="relative group overflow-hidden rounded-lg border border-slate-200">
+      <div className="relative group overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
         <img 
           src={image.original} 
           alt={`Validation ${image.id}`}
@@ -44,7 +44,7 @@ const ValidationImageCard = ({ image, showPredictions, showGroundTruth }: Valida
         </div>
       </div>
       
-      <div className="flex justify-between text-sm text-slate-600">
+      <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
         <span>Image #{image.id}</span>
         <span>Confidence: {(image.confidence * 100).toFixed(1)}%</span>
       </div>

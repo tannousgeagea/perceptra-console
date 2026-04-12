@@ -228,3 +228,25 @@
 .animate-pulse-gentle {
   animation: pulse-gentle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Smooth theme switching transitions */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+html {
+  transition: background-color 0.3s ease;
+}
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: ease;
+  transition-duration: 0.2s;
+}
+/* Re-enable normal transitions for elements with explicit animation classes */
+[class*="animate-"] {
+  transition-property: none;
+}

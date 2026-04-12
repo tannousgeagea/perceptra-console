@@ -82,12 +82,12 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ data, metri
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-medium text-gray-900">Training Metrics</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Training Metrics</h3>
         <button
           onClick={downloadChart}
-          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <Download className="h-4 w-4 mr-2" />
           Download Chart
@@ -101,8 +101,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ data, metri
             onClick={() => toggleMetric(metric)}
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               visibleMetrics.has(metric)
-                ? 'bg-blue-100 text-blue-800'
-                : 'bg-gray-100 text-gray-600'
+                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
             }`}
           >
             {metric}

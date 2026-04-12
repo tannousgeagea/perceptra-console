@@ -53,9 +53,9 @@ const SessionDetailPage: React.FC = () => {
 
   if (!session) {
     return (
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         <div className="text-center py-8">
-          <p className="text-gray-500">Session with ID {sessionId} not found</p>
+          <p className="text-gray-500 dark:text-gray-400">Session with ID {sessionId} not found</p>
           <Link to="/" className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to sessions list
           </Link>

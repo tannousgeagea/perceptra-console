@@ -33,21 +33,21 @@ const VersionCard: FC<VersionCardProps> = ({ version, onView }) => {
 
     return (
         <div
-          className={`relative p-4 min-w-[250px] rounded-xl shadow-md border transition-all cursor-pointer 
-            ${isSelected ? "border-purple-500 bg-purple-50" : "border-gray-200 hover:bg-gray-100"}`}
+          className={`relative p-4 min-w-[250px] rounded-xl shadow-md border transition-all cursor-pointer
+            ${isSelected ? "border-purple-500 bg-purple-50 dark:bg-purple-900/30" : "border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           onClick={() => onView(version.version_number)}
         >
           {/* ID Badge */}
-          <div className="absolute top-2 right-2 text-xs bg-gray-100 border border-gray-300 text-gray-600 rounded-full px-2 py-0.5">
+          <div className="absolute top-2 right-2 text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-full px-2 py-0.5">
             ID: {version.id}
           </div>
     
           {/* Main Content */}
           <div className="flex flex-col gap-1">
-            <div className="text-sm text-gray-500">{formatCreatedTime(version.created_at)}</div>
-            <div className="font-semibold text-gray-800">{version.name}</div>
-            <div className="text-xs text-gray-500">Edited {formatEditedTime(version.created_at)}</div>
-            <div className="mt-2 text-sm font-medium text-gray-600">Images • {version.count_images}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">{formatCreatedTime(version.created_at)}</div>
+            <div className="font-semibold text-gray-800 dark:text-gray-200">{version.name}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Edited {formatEditedTime(version.created_at)}</div>
+            <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">Images • {version.count_images}</div>
           </div>
         </div>
       );

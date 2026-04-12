@@ -148,29 +148,29 @@ const CreateProject: React.FC = () => {
   );
 
   return (
-    <div className="w-full bg-gradient-to-br from-slate-50 to-indigo-50 overflow-auto">
+    <div className="w-full bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-slate-900 dark:to-slate-900 overflow-auto">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
         <div className="mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button 
                 onClick={handleGoBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 disabled={isLoading}
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Create New Project</h1>
-                <p className="text-gray-600 text-sm">Set up your project configuration and annotation classes</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Create New Project</h1>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Set up your project configuration and annotation classes</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={handleGoBack}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                 disabled={isLoading}
               >
                 Cancel
@@ -225,15 +225,15 @@ const CreateProject: React.FC = () => {
           <ValidationErrors errors={validationErrors} />
 
           {/* Basic Information */}
-          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <Settings className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Basic Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Basic Information</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Project Name *
                 </label>
                 <input
@@ -241,20 +241,20 @@ const CreateProject: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter project name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   required
                   disabled={isLoading}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Project Type *
                 </label>
                 <select
                   value={formData.project_type_name}
                   onChange={(e) => setFormData({ ...formData, project_type_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   disabled={isLoading}
                 >
                   {projectTypes.map((type) => (
@@ -266,7 +266,7 @@ const CreateProject: React.FC = () => {
               </div>
 
               <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
                 <textarea
@@ -280,7 +280,7 @@ const CreateProject: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Visibility *
                 </label>
                 <div className="flex gap-4">
@@ -296,14 +296,14 @@ const CreateProject: React.FC = () => {
                         disabled={isLoading}
                       />
                       <span className="text-lg">{option.icon}</span>
-                      <span className="text-sm text-gray-700">{option.label}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{option.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Thumbnail URL
                 </label>
                 <input
@@ -311,7 +311,7 @@ const CreateProject: React.FC = () => {
                   value={formData.thumbnail_url}
                   onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
                   placeholder="https://example.com/thumbnail.jpg"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   disabled={isLoading}
                 />
               </div>
@@ -322,8 +322,8 @@ const CreateProject: React.FC = () => {
           <div>
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">Annotation Groups</h2>
-                <p className="text-sm text-gray-600 mt-1">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Annotation Groups</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Define the classes and groups for your annotations
                 </p>
               </div>
@@ -352,30 +352,30 @@ const CreateProject: React.FC = () => {
           </div>
 
           {/* Form Summary */}
-          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4">Project Summary</h3>
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Project Summary</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">Name:</span>
-                <p className="font-medium text-gray-900 truncate">
+                <span className="text-gray-600 dark:text-gray-400">Name:</span>
+                <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
                   {formData.name || 'Not set'}
                 </p>
               </div>
               <div>
-                <span className="text-gray-600">Type:</span>
-                <p className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
                   {projectTypes.find(t => t.value === formData.project_type_name)?.label}
                 </p>
               </div>
               <div>
-                <span className="text-gray-600">Groups:</span>
-                <p className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Groups:</span>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
                   {formData.annotation_groups.length}
                 </p>
               </div>
               <div>
-                <span className="text-gray-600">Total Classes:</span>
-                <p className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Total Classes:</span>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
                   {formData.annotation_groups.reduce((sum, group) => sum + group.classes.length, 0)}
                 </p>
               </div>
@@ -399,25 +399,25 @@ const CreateProject: React.FC = () => {
       {/* Exit Confirmation Modal */}
       {showExitConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Unsaved Changes</h3>
-                <p className="text-sm text-gray-600">You have unsaved changes that will be lost.</p>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Unsaved Changes</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">You have unsaved changes that will be lost.</p>
               </div>
             </div>
-            
-            <p className="text-gray-700 mb-6">
+
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
               Are you sure you want to leave without saving your project?
             </p>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={cancelExit}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Stay and Continue
               </button>
@@ -435,11 +435,11 @@ const CreateProject: React.FC = () => {
       {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-40">
-          <div className="bg-white rounded-2xl p-8 text-center shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-2xl">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
-            <p className="text-gray-700 font-medium">Creating your project...</p>
-            <p className="text-gray-500 text-sm mt-1">This may take a moment</p>
-            <div className="mt-4 bg-gray-200 rounded-full h-2 overflow-hidden">
+            <p className="text-gray-700 dark:text-gray-300 font-medium">Creating your project...</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">This may take a moment</p>
+            <div className="mt-4 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
               <div className="bg-indigo-600 h-full w-full animate-pulse"></div>
             </div>
           </div>

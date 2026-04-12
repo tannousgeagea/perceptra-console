@@ -37,7 +37,7 @@ export const TaskProgressTracker: React.FC<TaskProgressTrackerProps> = ({
   });
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md w-full">
+    <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md w-full">
       <ProgressBar
         percentage={progress.percentage}
         status={progress.status}

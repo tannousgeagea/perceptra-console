@@ -77,7 +77,7 @@ export const CustomPopover = ({
       {isOpen && (
         <div
           ref={popoverRef}
-          className={`absolute ${getSideClass()} ${getAlignmentClass()} z-[9999] bg-white border border-gray-200 rounded-md shadow-lg animate-in fade-in-0 zoom-in-95 duration-200`}
+          className={`absolute ${getSideClass()} ${getAlignmentClass()} z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg animate-in fade-in-0 zoom-in-95 duration-200`}
         >
           {children}
         </div>

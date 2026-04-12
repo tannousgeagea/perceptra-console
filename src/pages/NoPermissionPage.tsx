@@ -11,9 +11,9 @@ export default function NoPermissionPage() {
           <Ban className="h-8 w-8 text-red-500" />
         </div>
         
-        <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
-        
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Access Denied</h1>
+
+        <p className="text-gray-600 dark:text-gray-400">
           Sorry, you don't have permission to access this page. Please contact your administrator if you believe this is a mistake.
         </p>
 

@@ -36,16 +36,16 @@ if (!session) return null
   return (
     <div className="space-y-6">
         <div className="flex justify-between items-center">
-            <Link to={`/projects/${projectId}/sessions`} className="inline-flex items-center text-gray-500 hover:text-gray-700">
+            <Link to={`/projects/${projectId}/sessions`} className="inline-flex items-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to sessions
             </Link>
             <Badge status={session.status} />
         </div>
 
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900">{session.modelName}</h2>
-                <p className="text-gray-600 mt-1">{session.projectName}</p>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{session.modelName}</h2>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">{session.projectName}</p>
             </div>
 
             <div className="p-6">
@@ -62,7 +62,7 @@ if (!session) return null
             </div>
 
             <div className="mb-6">
-                <p className="text-sm font-medium text-gray-500 mb-2">Progress</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Progress</p>
                 <ProgressBar progress={session.progress} status={session.status} />
                 <p className="text-xs text-gray-500 mt-1 text-right">{session.progress}% complete</p>
             </div>

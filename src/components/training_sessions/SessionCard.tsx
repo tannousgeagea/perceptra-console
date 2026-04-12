@@ -30,12 +30,12 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onViewSession }) => 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow duration-200 overflow-hidden">
       <div className="px-6 py-5">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">{session.modelName}</h3>
-            <p className="text-sm text-gray-600">{session.projectName}</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{session.modelName}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{session.projectName}</p>
           </div>
           <Badge status={session.status} />
         </div>
@@ -55,13 +55,13 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onViewSession }) => 
         {session.metrics && (
           <div className="grid grid-cols-2 gap-2 mb-4">
             {session.metrics.accuracy && (
-              <div className="bg-gray-50 rounded p-2 text-center">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded p-2 text-center">
                 <p className="text-xs text-gray-500">Accuracy</p>
                 <p className="text-sm font-medium">{(session.metrics.accuracy * 100).toFixed(1)}%</p>
               </div>
             )}
             {session.metrics.f1Score && (
-              <div className="bg-gray-50 rounded p-2 text-center">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded p-2 text-center">
                 <p className="text-xs text-gray-500">F1 Score</p>
                 <p className="text-sm font-medium">{(session.metrics.f1Score * 100).toFixed(1)}%</p>
               </div>

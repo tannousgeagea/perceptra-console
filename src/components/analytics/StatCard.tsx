@@ -13,7 +13,7 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ label, value, change, className }) => {
   return (
-    <div className={`p-4 rounded-lg border bg-white shadow-sm ${className}`}>
+    <div className={`p-4 rounded-lg border bg-white dark:bg-gray-800 shadow-sm ${className}`}>
       <p className="stat-label">{label}</p>
       <div className="flex items-baseline justify-between mt-1">
         <h3 className="stat-value">{value}</h3>

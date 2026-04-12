@@ -48,7 +48,7 @@ export function DataLakeSelectionHeader({
 
       <div className="flex items-center gap-2">
         <Select onValueChange={onAddToProject} disabled={isLoadingProjects}>
-          <SelectTrigger className="w-[200px] bg-white text-foreground">
+          <SelectTrigger className="w-[200px] bg-white dark:bg-gray-900 text-foreground">
             <FolderPlus className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Add to project..." />
           </SelectTrigger>

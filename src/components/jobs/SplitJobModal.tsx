@@ -117,7 +117,7 @@ const SplitJobModal = ({ isOpen, onClose, job, users, onSplitJob }: SplitJobModa
                 {userAssignments.map((userId, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <div className="w-24 flex-shrink-0">
-                      <div className="px-2 py-1 bg-slate-100 rounded text-sm">
+                      <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-sm dark:text-slate-300">
                         Slice {index + 1}
                       </div>
                     </div>
