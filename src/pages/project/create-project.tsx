@@ -195,11 +195,11 @@ const CreateProject: React.FC = () => {
       {/* Error Alert */}
       {isError && error && (
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="rounded-xl border border-[var(--mtx-error-border)] bg-[var(--mtx-error-bg)] p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-medium text-red-800">Error Creating Project</h4>
-              <p className="text-red-700 text-sm mt-1">
+              <h4 className="font-medium text-[var(--mtx-error-text)]">Error Creating Project</h4>
+              <p className="text-sm text-[var(--mtx-error-text)]">
                 {error.message || 'An unexpected error occurred'}
               </p>
               {error.status_code && (

@@ -13,6 +13,7 @@ import {
   ScanEye,
   Scan,
 } from 'lucide-react';
+import { MTXLogo } from '../logo/mtx';
 import { cn } from '@/lib/utils';
 import { UserProfileMenu } from '../users/UserProfileMenu';
 import { getCurrentUser } from '@/utils/user';
@@ -59,86 +60,139 @@ const Navbar: FC = () => {
   };
 
   return (
-    <div
+    <aside
       className={cn(
-        "will-change-[width] transition-[width] duration-300 ease-in-out flex flex-col justify-between font-small text-white h-screen bg-gradient-to-b from-blue-600 via-indigo-500 to-purple-500 text-white",
-        isExpanded ? "w-[185px] px-3" : "w-[60px] px-0"
+        'flex h-screen flex-col justify-between border-r will-change-[width] transition-[width] duration-300 ease-in-out',
+        "bg-[var(--mtx-bg)] text-[var(--mtx-text)] border-[var(--mtx-border)]",
+        isExpanded ? 'w-[210px] px-3' : 'w-[68px] px-2'
       )}
     >
       <div>
-        <div className="w-full mb-4 flex flex-col justify-center items-center py-6 gap-8">
+        {/* Top */}
+        <div className="w-full mb-4 flex flex-col justify-center items-center py-6 gap-6">
           <button
-            className="text-lg cursor-pointer"
-            onClick={toggleNavbar}
-          >
-            {isExpanded ? <X size={24} /> : <Menu size={24} />}
-          </button>
-          <div className="flex flex-row items-center gap-2 text-violet-200">
-            <ScanEye className='w-5 h-5 mr-1'/>
-            {isExpanded && (
-              <h2 
-                className="transition-opacity duration-300 truncate"
-                style={{ maxWidth: '120px' }}
-              >
-                Malumetrix
-              </h2>
+            className={cn(
+              'rounded-lg p-2 transition-colors',
+              'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+              'dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white'
             )}
+            onClick={toggleNavbar}
+            aria-label='Toggle navigation'
+          >
+            {isExpanded ? <X size={22} /> : <Menu size={22} />}
+          </button>
+
+          <div 
+            className={cn(
+              'flex w-full items-center',
+              isExpanded ? 'justify-start px-2 gap-3' : 'justify-center'
+            )}
+          >
+            {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl 
+              bg-[linear-gradient(135deg,var(--mtx-accent),var(--mtx-primary),var(--mtx-secondary))]">
+              <ScanEye className="h-5 w-5 text-white" />
+            </div> */}
+
+            <MTXLogo 
+              className='h-12 w-auto'
+              compact={!isExpanded}
+            />
+            {/* {isExpanded && (
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-semibold tracking-wide text-slate-900 dark:text-white">
+                  Malumetrix
+                </h2>
+                <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                  Visual Intelligence
+                </p>
+              </div>
+            )} */}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 justify-start">
-          {items.map((item, index) => (
-            <div
-              className={cn(
-                "transition-all duration-300 p-2 rounded-md",
-                isExpanded ? "" : "mx-auto"
-              )}
-              key={index}
-            >
-              <Link
-                to={item.ref}
+        {/* Nav Items */}
+        <nav className="flex flex-col gap-1">
+          {items.map((item, index) => {
+            const active = isActive(item.ref);
+
+            return (
+              <div
+                key={index}
                 className={cn(
-                  "flex items-center text-sm font-medium hover:brightness-110 hover:opacity-70 rounded-md px-2 py-1.5 transition-colors duration-200",
-                  isActive(item.ref)
-                    ? "bg-white/20 text-white"
-                    : "text-white/80"
+                  "transition-all duration-300",
+                  isExpanded ? "" : "flex justify-center"
                 )}
               >
-                <div className={cn("transition-all duration-300", isExpanded ? "mr-3" : "")}>
-                  {item.icon}
-                </div>
+                <Link
+                  to={item.ref}
+                  className={cn(
+                    'group flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    isExpanded ? 'w-full' : 'w-[44px] justify-center px-0',
+                    active
+                      ? "bg-[linear-gradient(90deg,var(--mtx-accent),var(--mtx-primary),var(--mtx-secondary))] text-white"
+                      : "text-[var(--mtx-text-muted)] hover:bg-[var(--mtx-surface)] hover:text-[var(--mtx-text)]"
+                  )}
+                >
+                  <div 
+                    className={cn(
+                      'shrink-0 transition-all duration-300', 
+                      isExpanded ? "mr-3" : ""
+                    )}>
+                    {item.icon}
+                  </div>
 
-                {isExpanded && (
-                  <span
-                    className="transition-opacity duration-300 truncate"
-                    style={{ maxWidth: '120px' }}
-                  >
-                    {item.item}
-                  </span>
-                )}
-              </Link>
-            </div>
-          ))}
-        </div>
+                  {isExpanded && (
+                    <span
+                      className="truncate"
+                      style={{ maxWidth: '130px' }}
+                    >
+                      {item.item}
+                    </span>
+                  )}
+                </Link>
+              </div>
+            );
+          })}
+        </nav>
       </div>
 
+      {/* Buttom */}
       <div className="mt-auto">
-        <div className={cn("pt-4 pb-3 transition-all duration-300", isExpanded ? "border-t border-white/30" : "border-none")}> 
-          {organization && <OrganizationSection organization={organization} isExpanded={isExpanded} />}
-          <div className={cn("py-2 transition-all duration-300", isExpanded ? "px-1" : "px-0")}>
+        <div 
+          className={cn(
+            "pt-4 pb-3 transition-all duration-300", 
+            isExpanded 
+              ? "border-t border-slate-200 dark:border-white/10" 
+              : "border-none"
+          )}> 
+          {organization && (
+            <OrganizationSection 
+              organization={organization} 
+              isExpanded={isExpanded} 
+            />
+          )}
+          <div 
+            className={cn(
+              "py-2 transition-all duration-300", 
+              "bg-transparent text-slate-700 dark:text-slate-300",
+              isExpanded ? "px-1" : "px-0"
+            )}
+          >
             <ThemeToggle isCollapsed={!isExpanded} />
           </div>
           <div
             className={cn(
-              "p-3 transition-all duration-300",
-              isExpanded ? "border-t border-sidebar-border" : "border-none"
+              "transition-all duration-300",
+              isExpanded ? 'mt-3 border-t border-slate-200 pt-3 dark:border-white/10' : 'mt-2'
             )}
           >
-            <UserProfileMenu user={currentUser} isCollapsed={!isExpanded}/>
+            <div className={cn(isExpanded ? 'px-1' : 'flex justify-center')}>
+              <UserProfileMenu user={currentUser} isCollapsed={!isExpanded} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

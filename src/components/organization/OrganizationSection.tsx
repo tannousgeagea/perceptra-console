@@ -12,7 +12,8 @@ export const OrganizationSection = ({ organization, isExpanded }: OrgSectionProp
     <div className="px-2 pt-2 pb-4">
       {/* Section title */}
       {isExpanded && (
-        <h4 className="text-xs font-semibold uppercase text-white/60 px-2 mb-1 tracking-wide">
+        <h4 className="px-2 mb-1 text-xs font-semibold uppercase tracking-wide
+          text-slate-500 dark:text-slate-400">
           Organization
         </h4>
       )}
@@ -25,8 +26,10 @@ export const OrganizationSection = ({ organization, isExpanded }: OrgSectionProp
         <Link
           to={`/organizations/${organization.id}`}
           className={cn(
-            "flex items-center text-sm font-medium text-white hover:opacity-80 p-2",
-            isExpanded ? "gap-2" : "justify-center"
+            "flex items-center p-2 text-sm font-medium rounded-md transition-colors",
+            isExpanded ? "gap-2" : "justify-center",
+            "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+            "dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
           )}
         >
           <Building2 size={18} />
@@ -41,8 +44,10 @@ export const OrganizationSection = ({ organization, isExpanded }: OrgSectionProp
         <Link
           to={`/organizations/${organization.id}/members`}
           className={cn(
-            "flex items-center text-sm font-medium text-white hover:opacity-80 p-2",
-            isExpanded ? "gap-2" : "justify-center"
+            "flex items-center p-2 text-sm font-medium rounded-md transition-colors",
+            isExpanded ? "gap-2" : "justify-center",
+            "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+            "dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
           )}
         >
           <Users size={18} />
@@ -50,25 +55,14 @@ export const OrganizationSection = ({ organization, isExpanded }: OrgSectionProp
         </Link>
       </div>
 
-      {/* <div className={cn("w-full", isExpanded ? "px-2" : "flex justify-center")}>
-        <Link
-          to={`/organizations/${organization.id}/progress`}
-          className={cn(
-            "flex items-center text-sm font-medium text-white hover:opacity-80 p-2",
-            isExpanded ? "gap-2" : "justify-center"
-          )}
-        >
-          <CircleDashed size={18} />
-          {isExpanded && <span className="truncate max-w-[120px]">Progress</span>}
-        </Link>
-      </div> */}
-
       <div className={cn("w-full", isExpanded ? "px-2" : "flex justify-center")}>
         <Link
           to={`/activity`}
           className={cn(
-            "flex items-center text-sm font-medium text-white hover:opacity-80 p-2",
-            isExpanded ? "gap-2" : "justify-center"
+            "flex items-center p-2 text-sm font-medium rounded-md transition-colors",
+            isExpanded ? "gap-2" : "justify-center",
+            "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+            "dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
           )}
         >
           <Activity size={18} />
