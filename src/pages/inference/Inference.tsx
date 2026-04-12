@@ -22,7 +22,7 @@ const Inference = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
 
   return (
-    <div className={`w-full min-h-screen transition-all duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="w-full min-h-screen transition-all duration-300 bg-[var(--mtx-bg)] text-[var(--mtx-text)]">
       <Header 
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode}

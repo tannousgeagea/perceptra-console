@@ -33,9 +33,11 @@ export function ThemeToggle({ isCollapsed }: ThemeToggleProps) {
       <button
         onClick={() => setTheme(next.value as ThemeValue)}
         title={`Theme: ${current.label} — click to switch`}
-        className="w-full flex items-center justify-center p-2 rounded-md
-                   text-white/60 hover:text-white hover:bg-white/10
-                   transition-colors duration-200"
+        className={cn(
+          "w-full flex items-center justify-center p-2 rounded-md transition-colors duration-200",
+          "text-slate-500 hover:text-slate-900 hover:bg-slate-100",
+          "dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10"
+        )}
       >
         <Icon size={18} />
       </button>
@@ -44,7 +46,13 @@ export function ThemeToggle({ isCollapsed }: ThemeToggleProps) {
 
   // Expanded: pill-style segmented control
   return (
-    <div className="flex items-center gap-0.5 bg-white/10 rounded-lg p-1 mx-1">
+    <div 
+      className={cn(
+        "flex items-center gap-0.5 rounded-lg p-1 mx-1",
+        "bg-slate-100",
+        "dark:bg-white/10"
+      )}
+    >
       {THEMES.map(({ value, icon: Icon, label }) => (
         <button
           key={value}
@@ -54,8 +62,14 @@ export function ThemeToggle({ isCollapsed }: ThemeToggleProps) {
             'flex flex-1 items-center justify-center gap-1 py-1.5 rounded-md',
             'text-[11px] font-medium transition-all duration-200',
             theme === value
-              ? 'bg-white/25 text-white shadow-sm'
-              : 'text-white/50 hover:text-white/80 hover:bg-white/10',
+              ? [
+                  "bg-white text-slate-900 shadow-sm",
+                  "dark:bg-white/20 dark:text-white"
+                ]
+              : [
+                  "text-slate-500 hover:text-slate-900 hover:bg-slate-200",
+                  "dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10"
+                ]
           )}
         >
           <Icon size={13} />

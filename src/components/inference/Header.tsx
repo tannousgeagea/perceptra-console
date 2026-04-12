@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        {/* <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
             size="sm"
@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Moon className="w-4 h-4" />
             )}
           </Button>
-        </div>
+        </div> */}
       </div>
     </header>
   );

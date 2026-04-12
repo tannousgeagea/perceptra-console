@@ -109,6 +109,23 @@
     --chart-3: 38 92% 50%;
     --chart-4: 271 81% 56%;
     --chart-5: 0 84% 60%;
+
+    /* Brand */
+    --mtx-primary: #5A2DFF;
+    --mtx-secondary: #8A3FFC;
+    --mtx-accent: #2970FF;
+
+    /* Light mode */
+    --mtx-bg: #FFFFFF;
+    --mtx-surface: #F8FAFC;
+    --mtx-border: #E5E7EB;
+    --mtx-text: #0F172A;
+    --mtx-text-muted: #64748B;
+
+    /* Status */
+    --mtx-error-bg: #FEF2F2;
+    --mtx-error-border: #FECACA;
+    --mtx-error-text: #B91C1C;
   }
 
   .dark {
@@ -175,6 +192,16 @@
     --chart-3: 38 92% 50%;
     --chart-4: 271 81% 56%;
     --chart-5: 0 84% 60%;
+
+    --mtx-bg: #0D1117;
+    --mtx-surface: #1A1F2B;
+    --mtx-border: rgba(255, 255, 255, 0.08);
+    --mtx-text: #E6E8EF;
+    --mtx-text-muted: #9CA3AF;
+
+    --mtx-error-bg: rgba(127, 29, 29, 0.2);
+    --mtx-error-border: rgba(127, 29, 29, 0.4);
+    --mtx-error-text: #FCA5A5;
   }
 }
 
