@@ -55,15 +55,15 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "trained":
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-0">Trained</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-0 dark:bg-green-900/30 dark:text-green-400">Trained</Badge>;
       case "training":
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-0">Training</Badge>;
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-0 dark:bg-blue-900/30 dark:text-blue-300">Training</Badge>;
       case "failed":
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-0">Failed</Badge>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800 border-0 dark:bg-red-900/30 dark:text-red-400">Failed</Badge>;
       case "draft":
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-0">Draft</Badge>;
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-0 dark:bg-gray-800 dark:text-gray-400">Draft</Badge>;
       case "deployed":
-        return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-0">Deployed</Badge>;
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-0 dark:bg-purple-900/30 dark:text-purple-400">Deployed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -167,7 +167,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                       type="checkbox"
                       checked={selectedVersions.includes(version.id)}
                       onChange={() => toggleVersionSelection(version.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-900"
                     />
                   </TableCell>
                   <TableCell className="font-medium">

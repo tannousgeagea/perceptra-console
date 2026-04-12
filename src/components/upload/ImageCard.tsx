@@ -23,10 +23,10 @@ export const ImageCard: React.FC<ImageCardProps> = ({ file, onRemove }) => {
   };
 
   return (
-    <div className="group rounded-lg shadow-sm bg-white transition hover:-translate-y-1 hover:shadow-lg">
+    <div className="group rounded-lg shadow-sm bg-white dark:bg-gray-800 transition hover:-translate-y-1 hover:shadow-lg">
 
       {/* Preview */}
-      <div className="relative bg-slate-100 overflow-hidden aspect-3/4">
+      <div className="relative bg-slate-100 dark:bg-slate-800 overflow-hidden aspect-3/4">
 
         <img
           src={file.previewUrl}
@@ -65,7 +65,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ file, onRemove }) => {
       {/* Info */}
       <div className="p-3">
         <p
-          className="text-sm font-medium text-slate-800 truncate"
+          className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate"
           title={file.file.name}
         >
           {file.file.name}

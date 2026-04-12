@@ -48,7 +48,7 @@ const JobsSection = ({ title, description, jobs, status, onAssignJob, onViewJob,
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 flex items-center">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center">
             <div className={`w-2 h-5 mr-2 rounded ${getStatusColor(status)}`}></div>
             {title}
           </h2>
@@ -78,7 +78,7 @@ const JobsSection = ({ title, description, jobs, status, onAssignJob, onViewJob,
       </div>
 
       {jobs.length === 0 ? (
-        <div className="bg-white rounded-lg border border-slate-200 p-8 text-center">
+        <div className="bg-white dark:bg-card rounded-lg border border-slate-200 dark:border-slate-700 p-8 text-center">
           <p className="text-slate-500">No jobs in this category</p>
         </div>
       ) : (

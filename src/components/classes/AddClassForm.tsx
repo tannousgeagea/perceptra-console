@@ -42,7 +42,7 @@ const AddClassForm = ({ onAddClass, existingClasses }: AddClassFormProps) => {
   return (
     <div className="mt-4 flex items-center gap-2">
       <Input
-        className='bg-white border-gray p-2 text-black'
+        className='bg-white dark:bg-gray-900 border-gray dark:border-gray-600 p-2 text-black dark:text-gray-100'
         placeholder="Enter new class name" 
         value={newClassName}
         onChange={(e) => setNewClassName(e.target.value)}

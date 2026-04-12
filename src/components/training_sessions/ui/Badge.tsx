@@ -9,15 +9,15 @@ const Badge: React.FC<BadgeProps> = ({ status }) => {
   const getStatusStyles = (status: Status): string => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800';
       case 'running':
-        return 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse';
+        return 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800';
       case 'failed':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800';
       case 'pending':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
     }
   };
 

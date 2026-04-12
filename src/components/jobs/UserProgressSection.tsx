@@ -215,8 +215,8 @@ export const UserProgressSection = ({ orgId, onUserClick }: UserProgressSectionP
       <div className="flex flex-col gap-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-slate-800">User Progress Overview</h2>
-            <p className="text-slate-500">Track progress across all active users</p>
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">User Progress Overview</h2>
+            <p className="text-slate-500 dark:text-slate-400">Track progress across all active users</p>
           </div>
           
           <div className="flex gap-2 w-full md:w-auto">
@@ -224,7 +224,7 @@ export const UserProgressSection = ({ orgId, onUserClick }: UserProgressSectionP
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
               <Input
                 placeholder="Search users..."
-                className="pl-9 bg-slate-100 border-slate-200 focus:bg-white"
+                className="pl-9 bg-slate-100 border-slate-200 focus:bg-white dark:bg-slate-800 dark:border-slate-700 dark:focus:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

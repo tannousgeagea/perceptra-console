@@ -13,11 +13,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onCtaClick,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-      <div className="bg-gray-100 p-4 rounded-full mb-4">
+    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-full mb-4">
         <FileQuestion className="h-12 w-12 text-gray-400" />
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{message}</h3>
+      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{message}</h3>
       <p className="text-sm text-gray-500 max-w-md text-center mb-6">
         When you start training machine learning models, your sessions will appear here.
       </p>

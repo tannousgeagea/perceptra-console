@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AnnotationClass } from '@/contexts/ClassesContext';
+import { AnnotationClass } from '@/types/classes';
 import { 
   Table, 
   TableBody, 
@@ -57,9 +57,9 @@ const ClassesTable = ({
     }
   });
   return (
-    <div className="bg-white text-black rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="flex justify-between items-center p-2 bg-gray-50/60 border-b border-gray-100">
-        <h3 className="font-medium text-gray-700 pl-2">Classes</h3>
+    <div className="bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+      <div className="flex justify-between items-center p-2 bg-gray-50/60 dark:bg-gray-900/60 border-b border-gray-100 dark:border-gray-800">
+        <h3 className="font-medium text-gray-700 dark:text-gray-300 pl-2">Classes</h3>
         {onRefresh && (
           <Button 
             variant="ghost" 
@@ -76,10 +76,10 @@ const ClassesTable = ({
 
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-100/70">
+          <TableRow className="bg-gray-100/70 dark:bg-gray-800 text-black dark:text-gray-100">
             <TableHead className="w-24">COLOR</TableHead>
             <TableHead 
-              className="cursor-pointer hover:bg-gray-100/70 transition-colors"
+              className="cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-700 transition-colors"
               onClick={() => handleSort('classId')}
             >
               CLASS ID
@@ -88,7 +88,7 @@ const ClassesTable = ({
               </span>
             </TableHead>
             <TableHead 
-              className="cursor-pointer hover:bg-gray-100/70 transition-colors"
+              className="cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-700 transition-colors"
               onClick={() => handleSort('name')}
             >
               CLASS NAME
@@ -97,7 +97,7 @@ const ClassesTable = ({
               </span>
             </TableHead>
             <TableHead 
-              className="text-right w-24 cursor-pointer hover:bg-gray-100/70 transition-colors"
+              className="text-right w-24 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-700 transition-colors"
               onClick={() => handleSort('count')}
             >
               COUNT

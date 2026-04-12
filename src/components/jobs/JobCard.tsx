@@ -40,13 +40,13 @@ const JobCard = ({ job, onAssignJob, onViewJob, onSplitJob, onStatusChange, onEd
 const getStatusBadge = (status: JobStatus) => {
   switch (status) {
     case JobStatus.UNASSIGNED:
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Unassigned</Badge>;
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">Unassigned</Badge>;
     case JobStatus.ASSIGNED:
-      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Assigned</Badge>;
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">Assigned</Badge>;
     case JobStatus.IN_REVIEW:
-      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">In Review</Badge>;
+      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800">In Review</Badge>;
     case JobStatus.COMPLETED:
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Completed</Badge>;
+      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">Completed</Badge>;
   }
 };
 
@@ -55,7 +55,7 @@ const getStatusBadge = (status: JobStatus) => {
     if (job.sliceNumber !== undefined && job.parentJobId) {
       return (
         <div className="mt-2 flex items-center">
-          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+          <span className="text-xs bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded">
             Slice #{job.sliceNumber}
           </span>
         </div>
@@ -66,7 +66,7 @@ const getStatusBadge = (status: JobStatus) => {
 
 
   return (
-    <Card className="flex flex-col h-full animate-fade-in bg-white hover:shadow-md transition-shadow duration-200">
+    <Card className="flex flex-col h-full animate-fade-in bg-white dark:bg-card hover:shadow-md transition-shadow duration-200">
       <CardContent className="flex-1 p-4">
         <div className="flex justify-between items-start gap-3">
           <div className="max-w-[25%]">
@@ -120,7 +120,7 @@ const getStatusBadge = (status: JobStatus) => {
         </div>
       </CardContent>
       
-      <CardFooter className="mt-auto p-4 pt-2 flex justify-between gap-2 border-t border-slate-100">
+      <CardFooter className="mt-auto p-4 pt-2 flex justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
         <TooltipProvider>
           <div className="flex gap-1">
             <Tooltip>

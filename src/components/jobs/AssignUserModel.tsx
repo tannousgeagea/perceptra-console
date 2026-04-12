@@ -63,13 +63,13 @@ const AssignUserModal = ({
                 filteredUsers.map((user) => (
                   <div
                     key={user.id}
-                    className={`flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors ${
-                      job.assignedUser?.id === user.id ? "bg-slate-100" : ""
+                    className={`flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
+                      job.assignedUser?.id === user.id ? "bg-slate-100 dark:bg-slate-800" : ""
                     }`}
                     onClick={() => onAssign(job, user.id)}
                   >
-                    <Avatar className="h-8 w-8 border border-slate-200">
-                      <AvatarFallback className="bg-slate-100 text-slate-700 text-xs">
+                    <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                      <AvatarFallback className="bg-slate-100 text-slate-700 text-xs dark:bg-slate-800 dark:text-slate-300">
                         {getInitials(user.username)}
                       </AvatarFallback>
                     </Avatar>

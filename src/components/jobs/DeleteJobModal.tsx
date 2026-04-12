@@ -49,12 +49,12 @@ const DeleteJobModal = ({ isOpen, onClose, job, onDelete, isLoading }: DeleteJob
           Are you sure you want to delete this job? This action cannot be undone.
         </p>
 
-        <div className="bg-slate-50 p-3 rounded border">
-          <p className="font-medium text-slate-800">{job.name}</p>
-          <p className="text-sm text-slate-600">ID: {job.id}</p>
-          <p className="text-sm text-slate-600">Images: {job.image_count}</p>
+        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded border border-border">
+          <p className="font-medium text-slate-800 dark:text-slate-200">{job.name}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">ID: {job.id}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Images: {job.image_count}</p>
           {job.assignedUser && (
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Assigned to: {job.assignedUser.username}
             </p>
           )}

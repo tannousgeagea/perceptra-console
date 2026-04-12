@@ -33,13 +33,13 @@ export const CustomSelect = ({ options, value, onChange, placeholder }: CustomSe
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-left text-sm"
+        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-left text-sm dark:text-gray-100"
       >
         {selectedLabel}
       </button>
 
       {open && (
-        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg text-sm max-h-60 overflow-auto">
+        <ul className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg text-sm max-h-60 overflow-auto dark:text-gray-100">
           {options.map((option) => (
             <li
               key={option.value ?? "null"}
@@ -47,7 +47,7 @@ export const CustomSelect = ({ options, value, onChange, placeholder }: CustomSe
                 onChange(option.value);
                 setOpen(false);
               }}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+              className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
             >
               {option.label}
             </li>

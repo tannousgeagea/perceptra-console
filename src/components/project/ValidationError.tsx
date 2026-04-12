@@ -4,14 +4,21 @@ export const ValidationErrors: React.FC<{ errors: string[] }> = ({ errors }) => 
   if (errors.length === 0) return null;
 
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+    <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-900/50 dark:bg-red-950/40">
       <div className="flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-        <div>
-          <h4 className="font-medium text-red-800 mb-2">Please fix the following errors:</h4>
-          <ul className="text-red-700 text-sm space-y-1">
+        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+
+        <div className="min-w-0">
+          <h4 className="mb-2 font-medium text-red-800 dark:text-red-300">
+            Please fix the following errors:
+          </h4>
+
+          <ul className="space-y-1 text-sm text-red-700 dark:text-red-200">
             {errors.map((error, index) => (
-              <li key={index}>• {error}</li>
+              <li key={index} className="flex gap-2">
+                <span className="mt-[2px]">•</span>
+                <span className="break-words">{error}</span>
+              </li>
             ))}
           </ul>
         </div>

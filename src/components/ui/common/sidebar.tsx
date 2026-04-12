@@ -42,33 +42,33 @@ const SideBar: FC<SideBarProps> = () => {
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-slate-200 shadow-sm flex flex-col h-screen">
+    <div className="w-64 bg-white dark:bg-gray-900 border-r border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-screen">
       {/* Project Info */}
-      <div className="flex items-center gap-3 p-4 border-b border-slate-200">
+      <div className="flex items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800">
         <img
           src={project?.thumbnail_url || "https://placehold.co/40x40?font=roboto"}
           alt=""
-          className="w-12 h-12 rounded object-cover border border-slate-300 shadow-sm"
+          className="w-12 h-12 rounded object-cover border border-slate-300 dark:border-slate-700 shadow-sm"
         />
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-slate-700 truncate">{project?.name || "Project"}</h2>
-          <p className="text-xs text-slate-400 truncate">ID: {projectId}</p>
+          <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 truncate">{project?.name || "Project"}</h2>
+          <p className="text-xs text-slate-400 dark:text-slate-500 truncate">ID: {projectId}</p>
         </div>
       </div>
 
       {/* Navigation Links */}
       <div className="flex flex-col gap-2 p-4">
-        <h3 className="text-xs uppercase text-slate-400 tracking-wider font-medium">Data</h3>
+        <h3 className="text-xs uppercase text-slate-400 dark:text-slate-500 tracking-wider font-medium">Data</h3>
         {items.map((item, index) => {
           const isActive = location.pathname.includes(item.ref);
           return (
             <Link
               to={item.ref}
               key={index}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors 
-                ${isActive 
-                  ? "bg-accent text-white" 
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors
+                ${isActive
+                  ? "bg-accent text-white"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
                 }`}
             >
               <span className="flex-shrink-0">{item.icon}</span>

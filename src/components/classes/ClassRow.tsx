@@ -75,7 +75,7 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
   return (
     <TableRow 
       key={cls.id} 
-      className={`group transition-colors ${isEven ? 'bg-white' : 'bg-gray-50/40'} hover:bg-gray-100/70`}
+      className={`group transition-colors ${isEven ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/40 dark:bg-gray-900/40'} hover:bg-gray-100/70 dark:hover:bg-gray-700/70`}
     >
       <TableCell>
         <ColorPicker 
@@ -84,7 +84,7 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
         />
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className="bg-gray-50 text-gray-700 font-mono">
+        <Badge variant="outline" className="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-mono">
           {cls.classId || '—'}
         </Badge>
       </TableCell>
@@ -94,10 +94,10 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
             <Input
               value={editingName}
               onChange={(e) => setEditingName(e.target.value)}
-              className="bg-white max-w-[200px]"
+              className="bg-white dark:bg-gray-900 max-w-[200px]"
             />
             <Button size="sm" onClick={saveEditing}>Save</Button>
-            <Button size="sm" variant="outline" className='bg-white' onClick={() => setIsEditing(false)}>Cancel</Button>
+            <Button size="sm" variant="outline" className='bg-white dark:bg-gray-900' onClick={() => setIsEditing(false)}>Cancel</Button>
           </div>
         ) : (
           <div className="flex items-center gap-2">

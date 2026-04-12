@@ -67,9 +67,9 @@ const VersioningPanel: React.FC<VersioningPanelProps> = ({ projectId }) => {
           return (
             <div 
               key={version.id} 
-              className={`border rounded-lg overflow-hidden 
-                ${isFirst ? 'border-dashboard-blue bg-blue-50' : 'border-border'}
-                ${isPrevious ? 'bg-gray-50' : ''}
+              className={`border rounded-lg overflow-hidden
+                ${isFirst ? 'border-dashboard-blue bg-blue-50 dark:bg-blue-900/30' : 'border-border'}
+                ${isPrevious ? 'bg-gray-50 dark:bg-gray-900' : ''}
               `}
             >
               <div 

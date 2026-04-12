@@ -95,21 +95,21 @@ const EvaluationAnalyticsPanel: React.FC<EvaluationAnalyticsPanelProps> = ({ pro
           <div className="flex flex-col justify-center space-y-2">
             <div>
               <p className="text-sm text-muted-foreground">Precision</p>
-              <div className="h-3 bg-gray-200 rounded">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded">
                 <div className="h-3 rounded" style={{ width: `${(stats.precision * 100).toFixed(1)}%`, backgroundColor: METRIC_COLORS.precision }} />
               </div>
               <p className="text-xs">{(stats.precision * 100).toFixed(1)}%</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Recall</p>
-              <div className="h-3 bg-gray-200 rounded">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded">
                 <div className="h-3 rounded" style={{ width: `${(stats.recall * 100).toFixed(1)}%`, backgroundColor: METRIC_COLORS.recall }} />
               </div>
               <p className="text-xs">{(stats.recall * 100).toFixed(1)}%</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">F1 Score</p>
-              <div className="h-3 bg-gray-200 rounded">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded">
                 <div className="h-3 rounded" style={{ width: `${(stats.f1_score * 100).toFixed(1)}%`, backgroundColor: METRIC_COLORS.f1 }} />
               </div>
               <p className="text-xs">{(stats.f1_score * 100).toFixed(1)}%</p>

@@ -59,7 +59,7 @@ const EditJobModal = ({ isOpen, onClose, job, onSave, isLoading }: EditJobModalP
           />
         </div>
 
-        <div className="text-sm text-slate-500">
+        <div className="text-sm text-slate-500 dark:text-slate-400">
           <p>Job ID: {job.id}</p>
           <p>Images: {job.imageCount}</p>
         </div>

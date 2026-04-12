@@ -47,23 +47,23 @@ const ValidationMetricsCharts = ({ metricsData }: ValidationMetricsChartsProps) 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-600">{metricsData.map}</p>
-              <p className="text-sm text-slate-500">mAP@0.5</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">mAP@0.5</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">{metricsData.precision}</p>
-              <p className="text-sm text-slate-500">Precision</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Precision</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">{metricsData.recall}</p>
-              <p className="text-sm text-slate-500">Recall</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Recall</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-purple-600">{metricsData.f1}</p>
-              <p className="text-sm text-slate-500">F1-Score</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">F1-Score</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-orange-600">{metricsData.best_threshold}</p>
-              <p className="text-sm text-slate-500">Optimal Threshold</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Optimal Threshold</p>
             </div>
           </div>
         </CardContent>

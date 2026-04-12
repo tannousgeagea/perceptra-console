@@ -18,6 +18,7 @@ import { UserProfileMenu } from '../users/UserProfileMenu';
 import { getCurrentUser } from '@/utils/user';
 import { OrganizationSection } from '@/components/organization/OrganizationSection';
 import { useAuthHelpers } from '@/hooks/useAuthHelpers';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 
 interface NavbarItem {
@@ -79,7 +80,7 @@ const Navbar: FC = () => {
                 className="transition-opacity duration-300 truncate"
                 style={{ maxWidth: '120px' }}
               >
-                Perceptra Vision
+                Malumetrix
               </h2>
             )}
           </div>
@@ -124,12 +125,15 @@ const Navbar: FC = () => {
       <div className="mt-auto">
         <div className={cn("pt-4 pb-3 transition-all duration-300", isExpanded ? "border-t border-white/30" : "border-none")}> 
           {organization && <OrganizationSection organization={organization} isExpanded={isExpanded} />}
+          <div className={cn("py-2 transition-all duration-300", isExpanded ? "px-1" : "px-0")}>
+            <ThemeToggle isCollapsed={!isExpanded} />
+          </div>
           <div
             className={cn(
               "p-3 transition-all duration-300",
               isExpanded ? "border-t border-sidebar-border" : "border-none"
             )}
-          > 
+          >
             <UserProfileMenu user={currentUser} isCollapsed={!isExpanded}/>
           </div>
         </div>

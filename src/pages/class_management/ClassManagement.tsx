@@ -37,11 +37,11 @@ const ClassesManagement = () => {
           <TabsList className="mb-4">
             <TabsTrigger value="classes" className="relative">
               Classes
-              <span className="ml-1 text-xs text-black bg-gray-200 px-1.5 py-0.5 rounded-full">{classes.length}</span>
+              <span className="ml-1 text-xs text-black dark:text-gray-200 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">{classes.length}</span>
             </TabsTrigger>
             <TabsTrigger value="tags" className="relative">
               Tags
-              <span className="ml-1 text-xs text-black bg-gray-200 px-1.5 py-0.5 rounded-full">0</span>
+              <span className="ml-1 text-xs text-black dark:text-gray-200 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">0</span>
             </TabsTrigger>
           </TabsList>
         

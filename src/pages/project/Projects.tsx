@@ -102,33 +102,33 @@ const Projects: FC = () => {
 
     if (isLoading) return (
         <div className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm flex justify-center items-center z-50">
-            <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl">
                 <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading your projects...</p>
+                <p className="text-gray-600 dark:text-gray-400">Loading your projects...</p>
             </div>
         </div>
     )
 
     if (!projects || !jobs) return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center">
+        <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 flex items-center justify-center">
         <   div className="text-center">
-                <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Grid className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Projects Found</h3>
+                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No Projects Found</h3>
                 <p className="text-gray-500">Create your first project to get started</p>
             </div>
         </div>
     );
 
     if (error) return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-gray-100 flex items-center justify-center">
+        <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
-            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">⚠️</span>
             </div>
-            <h3 className="text-xl font-semibold text-red-700 mb-2">Error Loading Projects</h3>
-            <p className="text-red-600">{error.message}</p>
+            <h3 className="text-xl font-semibold text-red-700 dark:text-red-400 mb-2">Error Loading Projects</h3>
+            <p className="text-red-600 dark:text-red-400">{error.message}</p>
         </div>
         </div>
     );
@@ -166,7 +166,7 @@ const Projects: FC = () => {
     };
 
     return (
-        <div className="p-6 w-full min-h-full overflow-auto bg-slate-50">
+        <div className="p-6 w-full min-h-full overflow-auto bg-slate-50 dark:bg-background">
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
