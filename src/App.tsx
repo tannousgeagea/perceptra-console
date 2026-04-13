@@ -3,7 +3,7 @@ import Projects from './pages/project/Projects';
 import Layout from './components/ui/common/layout';
 import ProjectDataset from './pages/dataset/Dataset';
 import DatasetVersions from './pages/versions/DatasetVersions';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import ProjectLayout from './components/ui/common/project-layout';
 import Index from './pages/annotate-tool/AnnotationTool';
 import { ProtectedRoute, PublicRoute} from './pages/ProtectedRoute';
@@ -52,7 +52,9 @@ import Contractors from "./pages/Contractors";
 import ContractorSummary from "./pages/ContractorSummary";
 import Evaluation from './pages/Evaluation';
 import AutoAnnotate from "./pages/AutoAnnotate";
-
+import { AnimatePresence } from 'framer-motion';
+import { PageTransition } from './components/layout/PageTransition';
+import { AppBoot } from './components/layout/AppBoot';
 
 const queryClient = new QueryClient();
 
@@ -60,77 +62,79 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <AuthProvider>
-          <AuthProviderMock>
-            <TooltipProvider delayDuration={100}>
-              <Routes>
-                <Route element={<PublicRoute />}>
-                  <Route element={<AuthLayout />}>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/auth/callback" element={<OAuthCallback />} />
+        <AppBoot>
+          <AuthProvider>
+            <AuthProviderMock>
+              <TooltipProvider delayDuration={100}>
+                <Routes>
+                  <Route element={<PublicRoute />}>
+                    <Route element={<AuthLayout />}>
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<Signup />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/auth/callback" element={<OAuthCallback />} />
+                    </Route>
                   </Route>
-                </Route>
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Navigate to="/projects" replace />} />
-                    <Route path="/no-permission" element={<NoPermissionPage />} />
-                    <Route path='/organizations/:orgId' element={<OrganizationPage />} />
-                    <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
-                    <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
-                    <Route path='/datalake' element={<DataLake />} />
-                    <Route path='/upload' element={<UploadIndex />} />
-                    <Route path='/projects' element={<Projects />} />
-                    <Route path='/projects/add' element={<CreateProject />} />
-                    <Route path='/inference' element={<Inference />} />
-                    <Route path='/activity' element={<OrgActivityPage />} />
-                    <Route path="/billing" element={<Billing />} />
-                    <Route path="/billing/report" element={<BillingReport />} />
-                    <Route path="/billing/invoices" element={<Invoices />} />
-                    <Route path="/billing/invoices/:invoiceId" element={<InvoiceDetails />} />
-                    <Route path="/billing/contractors" element={<Contractors />} />
-                    <Route path="/billing/contractors/:userId/summary" element={<ContractorSummary />} />
-                    <Route path='/settings/*' element={<Settings />} />
-                    <Route path='projects/:projectId' element={
-                      <ProjectProvider>
-                        <ProjectLayout />
-                      </ProjectProvider>
-                    }>
-                      <Route path='upload' element={<UploadIndex />} />
-                      <Route path='dataset' element={<ProjectDataset />} />
-                      {/* <Route path='annotate' element={<Annotate />} /> */}
-                      <Route path='versions' element={<DatasetVersions />} />
-                      <Route path="analysis" element={<AnalysisPage/>} />
-                      <Route path='classes' element={<ClassesManagement/>} />
-                      <Route path='analytics' element={<Analytics/>} />
-                      <Route path='members' element={<ProjectMembersPage/>} />
-                      <Route path='activity' element={<ActivityPage />} />
-                      <Route path='annotate' element={<JobPage/>} />
-                      <Route path="models" element={<ModelsList />} />
-                      <Route path="models/new" element={<CreateModel />} />
-                      <Route path="models/:modelId" element={<ModelDetail />} />
-                      <Route path="models/:modelId/train" element={<ModelTraining />} />
-                      <Route path="evaluation" element={<Evaluation />} />
-                      <Route path="auto-annotate" element={<AutoAnnotate />} />
-                      <Route path="sessions" element={<SessionsPage />} />
-                      <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
-                      <Route path='annotate/job/:jobId' element={<JobAnnotation />} />
-                      <Route path='annotate/job/:jobId/auto-annotate' element={<AutoAnnotate />} />
-                      <Route path="no-permission" element={<NoPermissionPage />} />
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<Navigate to="/projects" replace />} />
+                      <Route path="/no-permission" element={<NoPermissionPage />} />
+                      <Route path='/organizations/:orgId' element={<OrganizationPage />} />
+                      <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
+                      <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
+                      <Route path='/datalake' element={<DataLake />} />
+                      <Route path='/upload' element={<UploadIndex />} />
+                      <Route path='/projects' element={<Projects />} />
+                      <Route path='/projects/add' element={<CreateProject />} />
+                      <Route path='/inference' element={<Inference />} />
+                      <Route path='/activity' element={<OrgActivityPage />} />
+                      <Route path="/billing" element={<Billing />} />
+                      <Route path="/billing/report" element={<BillingReport />} />
+                      <Route path="/billing/invoices" element={<Invoices />} />
+                      <Route path="/billing/invoices/:invoiceId" element={<InvoiceDetails />} />
+                      <Route path="/billing/contractors" element={<Contractors />} />
+                      <Route path="/billing/contractors/:userId/summary" element={<ContractorSummary />} />
+                      <Route path='/settings/*' element={<Settings />} />
+                      <Route path='projects/:projectId' element={
+                        <ProjectProvider>
+                          <ProjectLayout />
+                        </ProjectProvider>
+                      }>
+                        <Route path='upload' element={<UploadIndex />} />
+                        <Route path='dataset' element={<ProjectDataset />} />
+                        {/* <Route path='annotate' element={<Annotate />} /> */}
+                        <Route path='versions' element={<DatasetVersions />} />
+                        <Route path="analysis" element={<AnalysisPage/>} />
+                        <Route path='classes' element={<ClassesManagement/>} />
+                        <Route path='analytics' element={<Analytics/>} />
+                        <Route path='members' element={<ProjectMembersPage/>} />
+                        <Route path='activity' element={<ActivityPage />} />
+                        <Route path='annotate' element={<JobPage/>} />
+                        <Route path="models" element={<ModelsList />} />
+                        <Route path="models/new" element={<CreateModel />} />
+                        <Route path="models/:modelId" element={<ModelDetail />} />
+                        <Route path="models/:modelId/train" element={<ModelTraining />} />
+                        <Route path="evaluation" element={<Evaluation />} />
+                        <Route path="auto-annotate" element={<AutoAnnotate />} />
+                        <Route path="sessions" element={<SessionsPage />} />
+                        <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
+                        <Route path='annotate/job/:jobId' element={<JobAnnotation />} />
+                        <Route path='annotate/job/:jobId/auto-annotate' element={<AutoAnnotate />} />
+                        <Route path="no-permission" element={<NoPermissionPage />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Route>
                       <Route path="*" element={<NotFound />} />
                     </Route>
-                    <Route path="*" element={<NotFound />} />
+                    <Route path='/projects/:projectId/images/:imageId' element={<Index />} />
                   </Route>
-                  <Route path='/projects/:projectId/images/:imageId' element={<Index />} />
-                </Route>
-              </Routes>
-            </TooltipProvider>
-            <Toaster />
-            <Sonner />
-          </AuthProviderMock>
-        </AuthProvider>
+                </Routes>
+              </TooltipProvider>
+              <Toaster />
+              <Sonner />
+            </AuthProviderMock>
+          </AuthProvider>
+        </AppBoot>
       </Router>
     </QueryClientProvider>
   );

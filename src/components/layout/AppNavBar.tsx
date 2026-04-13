@@ -13,7 +13,7 @@ import {
   ScanEye,
   Scan,
 } from 'lucide-react';
-import { MTXLogo } from '../logo/mtx';
+import { MTXLogo } from '@/components/logo/MTXLogo';
 import { cn } from '@/lib/utils';
 import { UserProfileMenu } from '../users/UserProfileMenu';
 import { getCurrentUser } from '@/utils/user';
@@ -93,9 +93,9 @@ const Navbar: FC = () => {
               <ScanEye className="h-5 w-5 text-white" />
             </div> */}
 
-            <MTXLogo 
-              className='h-12 w-auto'
+            <MTXLogo
               compact={!isExpanded}
+              badgeClassName={isExpanded ? "w-7 h-7" : "w-8 h-8"}
             />
             {/* {isExpanded && (
               <div className="min-w-0">
