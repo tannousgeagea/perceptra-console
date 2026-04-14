@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Filter, DollarSign } from "lucide-react";
+import { Plus, Filter, DollarSign, FileText, UserCheck, BarChart3, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
@@ -12,6 +12,8 @@ import { CreateRateCardDialog } from "@/components/billing/CreateRateCardDialog"
 import { EditRateCardDialog } from "@/components/billing/EditRateCardDialog";
 import { DeleteRateCardDialog } from "@/components/billing/DeleteRateCardDialog";
 import QueryState from "@/components/common/QueryState";
+import { useInvoices } from "@/hooks/useInvoices";
+import { useOrganizationContractors } from "@/hooks/useContractors";
 
 export default function Billing() {
   const [filterProject, setFilterProject] = useState<string>("all");
@@ -21,7 +23,9 @@ export default function Billing() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { data: projects, isLoading: loadingProjects, isError: errorProjects, refetch } = useUserProjects();
-  const { data: rateCards, isLoading: loadingRateCards, isError: errorRateCards } = useRateCards()
+  const { data: rateCards, isLoading: loadingRateCards, isError: errorRateCards } = useRateCards();
+  const { data: invoices = [] } = useInvoices();
+  const { data: contractors = [] } = useOrganizationContractors();
 
   const { mutate: createRateCard, isPending: pendingCreateRateCard } = useCreateRateCard({
     onSuccess: (data) => {
@@ -105,6 +109,10 @@ export default function Billing() {
     });
   };
 
+  const pendingInvoices = invoices.filter(i => i.status === "pending").length;
+  const totalUnbilled = contractors.reduce((s, c) => s + c.total_unbilled_amount, 0);
+  const activeContractors = contractors.filter(c => c.billing_enabled).length;
+
   const isLoading = loadingProjects || loadingRateCards
   const isError = errorProjects || errorRateCards
   const disabled = pendingUpdateRateCard || pendingCreateRateCard || pendingDeleteRateCard || pendingDuplicateRateCard
@@ -145,10 +153,65 @@ export default function Billing() {
             </div>
           </div>
 
+
+          {/* Quick Navigation Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Link to="/billing/invoices">
+              <Card className="h-full hover:shadow-md transition-all hover:border-primary/50 cursor-pointer">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10"><FileText className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <p className="font-semibold">Invoices</p>
+                      <p className="text-sm text-muted-foreground">{pendingInvoices} pending</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/billing/contractors">
+              <Card className="h-full hover:shadow-md transition-all hover:border-primary/50 cursor-pointer">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10"><UserCheck className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <p className="font-semibold">Contractors</p>
+                      <p className="text-sm text-muted-foreground">{activeContractors} active</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/billing/report">
+              <Card className="h-full hover:shadow-md transition-all hover:border-primary/50 cursor-pointer">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10"><BarChart3 className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <p className="font-semibold">Reports</p>
+                      <p className="text-sm text-muted-foreground">View billing reports</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Card className="h-full">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30"><DollarSign className="h-5 w-5 text-yellow-600" /></div>
+                  <div>
+                    <p className="font-semibold">Unbilled</p>
+                    <p className="text-sm text-yellow-600 font-medium">${totalUnbilled.toFixed(2)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Filters */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <Filter className="h-5 w-5" />
                 Filters
               </CardTitle>
