@@ -1,16 +1,48 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, DollarSign, UserCheck, CreditCard, Building2 } from "lucide-react";
+import { ArrowLeft, DollarSign, UserCheck, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { Separator } from "@/components/ui/ui/separator";
-import { mockContractorSummary, mockBillableActions, actionTypeLabels, actionTypeIcons } from "@/components/billing/mockBillingData";
+import { actionTypeLabels, actionTypeIcons } from "@/components/billing/mockBillingData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useOrgMemberBillingSummary, useUserBillableActions } from "@/hooks/useContractors";
+import QueryState from "@/components/common/QueryState";
 
 export default function ContractorSummary() {
   const { userId } = useParams<{ userId: string }>();
-  const summary = mockContractorSummary;
-  const actions = mockBillableActions;
+
+  const {
+    data: summary,
+    isLoading: loadingSummary,
+    isError: errorSummary,
+    refetch,
+  } = useOrgMemberBillingSummary(userId || "");
+
+  const {
+    data: actions = [],
+    isLoading: loadingActions,
+    isError: errorActions,
+  } = useUserBillableActions(userId || "");
+
+  const isLoading = loadingSummary || loadingActions;
+  const isError = errorSummary || errorActions;
+
+  if (isLoading || isError || !summary) {
+    return (
+      <div className="min-h-screen bg-background w-full">
+        <div className="px-4 py-8">
+          <QueryState
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            loadingMessage="Loading billing summary..."
+            errorMessage="Failed to load billing summary. Please try again."
+          />
+        </div>
+      </div>
+    );
+  }
 
   const chartData = summary.action_breakdown.map(item => ({
     name: actionTypeLabels[item.action_type] || item.action_type,
@@ -56,7 +88,7 @@ export default function ContractorSummary() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground">Avg Rate</div>
-                <div className="text-2xl font-bold mt-1">${summary.avg_rate?.toFixed(2)}</div>
+                <div className="text-2xl font-bold mt-1">${summary.avg_rate?.toFixed(2) ?? "—"}</div>
               </CardContent>
             </Card>
           </div>
@@ -77,7 +109,7 @@ export default function ContractorSummary() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Rate Card</span>
-                  <p className="font-medium mt-1 flex items-center gap-1"><CreditCard className="h-4 w-4" />{summary.rate_card_name}</p>
+                  <p className="font-medium mt-1 flex items-center gap-1"><CreditCard className="h-4 w-4" />{summary.rate_card_name || "—"}</p>
                 </div>
                 {summary.hourly_rate && (
                   <div>
@@ -119,7 +151,6 @@ export default function ContractorSummary() {
 
               <Separator className="my-4" />
 
-              {/* Breakdown Table */}
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
@@ -147,27 +178,31 @@ export default function ContractorSummary() {
           <Card>
             <CardHeader><CardTitle>Recent Actions</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {actions.map(action => (
-                  <div key={action.action_id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{actionTypeIcons[action.action_type]}</span>
-                      <div>
-                        <p className="font-medium text-sm">{actionTypeLabels[action.action_type]}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(action.created_at).toLocaleDateString()} • {action.project_name}</p>
+              {actions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No recent actions found.</p>
+              ) : (
+                <div className="space-y-3">
+                  {actions.map(action => (
+                    <div key={action.action_id} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{actionTypeIcons[action.action_type]}</span>
+                        <div>
+                          <p className="font-medium text-sm">{actionTypeLabels[action.action_type]}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(action.created_at).toLocaleDateString()} • {action.project_name}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium text-sm">${action.total_amount.toFixed(2)}</span>
+                        {action.billed_at ? (
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">✓ Billed</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">⏳ Pending</Badge>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-sm">${action.total_amount.toFixed(2)}</span>
-                      {action.billed_at ? (
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">✓ Billed</Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">⏳ Pending</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

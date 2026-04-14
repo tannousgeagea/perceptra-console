@@ -2,23 +2,28 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, UserCheck, Plus, RefreshCw, DollarSign, Building2, Search } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/ui/card";
+import { Card, CardContent } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { Input } from "@/components/ui/ui/input";
 import { Checkbox } from "@/components/ui/ui/checkbox";
-import { mockContractors, mockRateCards } from "@/components/billing/mockBillingData";
 import { Contractor } from "@/types/billing";
 import { ContractorEnableDialog } from "@/components/billing/ContractorEnableDialog";
 import { BackfillDialog } from "@/components/billing/BackfillDialog";
-import { toast } from "sonner";
+import { useOrganizationContractors, useEnableOrgMemberBilling } from "@/hooks/useContractors";
+import { useRateCards } from "@/hooks/useBillingRateCards";
+import QueryState from "@/components/common/QueryState";
 
 export default function Contractors() {
-  const [contractors, setContractors] = useState<Contractor[]>(mockContractors);
   const [search, setSearch] = useState("");
   const [filterBillingEnabled, setFilterBillingEnabled] = useState(false);
   const [filterHasUnbilled, setFilterHasUnbilled] = useState(false);
   const [showEnableDialog, setShowEnableDialog] = useState(false);
   const [backfillContractor, setBackfillContractor] = useState<Contractor | null>(null);
+
+  const { data: contractors = [], isLoading, isError, refetch } = useOrganizationContractors();
+  const { data: rateCards = [] } = useRateCards();
+
+  const { mutate: toggleBilling, isPending: togglingBilling } = useEnableOrgMemberBilling();
 
   const filtered = contractors.filter(c => {
     if (search && !c.full_name.toLowerCase().includes(search.toLowerCase()) && !c.username.toLowerCase().includes(search.toLowerCase())) return false;
@@ -30,13 +35,37 @@ export default function Contractors() {
   const totalUnbilled = contractors.reduce((s, c) => s + c.total_unbilled_amount, 0);
   const activeCount = contractors.filter(c => c.billing_enabled).length;
 
-  const handleToggleBilling = (contractorId: string) => {
-    setContractors(prev => prev.map(c =>
-      c.user_id === contractorId ? { ...c, billing_enabled: !c.billing_enabled } : c
-    ));
-    const c = contractors.find(c => c.user_id === contractorId);
-    toast.success(`Billing ${c?.billing_enabled ? "disabled" : "enabled"} for ${c?.full_name}`);
+
+  const handleToggleBilling = (contractor: Contractor) => {
+    toggleBilling({
+      userId: contractor.user_id,
+      payload: {
+        is_external: contractor.is_external_annotator,
+        billing_enabled: !contractor.billing_enabled,
+        rate_card_id: contractor.rate_card_id,
+        hourly_rate: contractor.hourly_rate,
+        contractor_company: contractor.contractor_company,
+        contract_start_date: contractor.contract_start_date,
+        contract_end_date: contractor.contract_end_date,
+      },
+    });
   };
+
+  if (isLoading || isError) {
+    return (
+      <div className="min-h-screen bg-background w-full">
+        <div className="px-4 py-8">
+          <QueryState
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            loadingMessage="Loading contractors..."
+            errorMessage="Failed to load contractors. Please try again."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background w-full">
@@ -142,7 +171,8 @@ export default function Contractors() {
                       <Button
                         variant={contractor.billing_enabled ? "secondary" : "default"}
                         size="sm"
-                        onClick={() => handleToggleBilling(contractor.user_id)}
+                        disabled={togglingBilling}
+                        onClick={() => handleToggleBilling(contractor)}
                       >
                         {contractor.billing_enabled ? "Disable Billing" : "Enable Billing"}
                       </Button>
@@ -161,12 +191,8 @@ export default function Contractors() {
       <ContractorEnableDialog
         open={showEnableDialog}
         onOpenChange={setShowEnableDialog}
-        rateCards={mockRateCards}
-        onSuccess={(newContractor) => {
-          setContractors([newContractor, ...contractors]);
-          setShowEnableDialog(false);
-          toast.success("Contractor added successfully");
-        }}
+        rateCards={rateCards}
+        onSuccess={() => setShowEnableDialog(false)}
       />
 
       <BackfillDialog

@@ -17,6 +17,43 @@ import {
 } from "@/types/billing";
 
 // ============================================
+// RESPONSE NORMALIZERS
+// Backend may return numeric fields as strings (e.g. "0.00") and IDs as integers
+// ============================================
+
+const toNum = (v: unknown): number => {
+  const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+  return isNaN(n) ? 0 : n;
+};
+
+const normalizeContractor = (c: Contractor): Contractor => ({
+  ...c,
+  user_id: String(c.user_id),
+  total_unbilled_amount: toNum(c.total_unbilled_amount),
+  total_actions_this_month: toNum(c.total_actions_this_month),
+});
+
+const normalizeBillingSummary = (s: UserBillingSummary): UserBillingSummary => ({
+  ...s,
+  user_id: String(s.user_id),
+  total_amount: toNum(s.total_amount),
+  total_billed: toNum(s.total_billed),
+  total_unbilled: toNum(s.total_unbilled),
+  avg_rate: s.avg_rate != null ? toNum(s.avg_rate) : undefined,
+  action_breakdown: (s.action_breakdown ?? []).map(item => ({
+    ...item,
+    unit_rate: toNum(item.unit_rate),
+    total_amount: toNum(item.total_amount),
+  })),
+});
+
+const normalizeBillableAction = (a: BillableAction): BillableAction => ({
+  ...a,
+  unit_rate: toNum(a.unit_rate),
+  total_amount: toNum(a.total_amount),
+});
+
+// ============================================
 // API FUNCTIONS
 // ============================================
 
@@ -32,7 +69,7 @@ export const listOrganizationContractors = async (
   if (filters?.has_unbilled_actions !== undefined) params.append('has_unbilled_actions', String(filters.has_unbilled_actions));
 
   const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/contractors?${params}`,
+    `${baseURL}/api/v1/billing/organizations/${organizationId}/contractors?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -46,7 +83,8 @@ export const listOrganizationContractors = async (
     throw new Error(error.detail || 'Failed to fetch contractors');
   }
 
-  return response.json();
+  const data: Contractor[] = await response.json();
+  return data.map(normalizeContractor);
 };
 
 export const listProjectContractors = async (
@@ -75,7 +113,8 @@ export const listProjectContractors = async (
     throw new Error(error.detail || 'Failed to fetch project contractors');
   }
 
-  return response.json();
+  const data: Contractor[] = await response.json();
+  return data.map(normalizeContractor);
 };
 
 export const enableOrgMemberBilling = async (
@@ -87,7 +126,7 @@ export const enableOrgMemberBilling = async (
   if (!token) throw new Error("No authentication token found");
 
   const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/members/${userId}/billing/enable`,
+    `${baseURL}/api/v1/billing/organizations/${organizationId}/members/${userId}/billing/enable`,
     {
       method: 'POST',
       headers: {
@@ -150,7 +189,7 @@ export const getOrgMemberBillingSummary = async (
   if (filters?.end_date) params.append('end_date', filters.end_date);
 
   const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/members/${userId}/summary?${params}`,
+    `${baseURL}/api/v1/billing/organizations/${organizationId}/members/${userId}/summary?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -164,7 +203,8 @@ export const getOrgMemberBillingSummary = async (
     throw new Error(error.detail || 'Failed to fetch billing summary');
   }
 
-  return response.json();
+  const data: UserBillingSummary = await response.json();
+  return normalizeBillingSummary(data);
 };
 
 export const getProjectMemberBillingSummary = async (
@@ -195,7 +235,8 @@ export const getProjectMemberBillingSummary = async (
     throw new Error(error.detail || 'Failed to fetch project billing summary');
   }
 
-  return response.json();
+  const data: UserBillingSummary = await response.json();
+  return normalizeBillingSummary(data);
 };
 
 export const getUserBillableActions = async (
@@ -216,7 +257,7 @@ export const getUserBillableActions = async (
   if (pagination?.offset) params.append('offset', String(pagination.offset));
 
   const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/members/${userId}/actions?${params}`,
+    `${baseURL}/api/v1/billing/organizations/${organizationId}/members/${userId}/actions?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -230,7 +271,8 @@ export const getUserBillableActions = async (
     throw new Error(error.detail || 'Failed to fetch billable actions');
   }
 
-  return response.json();
+  const data: BillableAction[] = await response.json();
+  return data.map(normalizeBillableAction);
 };
 
 // ============================================

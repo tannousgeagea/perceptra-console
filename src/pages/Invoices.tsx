@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Plus, Filter, Download, Eye, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { FileText, Plus, Filter, Eye, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/ui/select";
-import { mockInvoices } from "@/components/billing/mockBillingData";
-import { Invoice, InvoiceStatus } from "@/types/billing";
+import { InvoiceStatus } from "@/types/billing";
 import { GenerateInvoiceDialog } from "@/components/billing/GenerateInvoiceDialog";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/ui/alert-dialog";
+import { useInvoices, useIssueInvoice, useMarkInvoicePaid, useCancelInvoice } from "@/hooks/useInvoices";
+import QueryState from "@/components/common/QueryState";
 
 const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: string }> = {
   draft: { label: "Draft", color: "bg-muted text-muted-foreground", icon: "📝" },
@@ -28,11 +28,26 @@ const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: 
 };
 
 export default function Invoices() {
-  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterClient, setFilterClient] = useState<string>("all");
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{ type: string; invoice: Invoice } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: string; invoiceId: string; invoiceNumber: string } | null>(null);
+
+  const { data: invoices = [], isLoading, isError, refetch } = useInvoices();
+
+  const { mutate: issueInvoice, isPending: issuingInvoice } = useIssueInvoice({
+    onSuccess: () => setConfirmAction(null),
+  });
+
+  const { mutate: markPaid, isPending: markingPaid } = useMarkInvoicePaid({
+    onSuccess: () => setConfirmAction(null),
+  });
+
+  const { mutate: cancelInv, isPending: cancellingInvoice } = useCancelInvoice({
+    onSuccess: () => setConfirmAction(null),
+  });
+
+  const isActionPending = issuingInvoice || markingPaid || cancellingInvoice;
 
   const clients = [...new Set(invoices.map(i => i.client_organization_name))];
 
@@ -42,44 +57,24 @@ export default function Invoices() {
     return true;
   });
 
-  const handleIssue = (invoice: Invoice) => {
-    setInvoices(prev => prev.map(i => 
-      i.invoice_id === invoice.invoice_id 
-        ? { ...i, status: "pending" as InvoiceStatus, issued_at: new Date().toISOString(), due_date: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0] }
-        : i
-    ));
-    toast.success(`Invoice ${invoice.invoice_number} issued`);
-    setConfirmAction(null);
-  };
-
-  const handleMarkPaid = (invoice: Invoice) => {
-    setInvoices(prev => prev.map(i => 
-      i.invoice_id === invoice.invoice_id 
-        ? { ...i, status: "paid" as InvoiceStatus, paid_at: new Date().toISOString() }
-        : i
-    ));
-    toast.success(`Invoice ${invoice.invoice_number} marked as paid`);
-    setConfirmAction(null);
-  };
-
-  const handleCancel = (invoice: Invoice) => {
-    setInvoices(prev => prev.map(i => 
-      i.invoice_id === invoice.invoice_id 
-        ? { ...i, status: "cancelled" as InvoiceStatus }
-        : i
-    ));
-    toast.success(`Invoice ${invoice.invoice_number} cancelled`);
-    setConfirmAction(null);
-  };
-
-  const handleGenerate = (newInvoice: Invoice) => {
-    setInvoices([newInvoice, ...invoices]);
-    setShowGenerateDialog(false);
-    toast.success("Invoice generated successfully");
-  };
-
   const totalPending = invoices.filter(i => i.status === "pending").reduce((s, i) => s + i.total_amount, 0);
   const totalPaid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.total_amount, 0);
+
+  if (isLoading || isError) {
+    return (
+      <div className="min-h-screen bg-background w-full">
+        <div className="px-4 py-8">
+          <QueryState
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            loadingMessage="Loading invoices..."
+            errorMessage="Failed to fetch invoices. Please try again."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background w-full">
@@ -195,17 +190,17 @@ export default function Invoices() {
                           <Button variant="outline" size="sm"><Eye className="h-4 w-4 mr-1" />Details</Button>
                         </Link>
                         {invoice.status === "draft" && (
-                          <Button size="sm" onClick={() => setConfirmAction({ type: "issue", invoice })}>
+                          <Button size="sm" disabled={isActionPending} onClick={() => setConfirmAction({ type: "issue", invoiceId: invoice.invoice_id, invoiceNumber: invoice.invoice_number })}>
                             <FileText className="h-4 w-4 mr-1" />Issue
                           </Button>
                         )}
                         {invoice.status === "pending" && (
-                          <Button size="sm" variant="default" onClick={() => setConfirmAction({ type: "paid", invoice })}>
+                          <Button size="sm" variant="default" disabled={isActionPending} onClick={() => setConfirmAction({ type: "paid", invoiceId: invoice.invoice_id, invoiceNumber: invoice.invoice_number })}>
                             <CheckCircle className="h-4 w-4 mr-1" />Mark Paid
                           </Button>
                         )}
                         {(invoice.status === "draft" || invoice.status === "pending") && (
-                          <Button size="sm" variant="destructive" onClick={() => setConfirmAction({ type: "cancel", invoice })}>
+                          <Button size="sm" variant="destructive" disabled={isActionPending} onClick={() => setConfirmAction({ type: "cancel", invoiceId: invoice.invoice_id, invoiceNumber: invoice.invoice_number })}>
                             <XCircle className="h-4 w-4 mr-1" />Cancel
                           </Button>
                         )}
@@ -222,9 +217,12 @@ export default function Invoices() {
         </div>
       </div>
 
-      <GenerateInvoiceDialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog} onGenerate={handleGenerate} />
+      <GenerateInvoiceDialog
+        open={showGenerateDialog}
+        onOpenChange={setShowGenerateDialog}
+        onSuccess={() => setShowGenerateDialog(false)}
+      />
 
-      {/* Confirm dialogs */}
       <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -234,19 +232,22 @@ export default function Invoices() {
               {confirmAction?.type === "cancel" && "Cancel Invoice"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction?.type === "issue" && `Issue ${confirmAction.invoice.invoice_number}? This will send it to the client.`}
-              {confirmAction?.type === "paid" && `Mark ${confirmAction?.invoice.invoice_number} as paid?`}
-              {confirmAction?.type === "cancel" && `Cancel ${confirmAction?.invoice.invoice_number}? This action cannot be undone.`}
+              {confirmAction?.type === "issue" && `Issue ${confirmAction.invoiceNumber}? This will send it to the client.`}
+              {confirmAction?.type === "paid" && `Mark ${confirmAction?.invoiceNumber} as paid?`}
+              {confirmAction?.type === "cancel" && `Cancel ${confirmAction?.invoiceNumber}? This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (!confirmAction) return;
-              if (confirmAction.type === "issue") handleIssue(confirmAction.invoice);
-              if (confirmAction.type === "paid") handleMarkPaid(confirmAction.invoice);
-              if (confirmAction.type === "cancel") handleCancel(confirmAction.invoice);
-            }}>
+            <AlertDialogCancel disabled={isActionPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isActionPending}
+              onClick={() => {
+                if (!confirmAction) return;
+                if (confirmAction.type === "issue") issueInvoice(confirmAction.invoiceId);
+                if (confirmAction.type === "paid") markPaid({ invoiceId: confirmAction.invoiceId });
+                if (confirmAction.type === "cancel") cancelInv({ invoiceId: confirmAction.invoiceId });
+              }}
+            >
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>

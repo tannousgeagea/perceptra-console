@@ -6,53 +6,61 @@ import { Label } from "@/components/ui/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/ui/select";
 import { Switch } from "@/components/ui/ui/switch";
 import { Checkbox } from "@/components/ui/ui/checkbox";
-import { Contractor, BillingRateCard } from "@/types/billing";
+import { Loader2 } from "lucide-react";
+import { BillingRateCard } from "@/types/billing";
+import { useEnableOrgMemberBilling } from "@/hooks/useContractors";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   rateCards: BillingRateCard[];
-  onSuccess: (contractor: Contractor) => void;
+  onSuccess?: () => void;
 }
 
 export function ContractorEnableDialog({ open, onOpenChange, rateCards, onSuccess }: Props) {
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState("");
   const [company, setCompany] = useState("");
   const [billingEnabled, setBillingEnabled] = useState(true);
   const [rateCardId, setRateCardId] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
   const [backfill, setBackfill] = useState(false);
   const [contractStart, setContractStart] = useState("");
+  const [contractEnd, setContractEnd] = useState("");
+
+  const { mutate: enableBilling, isPending } = useEnableOrgMemberBilling({
+    onSuccess: () => {
+      resetForm();
+      onSuccess?.();
+    },
+  });
 
   const handleSubmit = () => {
-    if (!fullName || !username || !email) return;
+    if (!userId) return;
 
-    const rc = rateCards.find(r => r.rate_card_id === rateCardId);
-    const contractor: Contractor = {
-      user_id: `usr-${Date.now()}`,
-      username,
-      full_name: fullName,
-      email,
-      is_external_annotator: true,
-      billing_enabled: billingEnabled,
-      contractor_company: company || undefined,
-      contract_start_date: contractStart || undefined,
-      total_unbilled_amount: 0,
-      total_actions_this_month: 0,
-      rate_card_id: rateCardId || undefined,
-      rate_card_name: rc?.name,
-      hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
-    };
-    onSuccess(contractor);
-    resetForm();
+    enableBilling({
+      userId,
+      payload: {
+        is_external: true,
+        billing_enabled: billingEnabled,
+        rate_card_id: rateCardId || undefined,
+        hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+        contractor_company: company || undefined,
+        contract_start_date: contractStart || undefined,
+        contract_end_date: contractEnd || undefined,
+        backfill,
+      },
+    });
   };
 
   const resetForm = () => {
-    setFullName(""); setUsername(""); setEmail(""); setCompany("");
-    setBillingEnabled(true); setRateCardId(""); setHourlyRate("");
-    setBackfill(false); setContractStart("");
+    setUserId("");
+    setCompany("");
+    setBillingEnabled(true);
+    setRateCardId("");
+    setHourlyRate("");
+    setBackfill(false);
+    setContractStart("");
+    setContractEnd("");
   };
 
   return (
@@ -60,24 +68,13 @@ export function ContractorEnableDialog({ open, onOpenChange, rateCards, onSucces
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Add External Contractor</DialogTitle>
-          <DialogDescription>Enable billing for an external annotator</DialogDescription>
+          <DialogDescription>Enable billing for an existing organization member</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Full Name *</Label>
-              <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Jane Doe" />
-            </div>
-            <div>
-              <Label>Username *</Label>
-              <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="jane.doe" />
-            </div>
-          </div>
-
           <div>
-            <Label>Email *</Label>
-            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
+            <Label>Member User ID *</Label>
+            <Input value={userId} onChange={e => setUserId(e.target.value)} placeholder="Enter the member's user ID" />
           </div>
 
           <div>
@@ -85,9 +82,15 @@ export function ContractorEnableDialog({ open, onOpenChange, rateCards, onSucces
             <Input value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name (optional)" />
           </div>
 
-          <div>
-            <Label>Contract Start Date</Label>
-            <Input type="date" value={contractStart} onChange={e => setContractStart(e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Contract Start Date</Label>
+              <Input type="date" value={contractStart} onChange={e => setContractStart(e.target.value)} />
+            </div>
+            <div>
+              <Label>Contract End Date</Label>
+              <Input type="date" value={contractEnd} onChange={e => setContractEnd(e.target.value)} />
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
@@ -119,8 +122,11 @@ export function ContractorEnableDialog({ open, onOpenChange, rateCards, onSucces
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!fullName || !username || !email}>Add Contractor</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={!userId || isPending}>
+            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Add Contractor
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

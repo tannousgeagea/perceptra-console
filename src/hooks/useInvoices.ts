@@ -49,6 +49,7 @@ export const listInvoices = async (
   if (!token) throw new Error("No authentication token found");
 
   const params = new URLSearchParams();
+  params.append('org_id', organizationId)
   if (filters?.client_org_id) params.append('client_org_id', filters.client_org_id);
   if (filters?.project_id) params.append('project_id', filters.project_id);
   if (filters?.status) params.append('status', filters.status);

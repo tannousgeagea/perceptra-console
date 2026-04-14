@@ -1,12 +1,25 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, FileText, CheckCircle, XCircle, Download } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle, XCircle, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { Separator } from "@/components/ui/ui/separator";
-import { mockInvoices, actionTypeLabels } from "@/components/billing/mockBillingData";
+import { actionTypeLabels } from "@/components/billing/mockBillingData";
 import { InvoiceStatus } from "@/types/billing";
+import { useInvoice, useIssueInvoice, useMarkInvoicePaid, useCancelInvoice } from "@/hooks/useInvoices";
+import QueryState from "@/components/common/QueryState";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/ui/alert-dialog";
 
 const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: string }> = {
   draft: { label: "Draft", color: "bg-muted text-muted-foreground", icon: "📝" },
@@ -17,7 +30,39 @@ const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: 
 
 export default function InvoiceDetails() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
-  const invoice = mockInvoices.find(i => i.invoice_id === invoiceId);
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
+
+  const { data: invoice, isLoading, isError, refetch } = useInvoice(invoiceId || "");
+
+  const { mutate: issueInvoice, isPending: issuingInvoice } = useIssueInvoice({
+    onSuccess: () => setConfirmAction(null),
+  });
+
+  const { mutate: markPaid, isPending: markingPaid } = useMarkInvoicePaid({
+    onSuccess: () => setConfirmAction(null),
+  });
+
+  const { mutate: cancelInv, isPending: cancellingInvoice } = useCancelInvoice({
+    onSuccess: () => setConfirmAction(null),
+  });
+
+  const isActionPending = issuingInvoice || markingPaid || cancellingInvoice;
+
+  if (isLoading || isError) {
+    return (
+      <div className="min-h-screen bg-background w-full">
+        <div className="px-4 py-8">
+          <QueryState
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            loadingMessage="Loading invoice..."
+            errorMessage="Failed to load invoice. Please try again."
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (!invoice) {
     return (
@@ -53,13 +98,22 @@ export default function InvoiceDetails() {
             </div>
             <div className="flex gap-2">
               {invoice.status === "draft" && (
-                <Button onClick={() => toast.info("Would issue invoice")}><FileText className="h-4 w-4 mr-1" />Issue Invoice</Button>
+                <Button disabled={isActionPending} onClick={() => setConfirmAction("issue")}>
+                  {issuingInvoice ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
+                  Issue Invoice
+                </Button>
               )}
               {invoice.status === "pending" && (
-                <Button onClick={() => toast.info("Would mark as paid")}><CheckCircle className="h-4 w-4 mr-1" />Mark Paid</Button>
+                <Button disabled={isActionPending} onClick={() => setConfirmAction("paid")}>
+                  {markingPaid ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-1" />}
+                  Mark Paid
+                </Button>
               )}
               {(invoice.status === "draft" || invoice.status === "pending") && (
-                <Button variant="destructive" onClick={() => toast.info("Would cancel")}><XCircle className="h-4 w-4 mr-1" />Cancel</Button>
+                <Button variant="destructive" disabled={isActionPending} onClick={() => setConfirmAction("cancel")}>
+                  {cancellingInvoice ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <XCircle className="h-4 w-4 mr-1" />}
+                  Cancel
+                </Button>
               )}
               <Button variant="outline" onClick={() => toast.info("PDF download coming soon")}>
                 <Download className="h-4 w-4 mr-1" />Download PDF
@@ -166,6 +220,36 @@ export default function InvoiceDetails() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "issue" && "Issue Invoice"}
+              {confirmAction === "paid" && "Mark as Paid"}
+              {confirmAction === "cancel" && "Cancel Invoice"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "issue" && `Issue ${invoice.invoice_number}? This will send it to the client.`}
+              {confirmAction === "paid" && `Mark ${invoice.invoice_number} as paid?`}
+              {confirmAction === "cancel" && `Cancel ${invoice.invoice_number}? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isActionPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isActionPending}
+              onClick={() => {
+                if (confirmAction === "issue") issueInvoice(invoice.invoice_id);
+                if (confirmAction === "paid") markPaid({ invoiceId: invoice.invoice_id });
+                if (confirmAction === "cancel") cancelInv({ invoiceId: invoice.invoice_id });
+              }}
+            >
+              {isActionPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

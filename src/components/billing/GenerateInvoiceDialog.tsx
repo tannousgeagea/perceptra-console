@@ -4,24 +4,17 @@ import { Button } from "@/components/ui/ui/button";
 import { Input } from "@/components/ui/ui/input";
 import { Label } from "@/components/ui/ui/label";
 import { Textarea } from "@/components/ui/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/ui/select";
 import { Checkbox } from "@/components/ui/ui/checkbox";
-import { Invoice } from "@/types/billing";
-import { mockBillingReport } from "./mockBillingData";
+import { Loader2 } from "lucide-react";
+import { useGenerateInvoice } from "@/hooks/useInvoices";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onGenerate: (invoice: Invoice) => void;
+  onSuccess?: () => void;
 }
 
-const clientOrgs = [
-  { id: "org-10", name: "Acme Corp" },
-  { id: "org-11", name: "TechStart Inc" },
-  { id: "org-12", name: "MedVision Health" },
-];
-
-export function GenerateInvoiceDialog({ open, onOpenChange, onGenerate }: Props) {
+export function GenerateInvoiceDialog({ open, onOpenChange, onSuccess }: Props) {
   const [clientId, setClientId] = useState("");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
@@ -30,43 +23,25 @@ export function GenerateInvoiceDialog({ open, onOpenChange, onGenerate }: Props)
   const [autoIssue, setAutoIssue] = useState(false);
   const [notes, setNotes] = useState("");
 
-  const client = clientOrgs.find(c => c.id === clientId);
+  const { mutate: generateInvoice, isPending } = useGenerateInvoice({
+    onSuccess: () => {
+      resetForm();
+      onSuccess?.();
+    },
+  });
 
   const handleGenerate = () => {
     if (!clientId || !periodStart || !periodEnd) return;
 
-    const subtotal = mockBillingReport.total_amount;
-    const tax = subtotal * (parseFloat(taxRate) / 100);
-    const total = subtotal + tax;
-    const dueDate = new Date(Date.now() + parseInt(dueDays) * 86400000).toISOString().split("T")[0];
-
-    const invoice: Invoice = {
-      invoice_id: `inv-${Date.now()}`,
-      invoice_number: `INV-DAC-${String(Date.now()).slice(-6)}`,
-      vendor_organization_id: "org-1",
-      vendor_organization_name: "DataAnnotation Corp",
+    generateInvoice({
       client_organization_id: clientId,
-      client_organization_name: client?.name || "",
       period_start: periodStart,
       period_end: periodEnd,
-      subtotal,
-      tax_rate: parseFloat(taxRate),
-      tax_amount: tax,
-      total_amount: total,
-      currency: "USD",
-      total_annotations: 543,
-      total_reviews: 687,
-      total_actions: mockBillingReport.total_actions,
-      action_breakdown: mockBillingReport.breakdown,
-      status: autoIssue ? "pending" : "draft",
-      issued_at: autoIssue ? new Date().toISOString() : undefined,
-      due_date: dueDate,
-      notes,
-      created_at: new Date().toISOString(),
-    };
-
-    onGenerate(invoice);
-    resetForm();
+      tax_rate: parseFloat(taxRate) || 0,
+      due_days: parseInt(dueDays) || 30,
+      auto_issue: autoIssue,
+      notes: notes || undefined,
+    });
   };
 
   const resetForm = () => {
@@ -89,13 +64,12 @@ export function GenerateInvoiceDialog({ open, onOpenChange, onGenerate }: Props)
 
         <div className="space-y-4">
           <div>
-            <Label>Client Organization *</Label>
-            <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-              <SelectContent>
-                {clientOrgs.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Label>Client Organization ID *</Label>
+            <Input
+              value={clientId}
+              onChange={e => setClientId(e.target.value)}
+              placeholder="Enter client organization ID"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -120,15 +94,6 @@ export function GenerateInvoiceDialog({ open, onOpenChange, onGenerate }: Props)
             </div>
           </div>
 
-          {clientId && periodStart && periodEnd && (
-            <div className="bg-muted/50 rounded-lg p-3 text-sm">
-              <p className="font-medium mb-1">Preview</p>
-              <p>Estimated unbilled actions: <span className="font-semibold">{mockBillingReport.total_actions.toLocaleString()}</span></p>
-              <p>Estimated subtotal: <span className="font-semibold">${mockBillingReport.total_amount.toFixed(2)}</span></p>
-              <p>Tax ({taxRate}%): <span className="font-semibold">${(mockBillingReport.total_amount * parseFloat(taxRate || "0") / 100).toFixed(2)}</span></p>
-            </div>
-          )}
-
           <div className="flex items-center gap-2">
             <Checkbox id="auto-issue" checked={autoIssue} onCheckedChange={(v) => setAutoIssue(!!v)} />
             <Label htmlFor="auto-issue">Auto-issue invoice after generation</Label>
@@ -141,8 +106,11 @@ export function GenerateInvoiceDialog({ open, onOpenChange, onGenerate }: Props)
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleGenerate} disabled={!clientId || !periodStart || !periodEnd}>Generate Invoice</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancel</Button>
+          <Button onClick={handleGenerate} disabled={!clientId || !periodStart || !periodEnd || isPending}>
+            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Generate Invoice
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

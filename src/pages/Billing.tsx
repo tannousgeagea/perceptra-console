@@ -12,7 +12,8 @@ import { CreateRateCardDialog } from "@/components/billing/CreateRateCardDialog"
 import { EditRateCardDialog } from "@/components/billing/EditRateCardDialog";
 import { DeleteRateCardDialog } from "@/components/billing/DeleteRateCardDialog";
 import QueryState from "@/components/common/QueryState";
-import { mockInvoices, mockContractors } from "@/components/billing/mockBillingData";
+import { useInvoices } from "@/hooks/useInvoices";
+import { useOrganizationContractors } from "@/hooks/useContractors";
 
 export default function Billing() {
   const [filterProject, setFilterProject] = useState<string>("all");
@@ -22,7 +23,9 @@ export default function Billing() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { data: projects, isLoading: loadingProjects, isError: errorProjects, refetch } = useUserProjects();
-  const { data: rateCards, isLoading: loadingRateCards, isError: errorRateCards } = useRateCards()
+  const { data: rateCards, isLoading: loadingRateCards, isError: errorRateCards } = useRateCards();
+  const { data: invoices = [] } = useInvoices();
+  const { data: contractors = [] } = useOrganizationContractors();
 
   const { mutate: createRateCard, isPending: pendingCreateRateCard } = useCreateRateCard({
     onSuccess: (data) => {
@@ -106,9 +109,9 @@ export default function Billing() {
     });
   };
 
-  const pendingInvoices = mockInvoices.filter(i => i.status === "pending").length;
-  const totalUnbilled = mockContractors.reduce((s, c) => s + c.total_unbilled_amount, 0);
-  const activeContractors = mockContractors.filter(c => c.billing_enabled).length;
+  const pendingInvoices = invoices.filter(i => i.status === "pending").length;
+  const totalUnbilled = contractors.reduce((s, c) => s + c.total_unbilled_amount, 0);
+  const activeContractors = contractors.filter(c => c.billing_enabled).length;
 
   const isLoading = loadingProjects || loadingRateCards
   const isError = errorProjects || errorRateCards
