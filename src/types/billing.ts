@@ -122,6 +122,35 @@ export interface Invoice {
   paid_at?: string;
   notes: string;
   created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceGenerateRequest {
+  period_start: string; // date
+  period_end: string; // date
+  project_id?: string;
+  client_organization_id: string;
+  tax_rate?: number;
+  notes?: string;
+  due_days?: number;
+  auto_issue?: boolean;
+}
+
+export interface InvoiceFilters {
+  client_org_id?: string;
+  project_id?: string;
+  status?: InvoiceStatus;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface MarkPaidRequest {
+  payment_date?: string;
+  payment_notes?: string;
+}
+
+export interface CancelInvoiceRequest {
+  reason?: string;
 }
 
 // ---------------------------------------
@@ -144,6 +173,33 @@ export interface Contractor {
   rate_card_name?: string;
   hourly_rate?: number;
 }
+
+export interface ContractorFilters {
+  billing_enabled?: boolean;
+  has_unbilled_actions?: boolean;
+}
+
+export interface ContractorEnableRequest {
+  is_external: boolean;
+  billing_enabled: boolean;
+  rate_card_id?: string;
+  hourly_rate?: number;
+  contractor_company?: string;
+  contract_start_date?: string;
+  contract_end_date?: string;
+  backfill?: boolean;
+}
+
+export interface ContractorEnableResponse {
+  message: string;
+  user_id: string;
+  organization_id?: string;
+  project_id?: string;
+  is_external_annotator: boolean;
+  billing_enabled: boolean;
+  backfill_task_id?: string;
+}
+
 export interface ContractorConfig {
   is_external: boolean;
   billing_enabled: boolean;
@@ -154,6 +210,8 @@ export interface ContractorConfig {
   contract_start_date?: string;
   contract_end_date?: string;
 }
+
+
 
 // ------------------------------------
 // Backfill Types
@@ -170,18 +228,29 @@ export interface BackfillTaskResponse {
   organization_id?: string;
   project_id?: string;
 }
-export type BackfillState = 'PENDING' | 'STARTED' | 'SUCCESS' | 'FAILURE';
+export type BackfillState = 'PENDING' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'RETRY';
+
+export interface BackfillResult {
+  user_id?: string;
+  username?: string;
+  organization_id?: string;
+  organization_name?: string;
+  project_id?: string;
+  project_name?: string;
+  total_events: number;
+  created: number;
+  skipped: number;
+}
+
 export interface TaskStatus {
   task_id: string;
   state: BackfillState;
   ready: boolean;
-  result?: {
-    total_events: number;
-    created: number;
-    skipped: number;
-  };
+  result?: BackfillResult;
   error?: string;
+  status?: string;
 }
+
 
 // -----------------------------------
 // Billing summary types
@@ -220,4 +289,45 @@ export interface BillableAction {
   project_id?: string;
   project_name?: string;
   metadata: Record<string, unknown>;
+}
+
+export interface BillableActionFilters {
+  start_date?: string;
+  end_date?: string;
+  action_type?: string;
+  is_billed?: boolean;
+}
+
+export interface BillingReport {
+  period_start: string;
+  period_end: string;
+  total_actions: number;
+  total_amount: number;
+  currency: string;
+  breakdown: BillableActionSummary[];
+}
+
+export interface BillingReportFilters {
+  project_id?: string;
+  user_id?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface OrganizationBillingReport {
+  summary: {
+    total_actions: number;
+    total_amount: number;
+    billed_amount: number;
+    unbilled_amount: number;
+    unique_users: number;
+    unique_projects: number;
+  };
+  breakdown: Array<Record<string, any>>;
+}
+
+export interface OrganizationBillingReportFilters {
+  start_date?: string;
+  end_date?: string;
+  group_by: 'user' | 'project' | 'action_type' | 'date';
 }
