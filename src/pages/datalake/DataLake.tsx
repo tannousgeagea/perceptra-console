@@ -287,7 +287,7 @@ const DataLake: React.FC = () => {
             onCancelScan={scan.cancelScan}
           />
           {/* Scan Results Panel */}
-          {scan.activeScan?.status === 'complete' && (
+          {scan.activeScan?.status === 'completed' && (
             <ScanResultsPanel
               open={scan.resultsOpen}
               onClose={() => scan.setResultsOpen(false)}

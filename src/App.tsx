@@ -52,9 +52,9 @@ import Contractors from "./pages/Contractors";
 import ContractorSummary from "./pages/ContractorSummary";
 import Evaluation from './pages/Evaluation';
 import AutoAnnotate from "./pages/AutoAnnotate";
-import { AnimatePresence } from 'framer-motion';
-import { PageTransition } from './components/layout/PageTransition';
 import { AppBoot } from './components/layout/AppBoot';
+import ScanHistory from './pages/ScanHistory';
+import ScanResults from './pages/ScanResults';
 
 const queryClient = new QueryClient();
 
@@ -96,6 +96,9 @@ const App = () => {
                       <Route path="/billing/contractors" element={<Contractors />} />
                       <Route path="/billing/contractors/:userId/summary" element={<ContractorSummary />} />
                       <Route path='/settings/*' element={<Settings />} />
+                      <Route path="/similarity" element={<Navigate to="/similarity/scans" replace />} />
+                      <Route path="/similarity/scans" element={<ScanHistory />} />
+                      <Route path="/similarity/scans/:scanId/results" element={<ScanResults />} />
                       <Route path='projects/:projectId' element={
                         <ProjectProvider>
                           <ProjectLayout />
