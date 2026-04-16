@@ -45,6 +45,7 @@ const Navbar: FC = () => {
   const items: NavbarItem[] = [
     { item: "Projects", ref: "/projects", icon: <Folder size={20} /> },
     { item: "Datalake", ref: "/datalake", icon: <Database size={20} /> },
+    { item: "Similarity", ref: "/similarity", icon: <ScanEye size={20} /> },
     { item: "Upload", ref: "/upload", icon: <Upload size={20} /> },
     { item: "Inference", ref: "/inference", icon: <Scan size={20} /> },
     { item: "Models", ref: "/models", icon: <Brain size={20} /> },

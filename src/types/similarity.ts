@@ -2,6 +2,8 @@ export type HashAlgorithm = 'ahash' | 'phash' | 'dhash' | 'whash';
 export type ScanScope = 'datalake' | 'project';
 export type ScanStatus = 'idle' | 'queued' | 'pending' | 'running' | 'complete' | 'completed' | 'failed' | 'cancelled';
 export type ClusterAction = 'archive_duplicates' | 'delete_duplicates' | 'mark_reviewed' | 'set_representative' | 'remove_from_cluster';
+export type ClusterStatus = "unreviewed" | "reviewed" | "actioned";
+export type MemberRole = "representative" | "duplicate";
 
 export interface SimilarityImage {
   id: string;
@@ -77,7 +79,7 @@ export type ScanHistoryStatus = 'pending' | 'running' | 'completed' | 'failed' |
 
 export interface ScanSummary {
   scan_id: string;
-  scope: 'datalake' | 'project';
+  scope: ScanScope;
   project_id: string | null;
   algorithm: HashAlgorithm;
   similarity_threshold: number;
@@ -102,6 +104,17 @@ export interface ScanListResponse {
   scans: ScanSummary[];
 }
 
+export interface CreateScanPayload {
+  scope: ScanScope;
+  project_id?: string;
+  algorithm: HashAlgorithm;
+  similarity_threshold: number;   // 0.50–1.00
+}
+ 
+export interface CreateScanResponse extends ScanSummary {
+  message: string;
+}
+
 export interface ScanStats {
   scans: {
     total: number;
@@ -124,6 +137,44 @@ export interface ScanStats {
   } | null;
 }
 
+export interface SimilarityStats {
+  scans: {
+    total: number;
+    completed: number;
+    running: number;
+  };
+  clusters: {
+    total: number;
+    unreviewed: number;
+    reviewed: number;
+    actioned: number;
+    avg_cluster_size: number;
+  };
+  total_duplicates: number;
+  latest_scan: {
+    scan_id: string;
+    completed_at: string;
+    algorithm: HashAlgorithm;
+    threshold: number;
+  } | null;
+}
+
+// ============================================
+// FILTER / QUERY PARAM TYPES
+// ============================================
+
+export interface ScanListFilters {
+  status?: ScanStatus;
+  scope?: ScanScope;
+  project_id?: string;
+  algorithm?: HashAlgorithm;
+}
+ 
+export interface ScanListPagination {
+  skip?: number;
+  limit?: number;
+}
+
 export interface ScanListParams {
   skip?: number;
   limit?: number;
@@ -131,4 +182,148 @@ export interface ScanListParams {
   scope?: 'datalake' | 'project';
   project_id?: string;
   algorithm?: HashAlgorithm;
+}
+
+export interface ClusterResultsFilters {
+  status?: ClusterStatus;
+  sort?: "size_desc" | "size_asc" | "similarity_desc" | "date_asc";
+  min_size?: number;
+}
+ 
+export interface ClusterResultsPagination {
+  skip?: number;
+  limit?: number;
+}
+ 
+export interface SimilarImagesParams {
+  threshold?: number;   // 0.50–1.00, default 0.80
+  algorithm?: HashAlgorithm;
+  limit?: number;
+}
+
+// ============================================
+// CLUSTER TYPES
+// ============================================
+ 
+export interface ImageStub {
+  image_id: string;
+  name: string;
+  original_filename: string;
+  file_format: string;
+  file_size: number;
+  file_size_mb: number;
+  width: number;
+  height: number;
+  checksum: string;
+  storage_key: string;
+  download_url: string;
+  created_at: string;
+}
+ 
+export interface ClusterMember {
+  image: ImageStub;
+  role: MemberRole;
+  similarity_score: number;       // 0.0–1.0
+}
+ 
+export interface ClusterSummary {
+  cluster_id: string;
+  scan_id: string;
+  member_count: number;
+  avg_similarity: number;
+  max_similarity: number;
+  status: ClusterStatus;
+  representative: ImageStub | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  // Only present when fetched with include_members=true
+  members?: ClusterMember[];
+}
+ 
+export interface ClusterDetail extends ClusterSummary {
+  members: ClusterMember[];
+  action_history: ClusterActionRecord[];
+}
+ 
+export interface ClusterActionRecord {
+  action_id: string;
+  action_type: ClusterAction;
+  performed_by: string | null;
+  image_ids: string[];
+  meta: Record<string, unknown>;
+  performed_at: string;
+}
+ 
+export interface ClusterResultsResponse {
+  scan_id: string;
+  scan_status: ScanStatus;
+  total_clusters: number;
+  total_duplicates: number;
+  page: number;
+  page_size: number;
+  clusters: ClusterSummary[];
+}
+
+// ============================================
+// ACTION TYPES
+// ============================================
+ 
+export interface ClusterActionPayload {
+  action: ClusterAction;
+  image_ids?: string[];
+  new_representative_id?: string;
+}
+ 
+export interface ClusterActionResponse {
+  message: string;
+  cluster_id: string;
+  action: ClusterAction;
+  // Action-specific fields
+  archived?: number;
+  deleted_from_db?: number;
+  storage_deleted?: number;
+  storage_failed?: number;
+  removed?: number;
+  affected_image_ids?: string[];
+  new_representative_id?: string;
+  status?: ClusterStatus;
+}
+ 
+export interface BulkClusterActionPayload {
+  cluster_ids: string[];
+  action: "archive_duplicates" | "delete_duplicates" | "mark_reviewed";
+}
+ 
+export interface BulkClusterActionDetail {
+  cluster_id: string;
+  status: "ok" | "error";
+  error?: string;
+  [key: string]: unknown;
+}
+ 
+export interface BulkClusterActionResponse {
+  message: string;
+  action: ClusterAction;
+  total: number;
+  successful: number;
+  failed: number;
+  details: BulkClusterActionDetail[];
+}
+ 
+
+// ============================================
+// SIMILAR IMAGES (per-image endpoint)
+// ============================================
+ 
+export interface SimilarImage extends ImageStub {
+  similarity_score: number;
+}
+ 
+export interface SimilarImagesResponse {
+  image_id: string;
+  algorithm: HashAlgorithm;
+  threshold: number;
+  total_found: number;
+  similar_images: SimilarImage[];
 }

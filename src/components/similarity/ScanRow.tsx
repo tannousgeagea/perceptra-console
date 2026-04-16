@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/ui/card';
@@ -13,7 +13,9 @@ import { ScanProgressBar } from './ScanProgressBar';
 import { ScanExpandedDetail } from './ScanExpandedDetail';
 import { ScanRowKebabMenu } from './ScanRowKebabMenu';
 import { ScanCancelDialog } from './ScanCancelDialog';
-import { useLiveScan, useCancelScan } from '@/hooks/useScanHistory';
+import { useScan, useCancelScan } from '@/hooks/useSimilarity';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 const ALGO_COLORS: Record<string, string> = {
@@ -44,10 +46,27 @@ export function ScanRow({ scan: initialScan, autoExpand = false }: ScanRowProps)
   const [expanded, setExpanded] = useState(autoExpand);
   const [cancelOpen, setCancelOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const isLive = initialScan.status === 'running' || initialScan.status === 'pending';
-  const { data: liveScan } = useLiveScan(initialScan.scan_id, initialScan.status);
+  const { data: liveScan } = useScan(initialScan.scan_id, { poll: isLive });
   const cancelMutation = useCancelScan();
+
+  // Only toast if the scan was actively live when this component mounted.
+  // This prevents showing toast for every completed scan visible on page load.
+  const wasLiveRef = useRef(isLive);
+
+  useEffect(() => {
+    if (!wasLiveRef.current) return;
+    const s = liveScan?.status;
+    if (!s || s === 'running' || s === 'pending') return;
+    if (s === 'completed') {
+      toast.success(`Scan finished — ${liveScan.clusters_found} clusters found`);
+    } else if (s === 'failed') {
+      toast.error('Scan failed — see error log');
+    }
+    queryClient.invalidateQueries({ queryKey: ['similarity'] });
+  }, [liveScan?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scan = (isLive && liveScan) ? liveScan : initialScan;
 

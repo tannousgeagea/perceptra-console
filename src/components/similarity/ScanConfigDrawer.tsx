@@ -42,7 +42,11 @@ export function ScanConfigDrawer({
   onCancelScan,
   showScopeToggle = false,
 }: ScanConfigDrawerProps) {
-  const isScanning = activeScan && (activeScan.status === 'running' || activeScan.status === 'queued');
+  const isScanning = activeScan && (
+    activeScan.status === 'running' ||
+    activeScan.status === 'queued' ||
+    activeScan.status === 'pending'
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

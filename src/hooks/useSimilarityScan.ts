@@ -1,124 +1,239 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSimilarityStore } from '@/stores/similarityStore';
-import * as api from '@/lib/similarity';
-import type { ScanConfig, SimilarityCluster, SimilarityImage } from '@/types/similarity';
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
+import {
+  createScan,
+  getScan,
+  getScanResults,
+  performClusterAction,
+  performBulkClusterAction,
+  cancelScan as cancelScanApi,
+  similarityKeys,
+} from '@/hooks/useSimilarity';
+import type {
+  ScanConfig,
+  ScanJob,
+  SimilarityCluster,
+  SimilarityImage,
+  ScanSummary,
+  ClusterSummary,
+  ClusterMember,
+} from '@/types/similarity';
+
+// ============================================================
+// Adapters — map real API shapes → legacy component shapes
+// ============================================================
+
+function adaptScanToJob(scan: ScanSummary): ScanJob {
+  return {
+    scan_id: scan.scan_id,
+    status: scan.status,
+    total_images: scan.total_images,
+    images_processed: scan.hashed_images,
+    clusters_found: scan.clusters_found,
+    progress: scan.progress,
+    eta_seconds: scan.eta_seconds ?? 0,
+  };
+}
+
+function adaptMember(member: ClusterMember): SimilarityImage {
+  return {
+    id: member.image.image_id,
+    filename: member.image.original_filename || member.image.name,
+    url: member.image.download_url ?? '',
+    thumbnail_url: member.image.download_url ?? '',
+    width: member.image.width,
+    height: member.image.height,
+    file_size: member.image.file_size,
+    upload_date: member.image.created_at,
+    similarity_score: member.similarity_score,
+    is_representative: member.role === 'representative',
+    datasets: [],
+  };
+}
+
+function adaptCluster(cluster: ClusterSummary): SimilarityCluster {
+  return {
+    id: cluster.cluster_id,
+    images: (cluster.members ?? []).map(adaptMember),
+    avg_similarity: cluster.avg_similarity,
+    status: cluster.status,
+  };
+}
+
+// ============================================================
+// Hook
+// ============================================================
 
 /**
- * Hook for the Datalake server-side similarity scan.
- * Handles starting scans, polling for progress, and fetching results.
+ * Orchestrates the DataLake server-side similarity scan workflow.
+ * Uses real API endpoints; adapts responses to the legacy SimilarityCluster
+ * shape so DataLake UI components require no changes.
  */
 export function useSimilarityScan() {
-  const pollRef = useRef<ReturnType<typeof setInterval>>();
   const store = useSimilarityStore();
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+  const orgId = currentOrganization?.id ?? '';
 
-  const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = undefined;
-    }
-  }, []);
+  // Active scan ID tracked locally — drives the polling loop
+  const [scanId, setScanId] = useState<string | null>(null);
 
-  // Clean up on unmount
-  useEffect(() => stopPolling, [stopPolling]);
+  // -------------------------------------------------------
+  // Live polling — 2s interval while scan is active
+  // -------------------------------------------------------
+  useEffect(() => {
+    if (!scanId || !orgId) return;
 
-  const startScan = useCallback(async (config: ScanConfig) => {
-    store.setScanConfig(config);
-    store.setActiveScan({
-      scan_id: '',
-      status: 'queued',
-      total_images: 0,
-      images_processed: 0,
-      clusters_found: 0,
-      progress: 0,
-      eta_seconds: 0,
-    });
+    let stopped = false;
 
-    try {
-      const job = await api.startScan(config);
-      store.setActiveScan(job);
+    const poll = async () => {
+      try {
+        const scan = await getScan(orgId, scanId);
+        if (stopped) return;
 
-      // --- Simulated progress for demo ---
-      let progress = 0;
-      let clustersFound = 0;
-      const totalImages = 2000 + Math.floor(Math.random() * 3000);
+        store.setActiveScan(adaptScanToJob(scan));
 
-      stopPolling();
-      pollRef.current = setInterval(() => {
-        progress += 3 + Math.random() * 8;
-        if (progress > 85) progress += Math.random() * 2;
-        clustersFound += Math.random() > 0.6 ? 1 : 0;
-
-        if (progress >= 100) {
-          progress = 100;
-          stopPolling();
-
-          // Generate mock results
-          const mockClusters = generateMockClusters(8 + Math.floor(Math.random() * 20));
-          const totalDupes = mockClusters.reduce((s, c) => s + c.images.length - 1, 0);
-
-          store.setActiveScan({
-            scan_id: job.scan_id,
-            status: 'complete',
-            total_images: totalImages,
-            images_processed: totalImages,
-            clusters_found: mockClusters.length,
-            progress: 100,
-            eta_seconds: 0,
-          });
-          store.setScanResults(mockClusters, mockClusters.length, totalDupes, 1);
+        if (scan.status === 'completed') {
+          // Fetch full results including member images
+          const results = await getScanResults(orgId, scanId, {}, {}, true);
+          if (stopped) return;
+          const clusters = results.clusters.map(adaptCluster);
+          store.setScanResults(
+            clusters,
+            results.total_clusters,
+            results.total_duplicates,
+            1
+          );
           store.setResultsOpen(true);
+          // Invalidate the shared similarity query cache
+          queryClient.invalidateQueries({ queryKey: similarityKeys.all(orgId) });
+        } else if (scan.status === 'failed' || scan.status === 'cancelled') {
+          // Terminal failure — nothing more to fetch
+          queryClient.invalidateQueries({ queryKey: similarityKeys.all(orgId) });
         } else {
-          store.setActiveScan({
-            scan_id: job.scan_id,
-            status: 'running',
-            total_images: totalImages,
-            images_processed: Math.floor((progress / 100) * totalImages),
-            clusters_found: clustersFound,
-            progress: Math.min(progress, 99),
-            eta_seconds: Math.max(1, Math.floor((100 - progress) / 8)),
-          });
+          // Still running — schedule next poll
+          setTimeout(poll, 2000);
         }
-      }, 1500);
-    } catch {
-      store.setActiveScan(null);
-    }
-  }, [store, stopPolling]);
+      } catch {
+        if (!stopped) {
+          store.setActiveScan(null);
+        }
+      }
+    };
 
-  const cancelScan = useCallback(() => {
-    stopPolling();
+    poll();
+
+    return () => {
+      stopped = true;
+    };
+  }, [scanId, orgId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // -------------------------------------------------------
+  // Actions
+  // -------------------------------------------------------
+
+  const startScan = useCallback(
+    async (config: ScanConfig) => {
+      if (!orgId) return;
+
+      // Optimistic pending state
+      store.setActiveScan({
+        scan_id: '',
+        status: 'queued',
+        total_images: 0,
+        images_processed: 0,
+        clusters_found: 0,
+        progress: 0,
+        eta_seconds: 0,
+      });
+
+      try {
+        const result = await createScan(orgId, {
+          scope: config.scope,
+          algorithm: config.algorithm,
+          similarity_threshold: config.threshold,
+          project_id: config.dataset_id,
+        });
+
+        store.setActiveScan(adaptScanToJob(result));
+        setScanId(result.scan_id);
+      } catch {
+        store.setActiveScan(null);
+      }
+    },
+    [orgId, store]
+  );
+
+  const cancelScan = useCallback(async () => {
+    if (scanId && orgId) {
+      try {
+        await cancelScanApi(orgId, scanId);
+      } catch {
+        // Best-effort cancel
+      }
+    }
+    setScanId(null);
     store.setActiveScan(null);
-  }, [store, stopPolling]);
+  }, [orgId, scanId, store]);
 
-  const archiveDuplicates = useCallback(async (clusterId: string) => {
-    await api.performClusterAction(clusterId, 'archive_duplicates');
-    store.removeCluster(clusterId);
-  }, [store]);
+  const archiveDuplicates = useCallback(
+    async (clusterId: string) => {
+      if (!orgId) return;
+      await performClusterAction(orgId, clusterId, { action: 'archive_duplicates' });
+      store.removeCluster(clusterId);
+    },
+    [orgId, store]
+  );
 
-  const deleteDuplicates = useCallback(async (clusterId: string) => {
-    await api.performClusterAction(clusterId, 'delete_duplicates');
-    store.removeCluster(clusterId);
-  }, [store]);
+  const deleteDuplicates = useCallback(
+    async (clusterId: string) => {
+      if (!orgId) return;
+      await performClusterAction(orgId, clusterId, { action: 'delete_duplicates' });
+      store.removeCluster(clusterId);
+    },
+    [orgId, store]
+  );
 
-  const markReviewed = useCallback(async (clusterId: string) => {
-    await api.performClusterAction(clusterId, 'mark_reviewed');
-    store.markClusterReviewed(clusterId);
-  }, [store]);
+  const markReviewed = useCallback(
+    async (clusterId: string) => {
+      if (!orgId) return;
+      await performClusterAction(orgId, clusterId, { action: 'mark_reviewed' });
+      store.markClusterReviewed(clusterId);
+    },
+    [orgId, store]
+  );
 
-  const setRepresentative = useCallback(async (clusterId: string, imageId: string) => {
-    await api.performClusterAction(clusterId, 'set_representative', { representative_id: imageId });
-    store.setRepresentative(clusterId, imageId);
-  }, [store]);
+  const setRepresentative = useCallback(
+    async (clusterId: string, imageId: string) => {
+      if (!orgId) return;
+      await performClusterAction(orgId, clusterId, {
+        action: 'set_representative',
+        new_representative_id: imageId,
+      });
+      store.setRepresentative(clusterId, imageId);
+    },
+    [orgId, store]
+  );
 
-  const bulkAction = useCallback(async (action: 'archive_duplicates' | 'delete_duplicates' | 'mark_reviewed') => {
-    const ids = Array.from(store.selectedClusterIds);
-    await api.performBulkAction(ids, action);
-    if (action === 'mark_reviewed') {
-      ids.forEach((id) => store.markClusterReviewed(id));
-    } else {
-      ids.forEach((id) => store.removeCluster(id));
-    }
-    store.clearClusterSelection();
-  }, [store]);
+  const bulkAction = useCallback(
+    async (action: 'archive_duplicates' | 'delete_duplicates' | 'mark_reviewed') => {
+      if (!orgId) return;
+      const ids = Array.from(store.selectedClusterIds);
+      if (ids.length === 0) return;
+
+      await performBulkClusterAction(orgId, { cluster_ids: ids, action });
+
+      if (action === 'mark_reviewed') {
+        ids.forEach((id) => store.markClusterReviewed(id));
+      } else {
+        ids.forEach((id) => store.removeCluster(id));
+      }
+      store.clearClusterSelection();
+    },
+    [orgId, store]
+  );
 
   return {
     scanConfig: store.scanConfig,
@@ -145,37 +260,4 @@ export function useSimilarityScan() {
     setResultsOpen: store.setResultsOpen,
     resetScan: store.resetScan,
   };
-}
-
-// --- Mock data generator ---
-function generateMockClusters(count: number): SimilarityCluster[] {
-  const clusters: SimilarityCluster[] = [];
-  for (let i = 0; i < count; i++) {
-    const imageCount = 2 + Math.floor(Math.random() * 5);
-    const images: SimilarityImage[] = [];
-    for (let j = 0; j < imageCount; j++) {
-      images.push({
-        id: `img-${i}-${j}`,
-        filename: `IMG_${1000 + i * 10 + j}.jpg`,
-        url: `https://picsum.photos/seed/${i * 10 + j}/800/600`,
-        thumbnail_url: `https://picsum.photos/seed/${i * 10 + j}/180/140`,
-        width: 800,
-        height: 600,
-        file_size: 500000 + Math.floor(Math.random() * 2000000),
-        upload_date: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-        similarity_score: j === 0 ? 1.0 : 0.7 + Math.random() * 0.28,
-        is_representative: j === 0,
-        datasets: j % 3 === 0
-          ? [{ id: 'd1', name: 'Training Set A' }, { id: 'd2', name: 'Validation Set' }]
-          : [{ id: 'd1', name: 'Training Set A' }],
-      });
-    }
-    clusters.push({
-      id: `cluster-${i}`,
-      images,
-      avg_similarity: images.reduce((s, img) => s + img.similarity_score, 0) / images.length,
-      status: 'unreviewed',
-    });
-  }
-  return clusters;
 }
