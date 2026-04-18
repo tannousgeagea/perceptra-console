@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/ui/select';
 import { UserRole } from '@/types/auth';
-import { UserPlus, Search, MoreVertical, Shield, Eye, Edit3, Crown, Loader2 } from 'lucide-react';
+import { UserPlus, Search, MoreVertical, Shield, Eye, Pencil, Crown, Loader2 } from 'lucide-react';
 import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
 import { UserInviteModal } from './UserInviteModal';
 import { useUpdateOrganizationUser } from '@/hooks/useUpdateOrganizationUser'; // ✅ Add this
@@ -34,8 +34,58 @@ import {
 const roleIcons = {
   owner: Crown,
   admin: Shield,
-  annotator: Edit3,
+  editor: Pencil,
+  annotator: Pencil,
   viewer: Eye,
+};
+
+type RoleConfig = {
+  icon: React.ElementType;
+  label: string;
+  color: string;
+};
+
+const ROLE_CONFIG: Record<string, RoleConfig> = {
+  owner: {
+    icon: Crown,
+    label: 'Owner',
+    color: 'bg-accent text-accent-foreground',
+  },
+  admin: {
+    icon: Shield,
+    label: 'Admin',
+    color: 'bg-primary text-primary-foreground',
+  },
+  annotator: {
+    icon: Pencil,
+    label: 'Annotator',
+    color: 'bg-secondary text-secondary-foreground',
+  },
+  viewer: {
+    icon: Eye,
+    label: 'Viewer',
+    color: 'bg-muted text-muted-foreground',
+  },
+};
+
+const getRoleConfig = (role?: string): RoleConfig => {
+  if (!role) {
+    return {
+      icon: Eye,
+      label: 'Unknown',
+      color: 'bg-muted text-muted-foreground',
+    };
+  }
+
+  const normalized = role.toLowerCase();
+
+  return (
+    ROLE_CONFIG[normalized] || {
+      icon: Eye,
+      label: role, // preserve original
+      color: 'bg-muted text-muted-foreground',
+    }
+  );
 };
 
 const roleColors = {
@@ -118,6 +168,8 @@ export function UserManagement() {
   }
 
 
+  console.log(users)
+
   return (
     <div className="space-y-6">
       <div>
@@ -173,7 +225,14 @@ export function UserManagement() {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => {
-                    const RoleIcon = roleIcons[user.role];
+                    console.log(user.role)
+                    const roleConfig = getRoleConfig(user.role);
+                    const RoleIcon = roleConfig.icon;
+
+                    console.log('ROLE DEBUG:', {
+                      apiRole: user.role,
+                      normalized: user.role?.toLowerCase(),
+                    });
                     return (
                       <TableRow key={user.id}>
                         <TableCell>
@@ -192,7 +251,7 @@ export function UserManagement() {
                               <SelectValue>
                                 <div className="flex items-center gap-2">
                                   <RoleIcon className="h-4 w-4" />
-                                  <span>{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
+                                  <span>{roleConfig.label}</span>
                                 </div>
                               </SelectValue>
                             </SelectTrigger>
@@ -205,7 +264,7 @@ export function UserManagement() {
                               </SelectItem>
                               <SelectItem value="Annotator">
                                 <div className="flex items-center gap-2">
-                                  <Edit3 className="h-4 w-4" />
+                                  <Pencil className="h-4 w-4" />
                                   <span>Annotator</span>
                                 </div>
                               </SelectItem>
@@ -300,7 +359,7 @@ export function UserManagement() {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Edit3 className="h-5 w-5 text-foreground mt-0.5" />
+              <Pencil className="h-5 w-5 text-foreground mt-0.5" />
               <div>
                 <div className="font-medium">Annotator</div>
                 <div className="text-sm text-muted-foreground">

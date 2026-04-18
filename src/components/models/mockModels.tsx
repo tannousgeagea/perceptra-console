@@ -41,19 +41,21 @@ const createModelVersion = (
 ): ModelVersion => {
   const date = new Date();
   date.setDate(date.getDate() - versionNumber * 2); // Each version is 2 days apart
-  
+  const dataset = mockDatasets.find(d => d.id === datasetId);
+
   return {
     id,
-    versionNumber,
-    createdAt: date.toISOString(),
-    createdBy: "john.doe@example.com",
+    version_number: versionNumber,
+    created_at: date.toISOString(),
+    created_by: "john.doe@example.com",
     status,
+    deployment_status: 'not_deployed',
     metrics,
+    config: {},
     tags,
-    datasetUsed: mockDatasets.find(d => d.id === datasetId),
+    dataset: dataset ? { id: dataset.id, name: dataset.name, version: '1', item_count: dataset.itemCount ?? 0, created_at: dataset.createdAt ?? '' } : undefined,
     artifacts: {
       onnx: versionNumber % 2 === 0 ? `model_v${versionNumber}.onnx` : undefined,
-      weights: `weights_v${versionNumber}.bin`,
       logs: `training_logs_v${versionNumber}.txt`
     }
   };
@@ -95,6 +97,8 @@ export const mockModels: Model[] = [
     name: "Product Classification Model",
     description: "Identifies product categories from images",
     type: "classification" as ModelType,
+    task: "classification",
+    framework: "pytorch",
     createdAt: "2023-04-15T10:30:00Z",
     updatedAt: "2023-06-20T14:45:00Z",
     createdBy: "john.doe@example.com",
@@ -118,6 +122,8 @@ export const mockModels: Model[] = [
     name: "Defect Detection",
     description: "Identifies manufacturing defects in products",
     type: "object-detection" as ModelType,
+    task: "object-detection",
+    framework: "yolo",
     createdAt: "2023-05-22T09:15:00Z",
     updatedAt: "2023-07-18T11:20:00Z",
     createdBy: "sarah.smith@example.com",
@@ -138,6 +144,8 @@ export const mockModels: Model[] = [
     name: "Image Segmentor",
     description: "Segments objects in retail environment",
     type: "segmentation" as ModelType,
+    task: "segmentation",
+    framework: "pytorch",
     createdAt: "2023-07-10T13:45:00Z",
     updatedAt: "2023-08-25T15:30:00Z",
     createdBy: "alex.wong@example.com",
@@ -153,6 +161,8 @@ export const mockModels: Model[] = [
     name: "Product Description Generator",
     description: "Generates product descriptions from images",
     type: "vlm" as ModelType,
+    task: "vlm",
+    framework: "pytorch",
     createdAt: "2023-08-05T14:20:00Z",
     updatedAt: "2023-09-12T10:15:00Z",
     createdBy: "rachel.green@example.com",

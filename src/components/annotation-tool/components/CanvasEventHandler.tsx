@@ -91,7 +91,7 @@ const CanvasEventHandler: React.FC<CanvasEventHandlerProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && tool === 'polygon' && currentPolygon) {
-        addPointToCurrentPolygon(null);
+        // Do not add a point; just notify the user the polygon was cancelled.
         toast.info('Polygon drawing cancelled');
       }
     };

@@ -23,6 +23,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   /** True only during the initial boot check — NOT during login/signup actions */
   isInitializing: boolean;
+  /** Alias for isInitializing — kept for backwards compatibility */
+  isLoading: boolean;
   setUser: (user: User) => void;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signup: (data: UserCreate) => Promise<{ success: boolean; error?: string }>;
@@ -457,6 +459,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     isAuthenticated: !!user,
     isInitializing,
+    isLoading: isInitializing,
     setUser,
     login,
     signup,

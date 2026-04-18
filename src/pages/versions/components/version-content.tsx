@@ -45,8 +45,8 @@ const VersionContent: FC<VersionContentProps> = ({ version, projectId }) => {
                             <p>Images</p>
                         </h3>
                         <div className="version-images">
-                            {versionImages?.data?.map((image) => (
-                                <ImageCard2 key={image.image_name} image={image} />
+                            {versionImages?.data?.map((image, index) => (
+                                <ImageCard2 key={image.image_name} image={image} index={index} onClick={() => {}} />
                             ))}
                         </div>
                     </div>

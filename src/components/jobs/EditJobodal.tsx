@@ -61,7 +61,7 @@ const EditJobModal = ({ isOpen, onClose, job, onSave, isLoading }: EditJobModalP
 
         <div className="text-sm text-slate-500 dark:text-slate-400">
           <p>Job ID: {job.id}</p>
-          <p>Images: {job.imageCount}</p>
+          <p>Images: {job.image_count}</p>
         </div>
 
         <div className="flex justify-end gap-2 pt-4">

@@ -9,7 +9,7 @@ interface OrgUsersTabProps {
 export const OrgUsersTab = ({ users }: OrgUsersTabProps) => {
   const totalAnnotations = users.reduce((sum, u) => sum + u.total_annotations, 0);
   const totalReviews = users.reduce((sum, u) => sum + u.images_reviewed, 0);
-  const avgTime = users.reduce((sum, u) => sum + u.avg_annotation_time_seconds, 0) / users.length;
+  const avgTime = users.reduce((sum, u) => sum + (u.avg_annotation_time_seconds ?? 0), 0) / users.length;
 
   return (
     <div className="space-y-6">
@@ -125,7 +125,7 @@ export const OrgUsersTab = ({ users }: OrgUsersTabProps) => {
                       <span className="text-success font-medium">{user.images_finalized.toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span className="text-foreground">{user.avg_annotation_time_seconds.toFixed(1)}s</span>
+                      <span className="text-foreground">{(user.avg_annotation_time_seconds ?? 0).toFixed(1)}s</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <span className="text-muted-foreground">{user.total_sessions}</span>

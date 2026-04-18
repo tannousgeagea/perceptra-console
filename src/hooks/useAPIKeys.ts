@@ -35,7 +35,6 @@ export function useAPIKeys(
     },
     enabled: !!currentOrganization,
     staleTime: 30 * 1000, // 30 seconds
-    onError: options?.onError,
   });
 }
 
@@ -57,7 +56,6 @@ export function useAPIKey(
     },
     enabled: !!currentOrganization && !!keyId,
     staleTime: 30 * 1000,
-    onError: options?.onError,
   });
 }
 
@@ -269,6 +267,5 @@ export function useAPIKeyUsage(
     },
     enabled: !!currentOrganization && !!keyId,
     staleTime: 60 * 1000, // 60 seconds
-    onError: options?.onError,
   });
 }

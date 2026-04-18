@@ -75,7 +75,7 @@ const GenerateVersionSection: FC<GenerateVersionSectionProps> = ({ projectId }) 
             </h3>
             <div className="version-images">
               {datasetInfo?.data?.map((image, index) => (
-                <ImageCard2 key={index} image={image} />
+                <ImageCard2 key={index} image={image} index={index} onClick={() => {}} />
               ))}
             </div>
           </div>
@@ -113,7 +113,7 @@ const GenerateVersionSection: FC<GenerateVersionSectionProps> = ({ projectId }) 
               Add Augmentation Step
               </button>
             <Modal isOpen={isOpen} title="Augmentation settings" onClose={() => setIsOpen(false)}>
-              {!augmentationLoading ? (<AugmentationPanel data={augmentations}/>) : <Spinner />}
+              {!augmentationLoading ? (<AugmentationPanel data={augmentations as any}/>) : <Spinner />}
             </Modal>
           </div>
 

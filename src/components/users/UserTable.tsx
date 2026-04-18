@@ -43,7 +43,7 @@ export function UserTable({
           <TableRow key={user.id}>
             <TableCell className="font-medium">
               <div className="flex items-center space-x-4">
-                <UserAvatar user={user} />
+                <UserAvatar user={user as any} />
                 <span>{user.username}</span>
               </div>
             </TableCell>

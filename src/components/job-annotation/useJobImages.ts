@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ProjectImage } from '@/components/project-dataset/types';
+import { ProjectImage } from '@/types/dataset';
 
 interface JobImagesData {
   total: number;
@@ -56,7 +56,7 @@ const generateMockJobImages = (): ProjectImage[] => {
         class_id: `class-${j % 3}`,
         class_name: ['person', 'car', 'truck'][j % 3],
         color: ['#22c55e', '#3b82f6', '#f59e0b'][j % 3],
-        data: {},
+        data: [0, 0, 100, 100] as [number, number, number, number],
         source: 'manual',
         confidence: 0.95,
         reviewed: status === 'reviewed',
@@ -118,7 +118,7 @@ export function useJobImages() {
                 class_id: 'class-0',
                 class_name: 'person',
                 color: '#22c55e',
-                data: {},
+                data: [0, 0, 100, 100] as [number, number, number, number],
                 source: 'manual',
                 confidence: 0.95,
                 reviewed: newStatus === 'reviewed',

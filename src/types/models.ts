@@ -100,6 +100,16 @@ export interface ModelUpdateRequest {
   config?: Record<string, any>;
 }
 
+export interface ModelItem {
+  id: string;
+  name: string;
+  version: string;
+  category: string;
+  description: string;
+  accuracy: number;
+  speed: 'fast' | 'medium' | 'slow';
+}
+
 export interface ModelArtifact {
   checkpoint?: string;
   onnx?: string;

@@ -6,14 +6,18 @@ import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
-import { 
+import {
   ModelCreateRequest,
   ModelListItem,
   ModelDetail,
   TrainingTriggerRequest,
   TrainingTriggerResponse,
-  ModelUpdateRequest
+  ModelUpdateRequest,
+  ModelFormData,
+  ModelTask
 } from "@/types/models";
+
+export type { ModelFormData, ModelTask };
 
 // ============================================
 // API FUNCTIONS

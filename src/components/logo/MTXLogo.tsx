@@ -38,13 +38,13 @@ export const MTXLogo = ({
         </defs>
 
         {/* Badge background */}
-        <rect width="36" height="36" rx="9" fill={`url(#${gradId})`} />
+        <rect width="38" height="38" rx="9" fill={`url(#${gradId})`} />
 
         {/* Geometric M mark — 5-point path */}
         <path
           d="M7.5 27 L7.5 9.5 L18 19.5 L28.5 9.5 L28.5 27"
           stroke="white"
-          strokeWidth="2.6"
+          strokeWidth="5.0"
           strokeLinejoin="round"
           strokeLinecap="round"
           fill="none"

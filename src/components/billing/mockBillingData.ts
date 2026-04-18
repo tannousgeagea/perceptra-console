@@ -145,6 +145,7 @@ export const mockInvoices: Invoice[] = [
     due_date: "2025-02-15",
     notes: "January 2025 annotation services for Urban Traffic Analysis project.",
     created_at: "2025-02-01T10:00:00Z",
+    updated_at: "2025-02-01T10:00:00Z",
   },
   {
     invoice_id: "inv-002",
@@ -175,6 +176,7 @@ export const mockInvoices: Invoice[] = [
     paid_at: "2025-01-05T14:30:00Z",
     notes: "December 2024 services across multiple projects.",
     created_at: "2025-01-02T09:00:00Z",
+    updated_at: "2025-01-05T14:30:00Z",
   },
   {
     invoice_id: "inv-003",
@@ -204,6 +206,7 @@ export const mockInvoices: Invoice[] = [
     status: "draft",
     notes: "February 2025 - Retail project annotation work.",
     created_at: "2025-03-01T08:00:00Z",
+    updated_at: "2025-03-01T08:00:00Z",
   },
   {
     invoice_id: "inv-004",
@@ -232,6 +235,7 @@ export const mockInvoices: Invoice[] = [
     due_date: "2024-12-15",
     notes: "Cancelled due to project scope change.",
     created_at: "2024-12-02T10:00:00Z",
+    updated_at: "2024-12-02T10:00:00Z",
   },
 ];
 

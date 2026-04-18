@@ -55,40 +55,40 @@ export const mockJobs: Job[] = [
     name: "Traffic Sign Detection",
     description: "Annotate traffic signs in urban environments",
     status: JobStatus.UNASSIGNED,
-    imageCount: 142,
+    image_count: 142,
     assignedUser: null,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-002",
     name: "Pedestrian Recognition",
     description: "Annotate pedestrians in crowded scenes",
     status: JobStatus.UNASSIGNED,
-    imageCount: 98,
+    image_count: 98,
     assignedUser: null,
-    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
-    updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+    updated_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-003",
     name: "Vehicle Damage Assessment",
     description: "Identify and classify vehicle damage",
     status: JobStatus.UNASSIGNED,
-    imageCount: 75,
+    image_count: 75,
     assignedUser: null,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+    updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-004",
     name: "Building Segmentation",
     description: "Segment buildings in aerial images",
     status: JobStatus.UNASSIGNED,
-    imageCount: 53,
+    image_count: 53,
     assignedUser: null,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+    updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
   },
 
   // Assigned Jobs
@@ -97,30 +97,30 @@ export const mockJobs: Job[] = [
     name: "Industrial Equipment",
     description: "Annotate industrial machinery components",
     status: JobStatus.ASSIGNED,
-    imageCount: 87,
+    image_count: 87,
     assignedUser: mockUsers[1], // Jamie Smith
-    createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-006",
     name: "Medical Imaging - Lungs",
     description: "Annotate lung structures in X-rays",
     status: JobStatus.ASSIGNED,
-    imageCount: 120,
+    image_count: 120,
     assignedUser: mockUsers[0], // Alex Johnson
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-007",
     name: "Construction Site Safety",
     description: "Identify safety hazards in construction sites",
     status: JobStatus.ASSIGNED,
-    imageCount: 62,
+    image_count: 62,
     assignedUser: mockUsers[4], // Robin Chen
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
   },
 
   // In Review Jobs
@@ -129,20 +129,20 @@ export const mockJobs: Job[] = [
     name: "Retail Shelf Analysis",
     description: "Annotate retail shelf products",
     status: JobStatus.IN_REVIEW,
-    imageCount: 93,
+    image_count: 93,
     assignedUser: mockUsers[3], // Casey Wilson
-    createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-009",
     name: "Crop Health Assessment",
     description: "Identify crop health issues in fields",
     status: JobStatus.IN_REVIEW,
-    imageCount: 105,
+    image_count: 105,
     assignedUser: mockUsers[5], // Jordan Lee
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
   },
 
   // Completed Jobs
@@ -151,29 +151,29 @@ export const mockJobs: Job[] = [
     name: "Public Transport Signs",
     description: "Annotate public transport signage",
     status: JobStatus.COMPLETED,
-    imageCount: 76,
+    image_count: 76,
     assignedUser: mockUsers[1], // Jamie Smith
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-011",
     name: "Wildlife Recognition",
     description: "Identify wildlife in nature reserves",
     status: JobStatus.COMPLETED,
-    imageCount: 134,
+    image_count: 134,
     assignedUser: mockUsers[0], // Alex Johnson
-    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
   },
   {
     id: "job-012",
     name: "Fashion Item Detection",
     description: "Annotate fashion items in e-commerce images",
     status: JobStatus.COMPLETED,
-    imageCount: 89,
+    image_count: 89,
     assignedUser: mockUsers[4], // Robin Chen
-    createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+    created_at: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
+    updated_at: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
   },
 ];

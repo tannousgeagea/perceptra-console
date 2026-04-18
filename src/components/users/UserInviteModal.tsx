@@ -28,14 +28,14 @@ interface UserInviteModalProps {
 
 export function UserInviteModal({ open, onOpenChange, onInvite }: UserInviteModalProps) {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('Viewer');
+  const [role, setRole] = useState<UserRole>('viewer');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email && role) {
       onInvite(email, role);
       setEmail('');
-      setRole('Viewer');
+      setRole('viewer');
     }
   };
 
@@ -68,7 +68,7 @@ export function UserInviteModal({ open, onOpenChange, onInvite }: UserInviteModa
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Admin">
+                  <SelectItem value="admin">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4" />
                       <div>
@@ -79,7 +79,7 @@ export function UserInviteModal({ open, onOpenChange, onInvite }: UserInviteModa
                       </div>
                     </div>
                   </SelectItem>
-                  <SelectItem value="Annotator">
+                  <SelectItem value="annotator">
                     <div className="flex items-center gap-2">
                       <Edit3 className="h-4 w-4" />
                       <div>
@@ -90,7 +90,7 @@ export function UserInviteModal({ open, onOpenChange, onInvite }: UserInviteModa
                       </div>
                     </div>
                   </SelectItem>
-                  <SelectItem value="Viewer">
+                  <SelectItem value="viewer">
                     <div className="flex items-center gap-2">
                       <Eye className="h-4 w-4" />
                       <div>

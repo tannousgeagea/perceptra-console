@@ -35,6 +35,7 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({ imageUrl, boxes, loading }) =
     if (!canvasRef.current) return;
     return boxes.map((box) => {
           const rect = canvasRef.current?.getBoundingClientRect();
+          if (!rect) return null;
           const denormalized = denormalizeBox(box, rect.width, rect.height);
 
           return (

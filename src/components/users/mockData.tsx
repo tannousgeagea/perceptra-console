@@ -54,9 +54,11 @@ export function getOrganizationMembers(orgId: string): OrganizationMember[] {
   return orgUserIds.map(userId => {
     const user = users.find(u => u.id === userId)!;
     const userMemberships = orgMemberships.filter(membership => membership.userId === userId);
-    
+    const highestRole: Role = userMemberships.some(m => m.role === 'admin') ? 'admin' : userMemberships.some(m => m.role === 'editor') ? 'editor' : 'viewer';
+
     return {
       ...user,
+      role: highestRole,
       projects: userMemberships,
     };
   });
@@ -107,8 +109,10 @@ export function getUserProfile(userId: string): UserProfile {
     };
   });
   
+  const primaryRole: Role = userProjectMemberships.some(m => m.role === 'admin') ? 'admin' : userProjectMemberships.some(m => m.role === 'editor') ? 'editor' : 'viewer';
   return {
     ...user,
+    role: primaryRole,
     organizations: userOrganizations,
     projectMemberships: userProjectMemberships,
   };

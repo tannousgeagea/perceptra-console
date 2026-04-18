@@ -1,5 +1,5 @@
 
-import { AnnotationClass } from "@/types/project";
+import { AnnotationClass, AnnotationGroup } from "@/types/project";
 import { X, Plus, Tag } from "lucide-react";
 import { AnnotationClassForm } from "./AnnotationClassForm";
 

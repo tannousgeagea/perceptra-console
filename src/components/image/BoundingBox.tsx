@@ -68,9 +68,9 @@ const BoundingBox: React.FC<BoundingBoxProps> = ({
           }`}
         >
           {label}
-          {annotation.confidence !== undefined && !compact && (
+          {annotation.confidence != null && !compact && (
             <span className="ml-1 opacity-70">
-              {Math.round(annotation.confidence * 100)}%
+              {Math.round((annotation.confidence ?? 0) * 100)}%
             </span>
           )}
         </div>

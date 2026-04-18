@@ -55,10 +55,10 @@ const DatasetTab: React.FC<DatasetTabProps> = ({
                 <SelectItem value="start-new">Start from scratch</SelectItem>
                 {model.versions
                   .filter(v => v.status === "trained")
-                  .sort((a, b) => b.versionNumber - a.versionNumber)
+                  .sort((a, b) => b.version_number - a.version_number)
                   .map(version => (
                     <SelectItem key={version.id} value={version.id}>
-                      v{version.versionNumber}{version.tags.includes("production") ? " (Production)" : ""}
+                      v{version.version_number}{version.tags.includes("production") ? " (Production)" : ""}
                     </SelectItem>
                   ))}
               </SelectContent>

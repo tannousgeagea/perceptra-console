@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Filters } from '@/types/dashboard';
+import { Filters, Version } from '@/types/dashboard';
 import { Button } from '@/components/ui/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/ui/popover';
 import { Calendar } from '@/components/ui/ui/calendar';

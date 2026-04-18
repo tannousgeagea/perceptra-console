@@ -3,6 +3,7 @@ import { useClassesApi } from '@/hooks/useClasses';
 import { toast } from '@/hooks/use-toast';
 import { useProject } from './ProjectContext';
 import { AnnotationClass } from '@/types/classes';
+export type { AnnotationClass };
 
 interface ClassesContextType {
   classes: AnnotationClass[];
