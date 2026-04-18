@@ -79,3 +79,13 @@ export interface ProjectsResponse {
   total: number;
   projects: OrgProject[];
 }
+
+export interface ProjectMember {
+  id: string;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  joined_at: string;
+}

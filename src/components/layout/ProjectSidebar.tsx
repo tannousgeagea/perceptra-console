@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Activity,
   Sparkle,
-  ChartCandlestick
+  ChartCandlestick,
+  Users,
 } from "lucide-react";
 
 interface Item {
@@ -50,6 +51,7 @@ const ProjectSideBar: FC = () => {
 
     // Settings Section
     { section: "Settings", label: "Classes", path: `/projects/${projectId}/classes`, icon: <Tags size={18} /> },
+    { section: "Settings", label: "Members", path: `/projects/${projectId}/members`, icon: <Users size={18} /> },
   ];
 
   const grouped = items.reduce((acc: Record<string, Item[]>, item) => {
