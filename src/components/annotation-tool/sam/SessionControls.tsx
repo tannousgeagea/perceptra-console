@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/ui/select';
 import { Label } from '@/components/ui/ui/label';
-import { Badge } from '@/components/ui/ui/badge';
 import { Power, PowerOff, Cpu, Zap, Settings2 } from 'lucide-react';
 import {
   AlertDialog,
@@ -48,19 +47,23 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
   };
 
   return (
-    <div className="space-y-4 p-4 border-b border-border">
+    <div className="space-y-3 p-4 border-b border-border">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Settings2 className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">Session Controls</h3>
+          <h3 className="font-semibold text-sm">AI Session</h3>
         </div>
-        {isActive && (
-          <Badge variant="default" className="gap-1">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Active
-          </Badge>
-        )}
       </div>
+
+      {/* Compact active chip */}
+      {isActive && (
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 self-start ml-0">
+          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+          <span className="text-xs font-medium text-foreground">
+            {currentConfig?.model.toUpperCase()} · {currentConfig?.device.toUpperCase()} · {currentConfig?.precision.toUpperCase()}
+          </span>
+        </div>
+      )}
 
       {!isActive ? (
         <div className="space-y-3">
@@ -126,34 +129,24 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="p-3 rounded-lg bg-card border border-border">
-            <div className="text-xs text-muted-foreground mb-1">Active Configuration</div>
-            <div className="text-sm font-medium">
-              {currentConfig?.model.toUpperCase()} ({currentConfig?.device.toUpperCase()}, {currentConfig?.precision.toUpperCase()})
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              onClick={() => setShowSwitchDialog(true)}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              <Settings2 className="h-3 w-3 mr-2" />
-              Switch Model
-            </Button>
-            <Button
-              onClick={onEndSession}
-              variant="outline"
-              size="sm"
-              className="w-full text-destructive hover:text-destructive"
-            >
-              <PowerOff className="h-3 w-3 mr-2" />
-              End Session
-            </Button>
-          </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowSwitchDialog(true)}
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8"
+          >
+            <Settings2 className="h-3 w-3 mr-1.5" />
+            Switch Model
+          </Button>
+          <Button
+            onClick={onEndSession}
+            variant="outline"
+            size="sm"
+            className="h-8 text-destructive hover:text-destructive px-3"
+          >
+            <PowerOff className="h-3 w-3" />
+          </Button>
         </div>
       )}
 

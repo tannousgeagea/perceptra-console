@@ -35,7 +35,7 @@ interface CanvasProps {
   onSelectSuggestion?: (suggestionId: string) => void;
   hoveredSuggestionId?: string;
   onHoverSuggestion?: (id: string | null) => void;
-  activeSAMTool?: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null; // NEW
+  activeSAMTool?: 'points' | 'box' | 'text' | 'similar' | 'propagate' | 'auto' | null;
 }
  
 export interface CanvasHandle {
@@ -69,12 +69,13 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   } = useAnnotationState();
 
   const {
+    addBox,
     updateBox,
     deleteBox,
     setAllBoxes,
     getBoxesArray,
     getPolygonsArray,
-  } = useAnnotationGeometry(); 
+  } = useAnnotationGeometry();
 
 
   // console.log("Canvas: ", hoveredBoxId)
@@ -441,12 +442,39 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   };
 
   const handleAcceptSuggestions = (suggestionIds: string[]) => {
-    // Accept with default class - can be enhanced to show class picker
-    samSession.acceptSuggestions({ 
-      suggestionIds, 
-      classId: undefined, 
-      className: 'object' 
-    });
+    const toAccept = samSession.suggestions.filter(s => suggestionIds.includes(s.id));
+    const first = toAccept[0];
+    samSession.acceptSuggestions(
+      {
+        suggestionIds,
+        classId: undefined,
+        className: first?.suggested_class_name || undefined,
+      },
+      {
+        onSuccess: () => {
+          for (const s of toAccept) {
+            const resolvedClass = classes?.find(c =>
+              c.name.toLowerCase() === (s.suggested_class_name || '').toLowerCase()
+            );
+            addBox({
+              id: s.id,
+              x: s.bbox.x,
+              y: s.bbox.y,
+              width: s.bbox.width,
+              height: s.bbox.height,
+              label: s.suggested_class_name || resolvedClass?.name || '',
+              color: resolvedClass?.color || '#888888',
+              class_id: resolvedClass?.classId || 0,
+            });
+          }
+          // CRITICAL: Invalidate cache so previous/next images reload fresh data
+          queryClient.invalidateQueries({ 
+            queryKey: ['projectImageDetails', currentOrganization?.id, projectId, image.image.image_id] 
+          });
+
+        },
+      },
+    );
   };
 
   // Get appropriate cursor based on current state
@@ -489,11 +517,32 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
           }}
           onClick={(e) => {
             e.stopPropagation();
-            samSession.acceptSuggestions({ suggestionIds: [suggestion.id] });
+            const resolvedClass = classes?.find(c =>
+              c.name.toLowerCase() === (suggestion.suggested_class_name || '').toLowerCase()
+            );
+            samSession.acceptSuggestions(
+              {
+                suggestionIds: [suggestion.id],
+                classId: undefined,
+                className: suggestion.suggested_class_name || undefined,
+              },
+              {
+                onSuccess: () => addBox({
+                  id: suggestion.id,
+                  x: suggestion.bbox.x,
+                  y: suggestion.bbox.y,
+                  width: suggestion.bbox.width,
+                  height: suggestion.bbox.height,
+                  label: suggestion.suggested_class_name || resolvedClass?.name || '',
+                  color: resolvedClass?.color || '#888888',
+                  class_id: resolvedClass?.classId || 0,
+                }),
+              },
+            );
           }}
         >
           <div className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-            {suggestion.suggested_label || 'AI'} ({Math.round(suggestion.confidence * 100)}%)
+            {suggestion.suggested_class_name || 'AI'} ({Math.round(suggestion.confidence * 100)}%)
           </div>
         </div>
       ));

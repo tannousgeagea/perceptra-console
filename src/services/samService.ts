@@ -11,6 +11,7 @@ import type {
   SegmentationResponse,
   SAMSession,
   ModelConfig,
+  SAMAutoRequest,
 } from '@/types/sam';
 import { baseURL } from '@/components/api/base';
 
@@ -193,15 +194,36 @@ export const samService = {
     return response.json();
   },
 
+  async autoSegment(
+    projectId: string,
+    imageId: string,
+    request: SAMAutoRequest,
+    organizationId: string,
+    token: string
+  ): Promise<SegmentationResponse> {
+    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/sam/auto`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "X-Organization-ID": organizationId,
+      },
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) throw new Error('Failed to auto-segment');
+    return response.json();
+  },
+
   // Accept/Reject
   async acceptSuggestions(
     sessionId: string,
     request: AcceptSuggestionsRequest,
     organizationId: string,
-    token: string
+    token: string,
+    projectId: string,
   ): Promise<void> {
     const response = await fetch(
-      `${baseURL}/api/v1/suggestions/session/${sessionId}/accept`,
+      `${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}/accept`,
       {
         method: 'POST',
         headers: {
@@ -219,10 +241,11 @@ export const samService = {
     sessionId: string,
     request: RejectSuggestionsRequest,
     organizationId: string,
-    token: string
+    token: string,
+    projectId: string,
   ): Promise<void> {
     const response = await fetch(
-      `${baseURL}/api/v1/suggestions/session/${sessionId}/reject`,
+      `${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}/reject`,
       {
         method: 'POST',
         headers: {

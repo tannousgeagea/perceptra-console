@@ -1,12 +1,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/ui/button';
 import { Badge } from '@/components/ui/ui/badge';
-import { MousePointer, Eraser, Zap } from 'lucide-react';
+import { MousePointer, Eraser, Zap, Plus, Minus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Point } from '@/types/sam';
 
 interface PointClickToolProps {
   points: Point[];
   isProcessing: boolean;
+  pointMode: 1 | 0;
+  setPointMode: (mode: 1 | 0) => void;
   onAddPoint: (point: Point) => void;
   onClearPoints: () => void;
   onSegment: () => void;
@@ -15,6 +18,8 @@ interface PointClickToolProps {
 export const PointClickTool: React.FC<PointClickToolProps> = ({
   points,
   isProcessing,
+  pointMode,
+  setPointMode,
   onClearPoints,
   onSegment,
 }) => {
@@ -24,13 +29,41 @@ export const PointClickTool: React.FC<PointClickToolProps> = ({
   return (
     <div className="space-y-4">
       <div>
-        <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+        <h4 className="text-sm font-medium mb-1 flex items-center gap-2">
           <MousePointer className="h-4 w-4 text-primary" />
           Point & Click Segmentation
         </h4>
         <p className="text-xs text-muted-foreground">
-          Left-click on the canvas to add positive points (include), right-click for negative points (exclude)
+          Click on the canvas to place points. Switch mode below to include or exclude regions.
         </p>
+      </div>
+
+      {/* Mode toggle */}
+      <div className="flex gap-1.5 p-1 rounded-lg bg-muted/50 border border-border">
+        <button
+          onClick={() => setPointMode(1)}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all",
+            pointMode === 1
+              ? "bg-green-600 text-white shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          )}
+        >
+          <Plus className="h-3 w-3" />
+          Positive
+        </button>
+        <button
+          onClick={() => setPointMode(0)}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all",
+            pointMode === 0
+              ? "bg-red-600 text-white shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          )}
+        >
+          <Minus className="h-3 w-3" />
+          Negative
+        </button>
       </div>
 
       <div className="flex gap-2">
@@ -38,18 +71,14 @@ export const PointClickTool: React.FC<PointClickToolProps> = ({
           <div className="text-xs text-muted-foreground mb-1">Positive</div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full bg-green-500" />
-            <Badge variant="secondary" className="text-xs">
-              {positivePoints}
-            </Badge>
+            <Badge variant="secondary" className="text-xs">{positivePoints}</Badge>
           </div>
         </div>
         <div className="flex-1 p-3 rounded-lg border border-border bg-card/50">
           <div className="text-xs text-muted-foreground mb-1">Negative</div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full bg-red-500" />
-            <Badge variant="secondary" className="text-xs">
-              {negativePoints}
-            </Badge>
+            <Badge variant="secondary" className="text-xs">{negativePoints}</Badge>
           </div>
         </div>
       </div>
@@ -71,14 +100,8 @@ export const PointClickTool: React.FC<PointClickToolProps> = ({
           size="sm"
         >
           <Eraser className="h-3 w-3 mr-2" />
-          Clear Points
+          Clear
         </Button>
-      </div>
-
-      <div className="p-3 rounded-lg bg-muted/50 border border-border">
-        <p className="text-xs text-muted-foreground">
-          <span className="font-medium">Tip:</span> Add more points to refine the segmentation. Positive points help include areas, negative points help exclude them.
-        </p>
       </div>
     </div>
   );

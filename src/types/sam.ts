@@ -39,13 +39,15 @@ export interface Mask {
 
 export interface SAMSuggestion {
   id: string;
-  type: 'point' | 'box' | 'text' | 'similar' | 'propagated';
+  type: 'point' | 'box' | 'text' | 'similar' | 'propagated' | 'auto';
   bbox: BBox;
   mask?: Mask;
+  /** Smooth polygon contour(s) from the SAM mask — normalized [0,1] coords. */
+  polygons?: [number, number][][];
   confidence: number;
-  suggested_label?: string;
+  suggested_class_name?: string;
   suggested_class_id?: string;
-  thumbnail?: string; // base64 or URL
+  thumbnail?: string;
   status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
 }
@@ -85,6 +87,15 @@ export interface AcceptSuggestionsRequest {
   suggestion_ids: string[];
   class_id?: string;
   class_name?: string;
+  use_polygon?: boolean;
+}
+
+export interface SAMAutoRequest {
+  session_id: string;
+  points_per_side?: number;
+  pred_iou_thresh?: number;
+  stability_score_thresh?: number;
+  min_area?: number;
 }
 
 export interface RejectSuggestionsRequest {

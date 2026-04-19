@@ -18,7 +18,7 @@ export interface AnnotationSuggestion {
   type: SuggestionType;
   annotation_data: AnnotationData | PolygonData;
   confidence?: number;
-  suggested_label?: string;
+  suggested_class_name?: string;
   suggested_class_id?: string;
   status: SuggestionStatus;
   source_annotation_id?: string;

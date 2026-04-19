@@ -96,7 +96,7 @@ const SuggestionLayer: React.FC<SuggestionLayerProps> = ({
                 }}
               >
                 {Math.round(suggestion.confidence * 100)}%
-                {suggestion.suggested_label && ` · ${suggestion.suggested_label}`}
+                {suggestion.suggested_class_name && ` · ${suggestion.suggested_class_name}`}
               </div>
             )}
 
