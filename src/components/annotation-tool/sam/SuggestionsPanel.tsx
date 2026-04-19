@@ -3,32 +3,42 @@ import { Button } from '@/components/ui/ui/button';
 import { Badge } from '@/components/ui/ui/badge';
 import { Checkbox } from '@/components/ui/ui/checkbox';
 import { ScrollArea } from '@/components/ui/ui/scroll-area';
-import { Check, X, CheckCheck, Trash2, Sparkles, MousePointer, Box, Search, Copy, ArrowRight, ChevronUp } from 'lucide-react';
-import { Progress } from '@/components/ui/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/ui/select';
+import { Check, X, CheckCheck, Trash2, Sparkles, MousePointer, Box, Search, Copy, ArrowRight, Layers } from 'lucide-react';
 import type { SAMSuggestion } from '@/types/sam';
+import type { AnnotationClass } from '@/types/classes';
 import { cn } from '@/lib/utils';
+
+type ConfidenceFilter = 'all' | 'high' | 'medium' | 'low';
 
 interface SuggestionsPanelProps {
   suggestions: SAMSuggestion[];
-  onAccept: (suggestionIds: string[]) => void;
+  classes: AnnotationClass[];
+  onAccept: (suggestionIds: string[], classId?: string, className?: string) => void;
   onReject: (suggestionIds: string[]) => void;
-  onAcceptAll: () => void;
+  onAcceptAll: (classId?: string, className?: string) => void;
   onClearAll: () => void;
   hoveredSuggestionId?: string | null;
   onHoverSuggestion?: (id: string | null) => void;
 }
 
 const typeConfig: Record<SAMSuggestion['type'], { label: string; icon: React.ReactNode; color: string }> = {
-  point: { label: 'Point Click', icon: <MousePointer className="h-3 w-3" />, color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-  box: { label: 'Box Refined', icon: <Box className="h-3 w-3" />, color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  text: { label: 'Text Found', icon: <Search className="h-3 w-3" />, color: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
-  similar: { label: 'Similar', icon: <Copy className="h-3 w-3" />, color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-  propagated: { label: 'Propagated', icon: <ArrowRight className="h-3 w-3" />, color: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
+  point:      { label: 'Point',     icon: <MousePointer className="h-3 w-3" />, color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  box:        { label: 'Box',       icon: <Box className="h-3 w-3" />,          color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  text:       { label: 'Text',      icon: <Search className="h-3 w-3" />,       color: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
+  similar:    { label: 'Similar',   icon: <Copy className="h-3 w-3" />,         color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  propagated: { label: 'Propagated',icon: <ArrowRight className="h-3 w-3" />,  color: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
+  auto:       { label: 'Auto',      icon: <Layers className="h-3 w-3" />,      color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
 };
 
+function resolveClass(classes: AnnotationClass[], name?: string | null): AnnotationClass | undefined {
+  if (!name) return undefined;
+  return classes.find(c => c.name.toLowerCase() === name.toLowerCase());
+}
 
 export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
   suggestions,
+  classes,
   onAccept,
   onReject,
   onAcceptAll,
@@ -38,9 +48,35 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>('all');
+  // Per-card selected class: suggestionId → classId string
+  const [cardClasses, setCardClasses] = useState<Record<string, string>>({});
+  // Global class for "Accept All" / "Accept N selected"
+  const [globalClassId, setGlobalClassId] = useState<string>('');
   const prevCountRef = useRef(0);
 
-  const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
+  const allPending = suggestions.filter(s => s.status === 'pending');
+
+  const pendingSuggestions = allPending.filter(s => {
+    if (confidenceFilter === 'high')   return s.confidence >= 0.8;
+    if (confidenceFilter === 'medium') return s.confidence >= 0.5 && s.confidence < 0.8;
+    if (confidenceFilter === 'low')    return s.confidence < 0.5;
+    return true;
+  });
+
+  // Pre-fill cardClasses when new suggestions arrive
+  useEffect(() => {
+    setCardClasses(prev => {
+      const next = { ...prev };
+      for (const s of allPending) {
+        if (!(s.id in next)) {
+          const matched = resolveClass(classes, s.suggested_label);
+          if (matched) next[s.id] = matched.id;
+        }
+      }
+      return next;
+    });
+  }, [allPending.length, classes]);
 
   // Track newly added suggestions for animation
   useEffect(() => {
@@ -66,11 +102,24 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
     else setSelectedIds(new Set(pendingSuggestions.map(s => s.id)));
   };
 
+  const resolveAcceptClass = (overrideClassId?: string): { classId?: string; className?: string } => {
+    const cid = overrideClassId || globalClassId;
+    if (!cid) return {};
+    const cls = classes.find(c => c.id === cid);
+    return cls ? { classId: cls.id, className: cls.name } : {};
+  };
+
   const handleAcceptSelected = () => {
-    if (selectedIds.size > 0) {
-      onAccept(Array.from(selectedIds));
-      setSelectedIds(new Set());
-    }
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    // If all selected share the same card class, use it; otherwise fall back to global
+    const cardClassIds = ids.map(id => cardClasses[id]).filter(Boolean);
+    const allSame = cardClassIds.length === ids.length && new Set(cardClassIds).size === 1;
+    const { classId, className } = allSame
+      ? resolveAcceptClass(cardClassIds[0])
+      : resolveAcceptClass();
+    onAccept(ids, classId, className);
+    setSelectedIds(new Set());
   };
 
   const handleRejectSelected = () => {
@@ -78,6 +127,16 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
       onReject(Array.from(selectedIds));
       setSelectedIds(new Set());
     }
+  };
+
+  const handleAcceptOne = (suggestionId: string) => {
+    const { classId, className } = resolveAcceptClass(cardClasses[suggestionId]);
+    onAccept([suggestionId], classId, className);
+  };
+
+  const handleAcceptAll = () => {
+    const { classId, className } = resolveAcceptClass();
+    onAcceptAll(classId, className);
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -92,7 +151,7 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
     return 'bg-red-500';
   };
 
-  if (pendingSuggestions.length === 0) {
+  if (allPending.length === 0) {
     return (
       <div className="p-6 text-center">
         <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 mb-2">
@@ -112,7 +171,7 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
             <div className="relative">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                {pendingSuggestions.length}
+                {allPending.length}
               </span>
             </div>
             <span className="font-semibold text-sm">Suggestions</span>
@@ -124,9 +183,55 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
           />
         </div>
 
+        {/* Confidence filter tabs */}
+        <div className="flex gap-1 mb-2 p-0.5 rounded-md bg-muted/50">
+          {(['all', 'high', 'medium', 'low'] as ConfidenceFilter[]).map((f) => {
+            const count = f === 'all' ? allPending.length
+              : f === 'high'   ? allPending.filter(s => s.confidence >= 0.8).length
+              : f === 'medium' ? allPending.filter(s => s.confidence >= 0.5 && s.confidence < 0.8).length
+              : allPending.filter(s => s.confidence < 0.5).length;
+            return (
+              <button
+                key={f}
+                onClick={() => setConfidenceFilter(f)}
+                className={cn(
+                  "flex-1 text-[10px] py-0.5 px-1 rounded transition-all capitalize",
+                  confidenceFilter === f
+                    ? "bg-background text-foreground shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {f} {count > 0 && <span className="opacity-60">({count})</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Global class selector */}
+        {classes.length > 0 && (
+          <Select value={globalClassId} onValueChange={setGlobalClassId}>
+            <SelectTrigger className="h-7 text-xs mb-2">
+              <SelectValue placeholder="Class for accept all…" />
+            </SelectTrigger>
+            <SelectContent>
+              {classes.map(cls => (
+                <SelectItem key={cls.id} value={cls.id} className="text-xs">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: cls.color }}
+                    />
+                    {cls.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         <div className="flex gap-1.5">
           <Button
-            onClick={selectedIds.size > 0 ? handleAcceptSelected : onAcceptAll}
+            onClick={selectedIds.size > 0 ? handleAcceptSelected : handleAcceptAll}
             size="sm"
             className="flex-1 h-7 text-xs bg-green-600 hover:bg-green-500 text-white"
           >
@@ -149,10 +254,14 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
       {/* Suggestion cards */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1.5">
+          {pendingSuggestions.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">No {confidenceFilter}-confidence suggestions</p>
+          )}
           {pendingSuggestions.map((suggestion) => {
             const config = typeConfig[suggestion.type];
             const isNew = newIds.has(suggestion.id);
             const isSelected = selectedIds.has(suggestion.id);
+            const cardClassId = cardClasses[suggestion.id] || '';
 
             return (
               <div
@@ -170,7 +279,6 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
                 onMouseEnter={() => onHoverSuggestion?.(suggestion.id)}
                 onMouseLeave={() => onHoverSuggestion?.(null)}
               >
-                {/* New indicator pulse */}
                 {isNew && (
                   <div className="absolute -left-px top-2 bottom-2 w-0.5 rounded-full bg-primary animate-pulse" />
                 )}
@@ -185,17 +293,10 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-5 gap-1 border", config.color)}>
-                          {config.icon}
-                          {config.label}
-                        </Badge>
-                        {suggestion.suggested_label && (
-                          <span className="text-xs font-medium text-foreground truncate max-w-[80px]">
-                            {suggestion.suggested_label}
-                          </span>
-                        )}
-                      </div>
+                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-5 gap-1 border", config.color)}>
+                        {config.icon}
+                        {config.label}
+                      </Badge>
                       {suggestion.confidence != null && (
                         <div className="flex items-center gap-1.5 shrink-0">
                           <div className="h-1 w-8 bg-muted rounded-full overflow-hidden">
@@ -211,9 +312,36 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
                       )}
                     </div>
 
+                    {/* Per-card class selector */}
+                    {classes.length > 0 && (
+                      <div className="mb-1.5" onClick={e => e.stopPropagation()}>
+                        <Select
+                          value={cardClassId}
+                          onValueChange={val => setCardClasses(prev => ({ ...prev, [suggestion.id]: val }))}
+                        >
+                          <SelectTrigger className="h-6 text-[10px] px-2">
+                            <SelectValue placeholder="Pick class…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {classes.map(cls => (
+                              <SelectItem key={cls.id} value={cls.id} className="text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="inline-block w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: cls.color }}
+                                  />
+                                  {cls.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div className="flex gap-1">
                       <Button
-                        onClick={(e) => { e.stopPropagation(); onAccept([suggestion.id]); }}
+                        onClick={(e) => { e.stopPropagation(); handleAcceptOne(suggestion.id); }}
                         size="sm"
                         className="h-6 flex-1 text-[10px] bg-green-600 hover:bg-green-500"
                       >

@@ -25,6 +25,7 @@ export const useSAMSession = (projectId: string, imageId: string) => {
   });
   const [suggestions, setSuggestions] = useState<SAMSuggestion[]>([]);
   const [points, setPoints] = useState<Point[]>([]);
+  const [pointMode, setPointMode] = useState<1 | 0>(1); // 1 = positive, 0 = negative
   const { currentOrganization } = useCurrentOrganization();
   if (!currentOrganization) throw new Error("No organization selected");
 
@@ -147,6 +148,28 @@ export const useSAMSession = (projectId: string, imageId: string) => {
     },
   });
 
+  // Auto segment entire image
+  const autoSegment = useMutation({
+    mutationFn: async (config: { points_per_side?: number; pred_iou_thresh?: number; stability_score_thresh?: number; min_area?: number }) => {
+      const token = await getAccessToken();
+      if (!token || !sessionId) throw new Error('No session');
+      return samService.autoSegment(
+        projectId,
+        imageId,
+        { session_id: sessionId, ...config },
+        currentOrganization.id,
+        token
+      );
+    },
+    onSuccess: (data) => {
+      setSuggestions((prev) => [...prev, ...data.suggestions]);
+      toast.success(`Auto-segmented ${data.count} objects`);
+    },
+    onError: () => {
+      toast.error('Auto-segmentation failed');
+    },
+  });
+
   // Segment similar
   const segmentSimilar = useMutation({
     mutationFn: async (referenceAnnotationUid: string) => {
@@ -218,7 +241,8 @@ export const useSAMSession = (projectId: string, imageId: string) => {
         sessionId,
         { suggestion_ids: suggestionIds, class_id: classId, class_name: className },
         currentOrganization.id,
-        token
+        token,
+        projectId,
       );
     },
     onSuccess: (_, variables) => {
@@ -242,7 +266,8 @@ export const useSAMSession = (projectId: string, imageId: string) => {
         sessionId,
         { suggestion_ids: suggestionIds },
         currentOrganization.id,
-        token
+        token,
+        projectId,
       );
     },
     onSuccess: (_, suggestionIds) => {
@@ -305,8 +330,9 @@ export const useSAMSession = (projectId: string, imageId: string) => {
     segmentWithBox: segmentWithBox.mutate,
     segmentWithText: segmentWithText.mutate,
     segmentSimilar: segmentSimilar.mutate,
-    propagateFromPrevious: (sourceImageId: string, annotationIds: string[]) => 
+    propagateFromPrevious: (sourceImageId: string, annotationIds: string[]) =>
       propagateFromPrevious.mutate({ sourceImageId, annotationUids: annotationIds }),
+    segmentAuto: autoSegment.mutate,
     acceptSuggestions: acceptSuggestions.mutate,
     rejectSuggestions: rejectSuggestions.mutate,
     addPoint,
@@ -314,6 +340,10 @@ export const useSAMSession = (projectId: string, imageId: string) => {
     clearSuggestions,
     endSession,
     
+    // Point mode
+    pointMode,
+    setPointMode,
+
     // Loading states
     isProcessing:
       createSession.isPending ||
@@ -323,6 +353,7 @@ export const useSAMSession = (projectId: string, imageId: string) => {
       segmentWithText.isPending ||
       segmentSimilar.isPending ||
       propagateFromPrevious.isPending ||
+      autoSegment.isPending ||
       session?.status === 'processing',
   };
 };

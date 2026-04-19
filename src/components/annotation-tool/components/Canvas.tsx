@@ -35,7 +35,7 @@ interface CanvasProps {
   onSelectSuggestion?: (suggestionId: string) => void;
   hoveredSuggestionId?: string;
   onHoverSuggestion?: (id: string | null) => void;
-  activeSAMTool?: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null; // NEW
+  activeSAMTool?: 'points' | 'box' | 'text' | 'similar' | 'propagate' | 'auto' | null;
 }
  
 export interface CanvasHandle {

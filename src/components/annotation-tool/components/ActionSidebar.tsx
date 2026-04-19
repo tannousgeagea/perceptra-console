@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAnnotationState } from "@/contexts/AnnotationStateContext";
 import ApproveButton from "./ButtonApprove";
 import DeleteButton from "./ButtonDelete";
@@ -7,27 +7,19 @@ import { ProjectImageOut } from "@/types/image";
 import { AIAssistPanel } from "../sam/AIAssistPanel";
 import { SuggestionFloatingBar } from '../sam/SuggestionFloatingBar';
 import { useSAMSession } from "@/hooks/useSAMSession";
-
+import type { AnnotationClass } from "@/types/classes";
 
 interface ActionSidebarProps {
   currentImage: ProjectImageOut;
   projectId: string;
   goToNextImage: () => void;
-  samSession: ReturnType<typeof useSAMSession>; // ADD THIS
-  // suggestions: AnnotationSuggestion[];
-  // generateAI: () => void;
-  // suggestSimilar: (annotationId: string) => void;
-  // propagate: (sourceImageId: string) => void;
-  // acceptSuggestion: (suggestionId: string) => void;
-  // rejectSuggestion: (suggestionId: string) => void;
-  // handleAcceptAll: () => void;
-  // clearSuggestions: () => void;
-  // isGenerating: boolean;
+  samSession: ReturnType<typeof useSAMSession>;
+  classes: AnnotationClass[];
   previousImageId?: string;
   hasPreviousImage?: boolean;
   hoveredSuggestionId?: string | null;
   onHoverSuggestion?: (id: string | null) => void;
-  onSAMToolChange?: (tool: 'points' | 'box' | 'text' | 'similar' | 'propagate' | null) => void;
+  onSAMToolChange?: (tool: 'points' | 'box' | 'text' | 'similar' | 'propagate' | 'auto' | null) => void;
 }
 
 const ActionSidebar: React.FC<ActionSidebarProps> = ({
@@ -35,46 +27,31 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
   projectId,
   goToNextImage,
   samSession,
-  // suggestions,
-  // generateAI,
-  // suggestSimilar,
-  // propagate,
-  // acceptSuggestion,
-  // rejectSuggestion,
-  // handleAcceptAll,
-  // clearSuggestions,
-  // isGenerating,
+  classes,
   previousImageId,
   hasPreviousImage,
   hoveredSuggestionId,
   onHoverSuggestion,
   onSAMToolChange,
 }) => {
-
   const { selectedBox } = useAnnotationState();
-  // const samSession = useSAMSession(projectId!, currentImage?.id || "");
 
-  const handleAcceptAll = () => {
-    const allSuggestionIds = samSession.suggestions
+  const handleAcceptAll = (classId?: string, className?: string) => {
+    const allIds = samSession.suggestions
       .filter(s => s.status === 'pending')
       .map(s => s.id);
-    
-    if (allSuggestionIds.length > 0) {
-      samSession.acceptSuggestions({ suggestionIds: allSuggestionIds });
+    if (allIds.length > 0) {
+      samSession.acceptSuggestions({ suggestionIds: allIds, classId, className });
     }
   };
 
-  const handleClearAll = () => {
-    samSession.clearSuggestions();
+  const handleAcceptSuggestions = (ids: string[], classId?: string, className?: string) => {
+    samSession.acceptSuggestions({ suggestionIds: ids, classId, className });
   };
-  
+
   return (
     <aside className="h-full flex flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white border-l border-slate-800 flex-shrink-0">
       <div className="py-4 border-b border-slate-800 flex justify-center">
-        {/* <h2 className="text-lg font-bold text-center mb-4 tracking-wide bg-gradient-to-r from-indigo-400 to-blue-500 text-transparent bg-clip-text">
-          <Settings className="w-4 h-4" /> Image Actions
-        </h2> */}
-
         <div className="flex w-full items-center gap-6 justify-center">
           <ApproveButton
             currentImage={currentImage}
@@ -99,7 +76,7 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
 
       <SuggestionFloatingBar
         suggestions={samSession.suggestions}
-        onAcceptAll={handleAcceptAll}
+        onAcceptAll={() => handleAcceptAll()}
         onClearAll={samSession.clearSuggestions}
       />
 
@@ -112,9 +89,11 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
           onStartSession={samSession.createSession}
           onSwitchModel={samSession.switchModel}
           onEndSession={samSession.endSession}
-          
+
           isProcessing={samSession.isProcessing}
           points={samSession.points}
+          pointMode={samSession.pointMode}
+          setPointMode={samSession.setPointMode}
           onAddPoint={samSession.addPoint}
           onClearPoints={samSession.clearPoints}
           onSegmentPoints={() => samSession.segmentWithPoints(samSession.points)}
@@ -122,13 +101,15 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
           onSegmentText={samSession.segmentWithText}
           onSegmentSimilar={samSession.segmentSimilar}
           onPropagate={samSession.propagateFromPrevious}
-          
+          onSegmentAuto={samSession.segmentAuto}
+
           suggestions={samSession.suggestions}
-          onAcceptSuggestions={(ids) => samSession.acceptSuggestions({ suggestionIds: ids })}
+          classes={classes}
+          onAcceptSuggestions={handleAcceptSuggestions}
           onRejectSuggestions={samSession.rejectSuggestions}
           onAcceptAll={handleAcceptAll}
-          onClearAll={handleClearAll}
-          
+          onClearAll={samSession.clearSuggestions}
+
           selectedAnnotationId={selectedBox!}
           hasPreviousImage={hasPreviousImage}
           previousImageId={previousImageId}
@@ -138,7 +119,6 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
         />
       </div>
 
-      {/* Footer */}
       <footer className="fixed w-80 bottom-0 bg-slate-900/90 backdrop-blur-md border-t border-indigo-500/50 shadow-[0_-1px_4px_rgba(0,0,0,0.4)]">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent animate-[pulse_4s_ease-in-out_infinite]" />
         <div className="px-4 py-3 text-center backdrop-blur-md">

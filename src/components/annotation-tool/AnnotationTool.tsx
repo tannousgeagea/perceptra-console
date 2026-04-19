@@ -32,7 +32,7 @@ const AnnotationTool = () => {
   const canvasRef = useRef<CanvasHandle>(null);
 
   // Track active SAM tool
-  const [activeSAMTool, setActiveSAMTool] = useState<'points' | 'box' | 'text' | 'similar' | 'propagate' | null>(null);
+  const [activeSAMTool, setActiveSAMTool] = useState<'points' | 'box' | 'text' | 'similar' | 'propagate' | 'auto' | null>(null);
 
   // query parametersconst canvasRef = useRef<CanvasHandle>(null);
   const jobId = searchParams.get("jobId") || "";
@@ -54,6 +54,11 @@ const AnnotationTool = () => {
 
   const imageIds = useMemo(
     () => jobImages?.images?.map((img) => img.image_id) || [],
+    [jobImages]
+  );
+
+  const imageIdInteger = useMemo(
+    () => jobImages?.images?.map((img) => img.id) || [],
     [jobImages]
   );
 
@@ -109,7 +114,7 @@ const AnnotationTool = () => {
   };
 
   const hasPreviousImage = currentIndex > 0;
-  const previousImageId = hasPreviousImage ? imageIds[currentIndex - 1] : undefined;
+  const previousImageId = hasPreviousImage ? imageIdInteger[currentIndex - 1] : undefined;
 
 
   if (isLoading || isError || !image) {
@@ -168,11 +173,12 @@ const AnnotationTool = () => {
                   <TabsTrigger value="info">Info</TabsTrigger>
                 </TabsList>
                 <TabsContent value="actions" className="flex-1 overflow-hidden m-0">
-                  <ActionSidebar 
-                    currentImage={image} 
+                  <ActionSidebar
+                    currentImage={image}
                     projectId={projectId!}
                     goToNextImage={handleNext}
                     samSession={samSession}
+                    classes={classes || []}
                     // suggestions={suggestions}
                     // generateAI={() => generateAI({})}
                     // suggestSimilar={(id) => suggestSimilar(id)}
