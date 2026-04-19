@@ -25,14 +25,14 @@ const DeleteButton:React.FC<DeleteButtonProps> = ( {currentImage, projectId, goT
   };
 
   return (
-    <Button 
-      onClick={handleDelete} 
+    <Button
+      onClick={handleDelete}
       disabled={isPending}
       className={className}
-      variant="destructive"
-      title='delete image'
+      variant="ghost"
     >
       {isPending ? <Loader className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+      <span>Skip</span>
     </Button>
   );
 };

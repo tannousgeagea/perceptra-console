@@ -40,13 +40,14 @@ const MarkAsNullButton:React.FC<MarkAsNullButtonProps> = ( {currentImage, projec
     }
   }
   return (
-    <Button 
-      onClick={handleMarkAsNull} 
+    <Button
+      onClick={handleMarkAsNull}
       disabled={isPending}
       className={className}
-      title='mark image as null (backgroud image)'
+      variant="ghost"
     >
       {isPending ? <Loader className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+      <span>Empty</span>
     </Button>
   );
 };

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/ui/button';
 import { Badge } from '@/components/ui/ui/badge';
-import { Download, Upload, RefreshCw, GitBranch, Copy } from 'lucide-react';
+import { Download, Upload, RefreshCw, GitBranch, Copy, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ProjectDatasetHeaderProps {
@@ -48,6 +48,10 @@ export function ProjectDatasetHeader({
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${projectId}/annotate`)}>
+            <Pencil className="w-4 h-4 mr-2" />
+            Annotate
+          </Button>
           <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${projectId}/versions`)}>
             <GitBranch className="w-4 h-4 mr-2" />
             Versions

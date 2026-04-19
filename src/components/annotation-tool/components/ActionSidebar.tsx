@@ -82,27 +82,31 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
 
   return (
     <aside className="h-full flex flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white border-l border-slate-800 flex-shrink-0">
-      <div className="py-4 border-b border-slate-800 flex justify-center">
-        <div className="flex w-full items-center gap-6 justify-center">
-          <ApproveButton
-            currentImage={currentImage}
-            projectId={projectId}
-            goToNextImage={goToNextImage}
-            className=""
-          />
-          <DeleteButton
-            currentImage={currentImage}
-            projectId={projectId}
-            goToNextImage={goToNextImage}
-            className=""
-          />
-          <MarkAsNullButton
-            currentImage={currentImage}
-            projectId={projectId}
-            goToNextImage={goToNextImage}
-            className="bg-red-500 hover:bg-red-600 text-white"
-          />
-        </div>
+      <div className="grid grid-cols-3 border-b border-slate-800 divide-x divide-slate-800">
+        <ApproveButton
+          currentImage={currentImage}
+          projectId={projectId}
+          goToNextImage={goToNextImage}
+          className="h-18 w-full flex-col gap-0.5 rounded-none border-0 bg-transparent
+                     text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300
+                     disabled:opacity-40 text-[11px] font-medium"
+        />
+        <DeleteButton
+          currentImage={currentImage}
+          projectId={projectId}
+          goToNextImage={goToNextImage}
+          className="h-18 w-full flex-col gap-0.5 rounded-none border-0 bg-transparent
+                     text-slate-400 hover:bg-slate-500/10 hover:text-slate-200
+                     disabled:opacity-40 text-[11px] font-medium"
+        />
+        <MarkAsNullButton
+          currentImage={currentImage}
+          projectId={projectId}
+          goToNextImage={goToNextImage}
+          className="h-18 w-full flex-col gap-0.5 rounded-none border-0 bg-transparent
+                     text-amber-400 hover:bg-amber-500/10 hover:text-amber-300
+                     disabled:opacity-40 text-[11px] font-medium"
+        />
       </div>
 
       <SuggestionFloatingBar
@@ -126,7 +130,7 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
         </div>
       )}
 
-      <div className="w-80 border-l">
+      <div className="w-80 border-l h-full">
         <AIAssistPanel
           sessionId={samSession.sessionId}
           isSessionActive={samSession.isSessionActive}

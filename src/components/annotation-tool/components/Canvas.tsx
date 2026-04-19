@@ -63,6 +63,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     hoveredBoxId,
     selectedPolygon,
     tool,
+    setTool,
     currentPolygon,
     setSelectedBox,
     setSelectedPolygon,
@@ -102,6 +103,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   const [annotationStartTime, setAnnotationStartTime] = useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isAltPressed, setIsAltPressed] = useState(false);
+  const prevToolRef = useRef<'draw' | 'move' | 'polygon' | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [isLoadingAnnotations, setIsLoadingAnnotation] = useState(false);
   const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
@@ -381,32 +383,62 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   }, [updateBox]);
 
   useEffect(() => {
+    const isTyping = (e: KeyboardEvent) =>
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      (e.target as HTMLElement)?.isContentEditable;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Control') {
-        setIsCtrlPressed(true);
-      } else if (e.key === 'Alt') {
-        setIsAltPressed(true);
-      } else if (e.key === 'Escape' && tool === 'polygon' && currentPolygon) {
-        toast.error('Polygon drawing cancelled');
+      if (e.key === 'Control') { setIsCtrlPressed(true); return; }
+      if (e.key === 'Alt')     { setIsAltPressed(true);  return; }
+      if (isTyping(e)) return;
+      if (e.repeat) return;
+
+      switch (e.key) {
+        case 'Escape':
+          if (tool === 'polygon' && currentPolygon) toast.error('Polygon drawing cancelled');
+          break;
+        case '1': case 'd': case 'D':
+          prevToolRef.current = null;
+          setTool('draw');
+          break;
+        case '2': case 'm': case 'M':
+          prevToolRef.current = null;
+          setTool('move');
+          break;
+        case '3':
+          prevToolRef.current = null;
+          setTool('polygon');
+          break;
+        case 'Delete': case 'Backspace':
+          if (selectedBox) handleDelete(selectedBox);
+          break;
+        // Hold S → temporary move/select mode (returns to draw on keyup)
+        case 's': case 'S':
+          if (tool === 'draw' && !prevToolRef.current) {
+            prevToolRef.current = 'draw';
+            setTool('move');
+          }
+          break;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Control') {
-        setIsCtrlPressed(false);
-      } else if (e.key === 'Alt') {
-        setIsAltPressed(false);
+      if (e.key === 'Control') { setIsCtrlPressed(false); return; }
+      if (e.key === 'Alt')     { setIsAltPressed(false);  return; }
+      if ((e.key === 's' || e.key === 'S') && prevToolRef.current) {
+        setTool(prevToolRef.current);
+        prevToolRef.current = null;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [tool, currentPolygon]);
+  }, [tool, currentPolygon, selectedBox, handleDelete, setTool]);
 
   // Combined mouse event handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
