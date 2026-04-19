@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@/components/ui/ui/button";
 import { useAnnotationState } from "@/contexts/AnnotationStateContext";
 import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import ApproveButton from "./ButtonApprove";
@@ -8,6 +9,7 @@ import { ProjectImageOut } from "@/types/image";
 import { AIAssistPanel } from "../sam/AIAssistPanel";
 import { SuggestionFloatingBar } from '../sam/SuggestionFloatingBar';
 import { useSAMSession } from "@/hooks/useSAMSession";
+import { ArrowLeftRight } from "lucide-react";
 import type { AnnotationClass } from "@/types/classes";
 import type { SAMSuggestion } from "@/types/sam";
 
@@ -108,6 +110,21 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
         onAcceptAll={() => handleAcceptAll()}
         onClearAll={samSession.clearSuggestions}
       />
+
+      {hasPreviousImage && samSession.isSessionActive && (
+        <div className="px-3 py-2 border-b border-slate-800">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs gap-2 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200"
+            disabled={samSession.isProcessing}
+            onClick={() => samSession.propagateFromPrevious(previousImageId!, [])}
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            Propagate from Previous Image
+          </Button>
+        </div>
+      )}
 
       <div className="w-80 border-l">
         <AIAssistPanel

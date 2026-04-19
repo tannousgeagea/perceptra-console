@@ -251,6 +251,7 @@ export const useSAMSession = (projectId: string, imageId: string) => {
       );
       toast.success('Suggestions accepted');
       queryClient.invalidateQueries({ queryKey: ['annotations'] });
+      queryClient.invalidateQueries({ queryKey: ['projectImageDetails'] });
     },
     onError: () => {
       toast.error('Failed to accept suggestions');
