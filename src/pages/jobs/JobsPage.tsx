@@ -9,6 +9,7 @@ import AssignUserModal from "@/components/jobs/AssignUserModel";
 import { Job, JobStatus } from "@/types/jobs";
 import { useProjectJobs } from "@/hooks/useProjectJobs";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { useAssignJob, useUnassignJob, useUpdateJob, useSplitJob, useDeleteJob } from '@/hooks/useJobs';
 import SplitJobModal from "@/components/jobs/SplitJobModal";
 import EditJobModal from "@/components/jobs/EditJobodal";
@@ -20,14 +21,16 @@ import { toast } from 'sonner';
 const JobPage = () => {
   const { projectId } = useParams<{ projectId: string }>()
   const navigate = useNavigate()
+  const { isOwner, isAdmin, currentOrganization } = useCurrentOrganization();
   const [searchQuery, setSearchQuery] = useState("");
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const orgId = currentOrganization?.id;
 
-  const { data: users } = useProjectMembers(projectId || '')
+  const { data: users } = useProjectMembers(orgId, projectId)
   const { data, isLoading, error, refetch } = useProjectJobs(projectId || '');
   const { mutate: assignJob } = useAssignJob(projectId!);
   const { mutate: unassignJob } = useUnassignJob(projectId!);
