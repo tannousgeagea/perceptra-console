@@ -22,6 +22,7 @@ interface PaginationControlsProps {
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (itemsPerPage: number) => void;
   itemsPerPageOptions?: number[];
+  className?:string;
 }
 
 export function PaginationControls({
@@ -31,6 +32,7 @@ export function PaginationControls({
   onPageChange,
   onItemsPerPageChange,
   itemsPerPageOptions = [10, 20, 50, 100, 200, 250],
+  className="",
 }: PaginationControlsProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -115,7 +117,7 @@ export function PaginationControls({
       </div>
 
       <Pagination>
-        <PaginationContent>
+        <PaginationContent className={className}>
           <PaginationItem>
             <PaginationPrevious
               onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}

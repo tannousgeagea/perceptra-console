@@ -20,6 +20,7 @@ import { getCurrentUser } from '@/utils/user';
 import { OrganizationSection } from '@/components/organization/OrganizationSection';
 import { useAuthHelpers } from '@/hooks/useAuthHelpers';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { tr } from 'zod/v4/locales';
 
 
 interface NavbarItem {
@@ -169,7 +170,7 @@ const Navbar: FC = () => {
           {organization && (
             <OrganizationSection 
               organization={organization} 
-              isExpanded={isExpanded} 
+              isExpanded={isExpanded}
             />
           )}
           <div 
