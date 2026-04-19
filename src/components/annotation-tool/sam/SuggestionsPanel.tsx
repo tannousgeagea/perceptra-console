@@ -70,7 +70,7 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
       const next = { ...prev };
       for (const s of allPending) {
         if (!(s.id in next)) {
-          const matched = resolveClass(classes, s.suggested_label);
+          const matched = resolveClass(classes, s.suggested_class_name);
           if (matched) next[s.id] = matched.id;
         }
       }
@@ -112,13 +112,27 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
   const handleAcceptSelected = () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    // If all selected share the same card class, use it; otherwise fall back to global
-    const cardClassIds = ids.map(id => cardClasses[id]).filter(Boolean);
-    const allSame = cardClassIds.length === ids.length && new Set(cardClassIds).size === 1;
-    const { classId, className } = allSame
-      ? resolveAcceptClass(cardClassIds[0])
-      : resolveAcceptClass();
-    onAccept(ids, classId, className);
+    if (globalClassId) {
+      const { classId, className } = resolveAcceptClass();
+      onAccept(ids, classId, className);
+    } else {
+      // Group by per-card class and batch per group
+      const groups: Record<string, string[]> = {};
+      const noClass: string[] = [];
+      for (const id of ids) {
+        const cid = cardClasses[id];
+        if (cid) {
+          groups[cid] = [...(groups[cid] || []), id];
+        } else {
+          noClass.push(id);
+        }
+      }
+      for (const [cid, groupIds] of Object.entries(groups)) {
+        const cls = classes.find(c => c.id === cid);
+        onAccept(groupIds, cls?.id, cls?.name);
+      }
+      if (noClass.length > 0) onAccept(noClass);
+    }
     setSelectedIds(new Set());
   };
 
@@ -135,8 +149,29 @@ export const SuggestionsPanel: React.FC<SuggestionsPanelProps> = ({
   };
 
   const handleAcceptAll = () => {
-    const { classId, className } = resolveAcceptClass();
-    onAcceptAll(classId, className);
+    if (globalClassId) {
+      const { classId, className } = resolveAcceptClass();
+      onAcceptAll(classId, className);
+      return;
+    }
+    // No global class — group pending suggestions by their per-card class and batch per group
+    const groups: Record<string, string[]> = {};
+    const noClass: string[] = [];
+    for (const s of allPending) {
+      const cid = cardClasses[s.id];
+      if (cid) {
+        groups[cid] = [...(groups[cid] || []), s.id];
+      } else {
+        noClass.push(s.id);
+      }
+    }
+    for (const [cid, ids] of Object.entries(groups)) {
+      const cls = classes.find(c => c.id === cid);
+      onAccept(ids, cls?.id, cls?.name);
+    }
+    if (noClass.length > 0) {
+      onAccept(noClass);
+    }
   };
 
   const getConfidenceColor = (confidence: number) => {

@@ -45,7 +45,7 @@ export interface SAMSuggestion {
   /** Smooth polygon contour(s) from the SAM mask — normalized [0,1] coords. */
   polygons?: [number, number][][];
   confidence: number;
-  suggested_label?: string;
+  suggested_class_name?: string;
   suggested_class_id?: string;
   thumbnail?: string;
   status: 'pending' | 'accepted' | 'rejected';

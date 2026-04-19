@@ -1,5 +1,6 @@
 import React from "react";
 import { useAnnotationState } from "@/contexts/AnnotationStateContext";
+import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import ApproveButton from "./ButtonApprove";
 import DeleteButton from "./ButtonDelete";
 import MarkAsNullButton from "./ButtonMarkNull";
@@ -8,6 +9,7 @@ import { AIAssistPanel } from "../sam/AIAssistPanel";
 import { SuggestionFloatingBar } from '../sam/SuggestionFloatingBar';
 import { useSAMSession } from "@/hooks/useSAMSession";
 import type { AnnotationClass } from "@/types/classes";
+import type { SAMSuggestion } from "@/types/sam";
 
 interface ActionSidebarProps {
   currentImage: ProjectImageOut;
@@ -35,18 +37,45 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
   onSAMToolChange,
 }) => {
   const { selectedBox } = useAnnotationState();
+  const { addBox } = useAnnotationGeometry();
 
-  const handleAcceptAll = (classId?: string, className?: string) => {
-    const allIds = samSession.suggestions
-      .filter(s => s.status === 'pending')
-      .map(s => s.id);
-    if (allIds.length > 0) {
-      samSession.acceptSuggestions({ suggestionIds: allIds, classId, className });
+  const addSuggestionsToContext = (
+    suggestions: SAMSuggestion[],
+    classId?: string,
+    className?: string,
+  ) => {
+    for (const s of suggestions) {
+      const resolvedClass = classes.find(c =>
+        classId ? c.id === classId : c.name.toLowerCase() === (s.suggested_class_name || '').toLowerCase()
+      );
+      addBox({
+        id: s.id,
+        x: s.bbox.x,
+        y: s.bbox.y,
+        width: s.bbox.width,
+        height: s.bbox.height,
+        label: className || resolvedClass?.name || s.suggested_class_name || '',
+        color: resolvedClass?.color || '#888888',
+        class_id: resolvedClass?.classId || 0,
+      });
     }
   };
 
+  const handleAcceptAll = (classId?: string, className?: string) => {
+    const pending = samSession.suggestions.filter(s => s.status === 'pending');
+    if (pending.length === 0) return;
+    samSession.acceptSuggestions(
+      { suggestionIds: pending.map(s => s.id), classId, className },
+      { onSuccess: () => addSuggestionsToContext(pending, classId, className) },
+    );
+  };
+
   const handleAcceptSuggestions = (ids: string[], classId?: string, className?: string) => {
-    samSession.acceptSuggestions({ suggestionIds: ids, classId, className });
+    const toAccept = samSession.suggestions.filter(s => ids.includes(s.id));
+    samSession.acceptSuggestions(
+      { suggestionIds: ids, classId, className },
+      { onSuccess: () => addSuggestionsToContext(toAccept, classId, className) },
+    );
   };
 
   return (

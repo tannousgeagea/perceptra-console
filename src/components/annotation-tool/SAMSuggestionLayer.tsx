@@ -138,7 +138,7 @@ const SAMSuggestionLayer: React.FC<SAMSuggestionLayerProps> = ({
                   }}
                 >
                   {Math.round(s.confidence * 100)}%
-                  {s.suggested_label && ` · ${s.suggested_label}`}
+                  {s.suggested_class_name && ` · ${s.suggested_class_name}`}
                 </div>
               )}
 

@@ -36,7 +36,7 @@ const SAMOverlay: React.FC<SAMOverlayProps> = ({
           }}
         >
           <div className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-            {suggestion.suggested_label || 'AI'} ({Math.round(suggestion.confidence * 100)}%)
+            {suggestion.suggested_class_name || 'AI'} ({Math.round(suggestion.confidence * 100)}%)
           </div>
         </div>
       ))}
