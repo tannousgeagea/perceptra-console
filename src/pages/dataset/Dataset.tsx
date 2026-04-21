@@ -231,6 +231,7 @@ export default function ProjectDataset() {
                   setCurrentPage(1);
                   setSelectedIds(new Set());
                 }}
+                className='pr-[32rem]'
               />
             </div>
             

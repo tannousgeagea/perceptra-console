@@ -251,6 +251,7 @@ export default function JobAnnotation() {
                   setItemsPerPage(perPage);
                   setCurrentPage(1);
                 }}
+                className='pr-[32rem]'
               />
             </div>
           </>

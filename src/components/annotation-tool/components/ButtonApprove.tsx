@@ -59,14 +59,17 @@ const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, g
   }, [isPending, boxes, currentImage]);
 
   return (
-    <Button 
-      onClick={handleApprove} 
+    <Button
+      onClick={handleApprove}
       disabled={isPending}
       className={className}
-      variant="default"
-      title='approve image'
+      variant="ghost"
     >
-      {isPending ? <Loader className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" /> }
+      {isPending ? <Loader className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+      <div className='space-x-2'>
+        <span>Approve</span>
+        <kbd className="text-[9px] px-1 leading-4 bg-emerald-500/20 border border-emerald-500/30 rounded">↵</kbd>
+      </div>
     </Button>
   );
 };

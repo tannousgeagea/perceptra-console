@@ -12,15 +12,15 @@ import {
 
 const KeyboardShortcuts: React.FC = () => {
   const shortcuts = [
-    { keys: ['Ctrl', 'Scroll'], action: 'Zoom in/out' },
+    { keys: ['Ctrl', 'Scroll'], action: 'Zoom in / out' },
     { keys: ['Alt', 'Drag'], action: 'Pan canvas' },
     { keys: ['Esc'], action: 'Cancel current action' },
     { keys: ['Delete'], action: 'Delete selected annotation' },
-    { keys: ['1'], action: 'Box tool' },
-    { keys: ['2'], action: 'Move tool' },
+    { keys: ['1'], action: 'Box (draw) tool' },
+    { keys: ['2'], action: 'Move / select tool' },
     { keys: ['3'], action: 'Polygon tool' },
-    { keys: ['Enter'], action: 'Accept selected suggestion' },
-    { keys: ['Backspace'], action: 'Reject selected suggestion' },
+    { keys: ['S', 'hold'], action: 'Temporarily switch to select — release to return to draw' },
+    { keys: ['Enter'], action: 'Approve image' },
   ];
 
   return (

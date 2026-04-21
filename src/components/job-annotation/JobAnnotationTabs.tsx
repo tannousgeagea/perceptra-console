@@ -51,7 +51,7 @@ export function JobAnnotationTabs({
             <div className="flex items-center gap-2">
               {tab.label}
               <Badge
-                className="rounded-full h-6 w-6 flex items-center justify-center p-0 text-xs font-bold"
+                className="h-6 w-8 flex items-center justify-center p-0 text-xs font-bold"
                 style={{
                   backgroundColor: tab.color,
                   color: 'white',
