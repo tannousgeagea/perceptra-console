@@ -33,11 +33,64 @@ export type ModelFramework =
   | 'onnx'
   | 'custom';
 
-export type DeploymentStatus = 
+export type DeploymentStatus =
   | 'not_deployed'
+  | 'staging'
+  | 'production'
+  | 'retired'
   | 'deploying'
   | 'deployed'
   | 'failed';
+
+// Champion/challenger evaluation
+export interface ModelEvaluation {
+  evaluation_id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  challenger_version_id: string | null;
+  champion_version_id: string | null;
+  challenger_metrics: Record<string, number>;
+  champion_metrics: Record<string, number>;
+  improvement_delta: number | null;
+  recommendation: 'promote' | 'keep_champion' | 'inconclusive' | null;
+  auto_promoted: boolean;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface ModelEvaluationList {
+  count: number;
+  results: ModelEvaluation[];
+}
+
+// Retraining policy
+export interface RetrainingPolicy {
+  policy_id: string;
+  model_id: string;
+  is_active: boolean;
+  trigger_type: 'annotation_count' | 'correction_rate' | 'time_elapsed' | 'combined';
+  min_new_annotations: number;
+  min_correction_rate: number | null;
+  max_days_since_training: number | null;
+  lookback_days: number;
+  auto_create_dataset_version: boolean;
+  auto_submit_training: boolean;
+  compute_profile_id: string | null;
+  min_hours_between_runs: number;
+  last_triggered_at: string | null;
+  created_at: string;
+}
+
+export interface RetrainingPolicyCreate {
+  trigger_type?: string;
+  min_new_annotations?: number;
+  min_correction_rate?: number | null;
+  max_days_since_training?: number | null;
+  lookback_days?: number;
+  auto_create_dataset_version?: boolean;
+  auto_submit_training?: boolean;
+  compute_profile_id?: string | null;
+  min_hours_between_runs?: number;
+}
 
 export interface Dataset {
   id: string;
@@ -186,6 +239,8 @@ export interface ModelListItem {
   version_count: number;
   latest_version_number?: number;
   latest_status?: string;
+  has_production_version?: boolean;
+  production_version_number?: number;
   created_at: string;
   updated_at: string;
 }
