@@ -1,16 +1,17 @@
 
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
-import { 
-  BarChart4, 
-  Clock, 
-  Code, 
-  Database, 
-  Layers, 
-  Plus, 
-  Settings, 
-  Tag
+import {
+  BarChart4,
+  Clock,
+  Code,
+  Database,
+  Layers,
+  Plus,
+  RefreshCw,
+  Settings,
+  Tag,
+  Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/ui/badge";
 import { Button } from "@/components/ui/ui/button";
@@ -20,6 +21,8 @@ import ModelVersionsList from "@/components/models/ModelVersionList";
 import ModelVisualResults from "@/components/models/ModelVisualResults";
 import ModelMetricsView from "@/components/models/ModelMetricView";
 import ModelDeploymentView from "@/components/models/ModelDeploymentView";
+import ModelEvaluationsView from "@/components/models/ModelEvaluationsView";
+import RetrainingPolicyView from "@/components/models/RetrainingPolicyView";
 import { useModelDetail } from "@/hooks/useModels";
 
 const ModelDetail: React.FC = () => {
@@ -168,35 +171,49 @@ const ModelDetail: React.FC = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="versions" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
-          <TabsTrigger value="versions" className="flex items-center gap-2">
+        <TabsList className="flex flex-wrap gap-1 h-auto w-full max-w-3xl">
+          <TabsTrigger value="versions" className="flex items-center gap-1.5">
             <Layers className="h-4 w-4" /> Versions
           </TabsTrigger>
-          <TabsTrigger value="visual" className="flex items-center gap-2">
+          <TabsTrigger value="visual" className="flex items-center gap-1.5">
             <BarChart4 className="h-4 w-4" /> Results
           </TabsTrigger>
-          <TabsTrigger value="metrics" className="flex items-center gap-2">
+          <TabsTrigger value="metrics" className="flex items-center gap-1.5">
             <Code className="h-4 w-4" /> Metrics
           </TabsTrigger>
-          <TabsTrigger value="deployment" className="flex items-center gap-2">
+          <TabsTrigger value="deployment" className="flex items-center gap-1.5">
             <Settings className="h-4 w-4" /> Deployment
           </TabsTrigger>
+          <TabsTrigger value="evaluations" className="flex items-center gap-1.5">
+            <Trophy className="h-4 w-4" /> Evaluations
+          </TabsTrigger>
+          <TabsTrigger value="retraining" className="flex items-center gap-1.5">
+            <RefreshCw className="h-4 w-4" /> Retraining
+          </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="versions" className="mt-6">
           <ModelVersionsList model={model} projectId={projectId || ''} />
         </TabsContent>
-        
+
         <TabsContent value="visual" className="mt-6">
           <ModelVisualResults model={model} />
         </TabsContent>
-        
+
         <TabsContent value="metrics" className="mt-6">
           <ModelMetricsView model={model} />
         </TabsContent>
-        
+
         <TabsContent value="deployment" className="mt-6">
           <ModelDeploymentView model={model} />
+        </TabsContent>
+
+        <TabsContent value="evaluations" className="mt-6">
+          <ModelEvaluationsView model={model} />
+        </TabsContent>
+
+        <TabsContent value="retraining" className="mt-6">
+          <RetrainingPolicyView model={model} />
         </TabsContent>
       </Tabs>
     </div>

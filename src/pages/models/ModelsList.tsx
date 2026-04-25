@@ -327,7 +327,14 @@ const ModelsList: React.FC = () => {
                 <Card className="hover:shadow-md transition-shadow overflow-hidden h-full border-border/50 hover:border-primary/30">
                   <CardHeader>
                     <div className="flex justify-between items-start pr-8 w-full">
-                      <CardTitle className="line-clamp-1">{model.name}</CardTitle>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CardTitle className="line-clamp-1">{model.name}</CardTitle>
+                        {model.has_production_version && (
+                          <Badge variant="outline" className="border-0 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 shrink-0 text-xs">
+                            Live
+                          </Badge>
+                        )}
+                      </div>
                       <Badge
                         variant="outline"
                         className={`${getModelTypeColor(model.task)} border-0 shrink-0`}
