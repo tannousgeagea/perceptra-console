@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
+import { apiFetch } from "@/services/apiClient";
 import { Model } from "@/types/models";
 
 // Fetcher
 const fetchModelById = async (modelId: string): Promise<Model> => {
-  const res = await fetch(`${baseURL}/api/v1/models/${modelId}`);
+  const res = await apiFetch(`/api/v1/models/${modelId}`);
 
   if (!res.ok) {
     throw new Error("Failed to fetch model");

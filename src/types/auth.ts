@@ -98,6 +98,8 @@ export const AUTH_STORAGE_KEYS = {
   TOKEN_EXPIRY: 'token_expiry',
   /** Tracks which storage backend (local vs session) was chosen at login */
   STORAGE_TYPE: 'auth_storage_type',
+  /** Active organization ID — read by apiFetch to inject X-Organization-ID */
+  ACTIVE_ORG_ID: 'active_org_id',
 } as const;
 
 /**
