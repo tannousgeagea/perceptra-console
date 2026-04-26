@@ -14,6 +14,7 @@ import {
   Organization,
   OAuthProviderType,
   UserCreate,
+  AUTH_STORAGE_KEYS,
   OAUTH_STORAGE_KEYS,
   getPrimaryOrganization,
 } from '@/types/auth';
@@ -100,6 +101,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     refreshTokenRef.current = refreshToken;
   });
+
+  // Persist the active org ID to storage so apiFetch can read it synchronously
+  // without needing React context access.
+  useEffect(() => {
+    if (currentOrgId) {
+      authStorage.set(AUTH_STORAGE_KEYS.ACTIVE_ORG_ID, currentOrgId);
+    }
+  }, [currentOrgId]);
 
   // ---------------------------------------------------------------------------
   // logout  (defined before refreshToken so the latter can reference it)

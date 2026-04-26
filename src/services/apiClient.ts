@@ -29,6 +29,7 @@
 
 import { baseURL } from '@/components/api/base';
 import { authStorage } from '@/services/authService';
+import { AUTH_STORAGE_KEYS } from '@/types/auth';
 
 // ---------------------------------------------------------------------------
 // Ref injection
@@ -62,6 +63,7 @@ export async function apiFetch(
 ): Promise<Response> {
   const url = `${baseURL}${path}`;
   const { accessToken } = authStorage.getAuthData();
+  const orgId = authStorage.get(AUTH_STORAGE_KEYS.ACTIVE_ORG_ID);
 
   const buildHeaders = (token: string | null): HeadersInit => {
     // Do not set Content-Type for FormData — the browser must set it with the boundary.
@@ -71,6 +73,7 @@ export async function apiFetch(
       ...base,
       ...options.headers,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(orgId ? { 'X-Organization-ID': orgId } : {}),
     };
   };
 
