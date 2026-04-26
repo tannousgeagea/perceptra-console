@@ -39,7 +39,6 @@ const useImages = () => {
         }
     };
 
-    console.log("Query: ", selectedFilters);
     
     const filterAndSortImages = (): void => {
         let filtered: Image[] = [...images];

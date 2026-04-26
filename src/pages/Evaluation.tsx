@@ -38,7 +38,7 @@ const Evaluation = () => {
     acknowledgeAlert,
     updateThresholds,
     generatePriorityQueue,
-  } = useEvaluationData();
+  } = useEvaluationData(projectId);
 
   const unacknowledgedCount = alerts.filter((a) => !a.is_acknowledged).length;
 

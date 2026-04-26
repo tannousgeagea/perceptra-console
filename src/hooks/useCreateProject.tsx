@@ -95,7 +95,6 @@ export const useCreateProject = (options: UseCreateProjectOptions = {}) => {
   // ✅ Get current organization from auth context
   const { currentOrganization } = useCurrentOrganization();
   
-  console.log(currentOrganization)
   const {
     onSuccess,
     onError,

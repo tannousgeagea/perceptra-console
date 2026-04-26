@@ -79,7 +79,6 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   } = useAnnotationGeometry();
 
 
-  // console.log("Canvas: ", hoveredBoxId)
   const canvasRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { 
@@ -249,7 +248,6 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   useEffect(() => {
     // Load on: (1) image change OR (2) first mount
     if (image.image.id !== currentImageId || !hasSyncedInitial) {
-      console.log('loading annotation')
       setIsLoadingAnnotation(true);
       const annotations = image.annotations || [];
       const boxes = annotations.map(ann => ({

@@ -21,7 +21,6 @@ export const AnalyticsFiltersComponent = ({ filters, onFiltersChange, availableU
   // // const roles = ["Senior Annotator", "Annotator", "Lead Reviewer", "Junior Annotator"];
   const { data: roles } = useAnalyticsRoles();
 
-  console.log(roles)
   const handleUserToggle = (user: string, checked: boolean) => {
     if (showingAllUsers && checked) {
       // If showing all users and user clicks to select specific user,

@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { ProjectImage } from '@/types/dataset';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   AIModel,
   LabelConfig,
@@ -7,48 +7,14 @@ import {
   GeneratedAnnotation,
   ActivityLogEntry,
   AutoAnnotateStep,
+  AnnotationType,
 } from '@/types/auto-annotate';
 import { useJobImages } from '@/hooks/useJobImages';
 import { useProjectImages } from '@/hooks/useProjectImages';
 import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
-import { da } from 'zod/v4/locales';
-
-// ── Mock AI Models ──
-const MOCK_MODELS: AIModel[] = [
-  {
-    id: 'model-yolov8',
-    name: 'YOLOv8-X',
-    version: 'v8.1.0',
-    supportedTypes: ['bounding-box', 'segmentation'],
-    description: 'State-of-the-art real-time object detection and segmentation.',
-    accuracy: 92.4,
-  },
-  {
-    id: 'model-detr',
-    name: 'DETR',
-    version: 'v2.0',
-    supportedTypes: ['bounding-box'],
-    description: 'Transformer-based detection. Excellent on complex scenes.',
-    accuracy: 89.1,
-  },
-  {
-    id: 'model-sam',
-    name: 'SAM 2',
-    version: 'v2.1',
-    supportedTypes: ['segmentation', 'polygon'],
-    description: 'Segment Anything Model. Best-in-class zero-shot segmentation.',
-    accuracy: 94.7,
-  },
-  {
-    id: 'model-clip',
-    name: 'CLIP Classifier',
-    version: 'v3.0',
-    supportedTypes: ['classification'],
-    description: 'Zero-shot image classification using natural language prompts.',
-    accuracy: 87.3,
-  },
-];
+import { useProgress } from '@/hooks/useProgress';
+import { apiFetch } from '@/services/apiClient';
 
 const LABEL_PRESETS: LabelConfig[] = [
   { name: 'person', color: '#22c55e' },
@@ -63,41 +29,14 @@ const LABEL_PRESETS: LabelConfig[] = [
   { name: 'cat', color: '#a855f7' },
 ];
 
-const MOCK_ACTIVITY_LOG: ActivityLogEntry[] = [
-  {
-    id: 'log-1',
-    sessionId: 'session-old-1',
-    date: new Date(Date.now() - 2 * 86400000).toISOString(),
-    user: 'alice@team.com',
-    modelName: 'YOLOv8-X v8.1.0',
-    imageCount: 50,
-    annotationsCreated: 234,
-    successRate: 96,
-    status: 'completed',
-  },
-  {
-    id: 'log-2',
-    sessionId: 'session-old-2',
-    date: new Date(Date.now() - 5 * 86400000).toISOString(),
-    user: 'bob@team.com',
-    modelName: 'SAM 2 v2.1',
-    imageCount: 120,
-    annotationsCreated: 587,
-    successRate: 92,
-    status: 'completed',
-  },
-  {
-    id: 'log-3',
-    sessionId: 'session-old-3',
-    date: new Date(Date.now() - 8 * 86400000).toISOString(),
-    user: 'alice@team.com',
-    modelName: 'CLIP Classifier v3.0',
-    imageCount: 30,
-    annotationsCreated: 0,
-    successRate: 0,
-    status: 'failed',
-  },
-];
+const taskToAnnotationTypes = (task: string): AnnotationType[] => {
+  switch (task?.toLowerCase()) {
+    case 'object-detection': return ['bounding-box'];
+    case 'segmentation': return ['segmentation', 'polygon'];
+    case 'classification': return ['classification'];
+    default: return ['bounding-box'];
+  }
+};
 
 export function useAutoAnnotate(projectId: string, jobId?: string) {
   const [step, setStep] = useState<AutoAnnotateStep>('select');
@@ -105,37 +44,80 @@ export function useAutoAnnotate(projectId: string, jobId?: string) {
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
   const [session, setSession] = useState<AutoAnnotateSession | null>(null);
-  const [generatedAnnotations, setGeneratedAnnotations] = useState<GeneratedAnnotation[]>([]);
-  const [activityLog] = useState<ActivityLogEntry[]>(MOCK_ACTIVITY_LOG);
+  const [generatedAnnotations] = useState<GeneratedAnnotation[]>([]);
+  const [activityLog] = useState<ActivityLogEntry[]>([]);
   const [confidenceThreshold, setConfidenceThreshold] = useState(50);
   const [searchQuery, setSearchQuery] = useState('');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
 
+  // ── Real models from API ──────────────────────────────────────────────────
+  const modelsQuery = useQuery({
+    queryKey: ['project-models-deployed', projectId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/v1/models/projects/${projectId}/models`);
+      if (!res.ok) throw new Error('Failed to fetch models');
+      return res.json() as Promise<any[]>;
+    },
+    enabled: !!projectId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const models: AIModel[] = (modelsQuery.data ?? [])
+    .filter((m: any) => m.has_production_version)
+    .map((m: any): AIModel => ({
+      id: m.id,
+      name: m.name,
+      version: m.production_version_number ? `v${m.production_version_number}` : '',
+      supportedTypes: taskToAnnotationTypes(m.task),
+      description: m.description ?? '',
+      accuracy: 0,
+      productionVersionId: m.production_version_id,
+    }));
+
+  // ── Image queries ─────────────────────────────────────────────────────────
   const parsedQuery = useSearchParser(searchQuery);
   const _query = buildImageQuery(parsedQuery);
 
-  const projectImagesQuery = useProjectImages(projectId, {
-    q: _query,
-    limit: 200,
-  });
-
-  const jobImagesQuery = useJobImages(projectId, jobId!, {
-    q: _query,
-    limit: 200,
-  });
+  const projectImagesQuery = useProjectImages(projectId, { q: _query, limit: 200 });
+  const jobImagesQuery = useJobImages(projectId, jobId!, { q: _query, limit: 200 });
 
   const activeQuery = jobId ? jobImagesQuery : projectImagesQuery;
   const { data, isLoading, error, refetch } = activeQuery;
 
-  const availableImages = data?.images || []
-  const processingRef = useRef<NodeJS.Timeout | null>(null);
-  const pausedRef = useRef(false);
+  const availableImages = data?.images || [];
 
-  const models = MOCK_MODELS;
-  const labelPresets = LABEL_PRESETS;
+  // ── Progress polling (only when a task is running) ────────────────────────
+  const { progress: taskProgress } = useProgress({
+    taskId: taskId ?? '',
+    pollingInterval: 3000,
+    enabled: !!taskId,
+    onComplete: () => {
+      setSession((s) =>
+        s ? { ...s, status: 'completed', completedAt: new Date().toISOString() } : s
+      );
+      setStep('complete');
+    },
+  });
 
-  // Derived
+  // Sync progress percentage into session
+  useEffect(() => {
+    if (!taskId || !session) return;
+    const processed = Math.round((taskProgress.percentage / 100) * session.totalImages);
+    setSession((s) =>
+      s
+        ? {
+            ...s,
+            processedImages: processed,
+            status: taskProgress.isComplete ? 'completed' : 'processing',
+          }
+        : s
+    );
+  }, [taskProgress.percentage, taskProgress.isComplete, taskId]);
+
+  // ── Derived state ─────────────────────────────────────────────────────────
   const allTags = Array.from(new Set(availableImages.flatMap((img) => img.tags)));
 
   const filteredImages = availableImages.filter((img) => {
@@ -147,7 +129,7 @@ export function useAutoAnnotate(projectId: string, jobId?: string) {
   const selectedImages = availableImages.filter((img) => selectedIds.has(img.id));
   const totalSizeMb = selectedImages.reduce((s, img) => s + img.file_size_mb, 0);
 
-  // Selection helpers
+  // ── Selection helpers ─────────────────────────────────────────────────────
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -161,234 +143,112 @@ export function useAutoAnnotate(projectId: string, jobId?: string) {
     setSelectedIds(new Set(filteredImages.map((img) => img.id)));
   }, [filteredImages]);
 
-  const deselectAll = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
+  const deselectAll = useCallback(() => setSelectedIds(new Set()), []);
 
-  // Label helpers
-  const addLabel = useCallback((label: string) => {
-    const trimmed = label.trim().toLowerCase();
-    if (trimmed && !labels.includes(trimmed)) {
-      setLabels((prev) => [...prev, trimmed]);
-    }
-  }, [labels]);
+  // ── Label helpers ─────────────────────────────────────────────────────────
+  const addLabel = useCallback(
+    (label: string) => {
+      const trimmed = label.trim().toLowerCase();
+      if (trimmed && !labels.includes(trimmed)) {
+        setLabels((prev) => [...prev, trimmed]);
+      }
+    },
+    [labels]
+  );
 
-  const removeLabel = useCallback((label: string) => {
-    setLabels((prev) => prev.filter((l) => l !== label));
-  }, []);
+  const removeLabel = useCallback(
+    (label: string) => setLabels((prev) => prev.filter((l) => l !== label)),
+    []
+  );
 
-  // Processing simulation
-  const startProcessing = useCallback(() => {
-    if (!selectedModel || labels.length === 0 || selectedIds.size === 0) return;
+  // ── Start processing (real API) ───────────────────────────────────────────
+  const startProcessing = useCallback(async () => {
+    if (!selectedModel?.productionVersionId || labels.length === 0 || selectedIds.size === 0) return;
 
-    const imgs = availableImages.filter((img) => selectedIds.has(img.id));
+    const imageIds = availableImages
+      .filter((img) => selectedIds.has(img.id))
+      .map((img) => parseInt(img.id, 10))
+      .filter((id) => !isNaN(id));
+
+    if (imageIds.length === 0) return;
+
     const newSession: AutoAnnotateSession = {
       id: `session-${Date.now()}`,
-      status: 'processing',
+      status: 'pending',
       modelId: selectedModel.id,
       modelName: `${selectedModel.name} ${selectedModel.version}`,
       labels,
-      totalImages: imgs.length,
+      totalImages: imageIds.length,
       processedImages: 0,
       successCount: 0,
       failedCount: 0,
       totalAnnotationsCreated: 0,
       startedAt: new Date().toISOString(),
       elapsedSeconds: 0,
-      estimatedRemainingSeconds: imgs.length * 2,
-      currentImageName: imgs[0]?.name,
-      currentImageUrl: imgs[0]?.download_url,
-      initiatedBy: 'current-user@team.com',
+      estimatedRemainingSeconds: imageIds.length * 2,
+      initiatedBy: '',
     };
 
     setSession(newSession);
-    setGeneratedAnnotations([]);
     setStep('processing');
-    pausedRef.current = false;
+    setStartError(null);
 
-    let idx = 0;
-    const tick = () => {
-      if (pausedRef.current) return;
+    try {
+      const response = await apiFetch(`/api/v1/projects/${projectId}/auto-annotate`, {
+        method: 'POST',
+        body: JSON.stringify({
+          model_version_id: selectedModel.productionVersionId,
+          image_ids: imageIds,
+          confidence_threshold: confidenceThreshold / 100,
+        }),
+      });
 
-      if (idx >= imgs.length) {
-        setSession((s) =>
-          s
-            ? {
-                ...s,
-                status: 'completed',
-                completedAt: new Date().toISOString(),
-                currentImageName: undefined,
-                currentImageUrl: undefined,
-                estimatedRemainingSeconds: 0,
-              }
-            : s
-        );
-        setStep('complete');
-        return;
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to start auto-annotation');
       }
 
-      const img = imgs[idx];
-      const annotCount = Math.floor(Math.random() * 4) + 1;
-      const failed = Math.random() < 0.05;
-      const newAnnots: GeneratedAnnotation[] = failed
-        ? []
-        : Array.from({ length: annotCount }, (_, j) => ({
-            id: `ga-${img.id}-${j}`,
-            imageId: img.id,
-            imageName: img.name,
-            imageUrl: img.download_url,
-            label: labels[j % labels.length],
-            type: selectedModel.supportedTypes[0],
-            confidence: Math.round((60 + Math.random() * 40) * 10) / 10,
-            reviewStatus: 'pending' as const,
-            data: { x: Math.random() * 100, y: Math.random() * 100, w: 50, h: 50 },
-            sessionId: newSession.id,
-            createdAt: new Date().toISOString(),
-          }));
-
-      idx++;
-
-      setGeneratedAnnotations((prev) => [...prev, ...newAnnots]);
-      setSession((s) =>
-        s
-          ? {
-              ...s,
-              processedImages: idx,
-              successCount: s.successCount + (failed ? 0 : 1),
-              failedCount: s.failedCount + (failed ? 1 : 0),
-              totalAnnotationsCreated: s.totalAnnotationsCreated + newAnnots.length,
-              elapsedSeconds: idx * 2,
-              estimatedRemainingSeconds: (imgs.length - idx) * 2,
-              currentImageName: imgs[idx]?.name,
-              currentImageUrl: imgs[idx]?.download_url,
-            }
-          : s
-      );
-
-      processingRef.current = setTimeout(tick, 800);
-    };
-
-    processingRef.current = setTimeout(tick, 800);
-  }, [selectedModel, labels, selectedIds, availableImages]);
-
-  const pauseProcessing = useCallback(() => {
-    pausedRef.current = true;
-    setSession((s) => (s ? { ...s, status: 'paused' } : s));
-  }, []);
-
-  const resumeProcessing = useCallback(() => {
-    pausedRef.current = false;
-    setSession((s) => (s ? { ...s, status: 'processing' } : s));
-    // restart the tick
-    if (session) {
-      const imgs = availableImages.filter((img) => selectedIds.has(img.id));
-      let idx = session.processedImages;
-
-      const tick = () => {
-        if (pausedRef.current) return;
-        if (idx >= imgs.length) {
-          setSession((s) =>
-            s ? { ...s, status: 'completed', completedAt: new Date().toISOString(), estimatedRemainingSeconds: 0, currentImageName: undefined, currentImageUrl: undefined } : s
-          );
-          setStep('complete');
-          return;
-        }
-
-        const img = imgs[idx];
-        const annotCount = Math.floor(Math.random() * 4) + 1;
-        const failed = Math.random() < 0.05;
-        const newAnnots: GeneratedAnnotation[] = failed
-          ? []
-          : Array.from({ length: annotCount }, (_, j) => ({
-              id: `ga-${img.id}-${j}`,
-              imageId: img.id,
-              imageName: img.name,
-              imageUrl: img.download_url,
-              label: labels[j % labels.length],
-              type: selectedModel!.supportedTypes[0],
-              confidence: Math.round((60 + Math.random() * 40) * 10) / 10,
-              reviewStatus: 'pending' as const,
-              data: {},
-              sessionId: session!.id,
-              createdAt: new Date().toISOString(),
-            }));
-
-        idx++;
-        setGeneratedAnnotations((prev) => [...prev, ...newAnnots]);
-        setSession((s) =>
-          s
-            ? {
-                ...s,
-                processedImages: idx,
-                successCount: s.successCount + (failed ? 0 : 1),
-                failedCount: s.failedCount + (failed ? 1 : 0),
-                totalAnnotationsCreated: s.totalAnnotationsCreated + newAnnots.length,
-                elapsedSeconds: idx * 2,
-                estimatedRemainingSeconds: (imgs.length - idx) * 2,
-                currentImageName: imgs[idx]?.name,
-                currentImageUrl: imgs[idx]?.download_url,
-              }
-            : s
-        );
-
-        processingRef.current = setTimeout(tick, 800);
-      };
-
-      processingRef.current = setTimeout(tick, 800);
+      const { task_id } = await response.json();
+      setTaskId(task_id);
+      setSession((s) => (s ? { ...s, id: task_id, status: 'processing' } : s));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setStartError(msg);
+      setSession((s) => (s ? { ...s, status: 'failed' } : s));
+      setStep('complete');
     }
-  }, [session, availableImages, selectedIds, labels, selectedModel]);
+  }, [selectedModel, labels, selectedIds, availableImages, confidenceThreshold, projectId]);
 
   const cancelProcessing = useCallback(() => {
-    if (processingRef.current) clearTimeout(processingRef.current);
-    pausedRef.current = true;
+    setTaskId(null);
     setSession((s) => (s ? { ...s, status: 'cancelled' } : s));
     setStep('complete');
   }, []);
 
-  // Review helpers
+  // Celery tasks do not support pause/resume — kept as no-ops for UI compatibility
+  const pauseProcessing = useCallback(() => {}, []);
+  const resumeProcessing = useCallback(() => {}, []);
+
+  // ── Review helpers ────────────────────────────────────────────────────────
   const updateAnnotationStatus = useCallback(
-    (annotationId: string, status: 'accepted' | 'rejected') => {
-      setGeneratedAnnotations((prev) =>
-        prev.map((a) => (a.id === annotationId ? { ...a, reviewStatus: status } : a))
-      );
+    (_annotationId: string, _status: 'accepted' | 'rejected') => {
+      // Annotations are persisted by the backend; no local state needed
     },
     []
   );
 
-  const bulkAcceptAbove = useCallback(
-    (threshold: number) => {
-      setGeneratedAnnotations((prev) =>
-        prev.map((a) => (a.confidence >= threshold ? { ...a, reviewStatus: 'accepted' } : a))
-      );
-    },
-    []
-  );
-
-  const bulkRejectBelow = useCallback(
-    (threshold: number) => {
-      setGeneratedAnnotations((prev) =>
-        prev.map((a) => (a.confidence < threshold ? { ...a, reviewStatus: 'rejected' } : a))
-      );
-    },
-    []
-  );
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (processingRef.current) clearTimeout(processingRef.current);
-    };
-  }, []);
+  const bulkAcceptAbove = useCallback((_threshold: number) => {}, []);
+  const bulkRejectBelow = useCallback((_threshold: number) => {}, []);
 
   const reset = useCallback(() => {
-    if (processingRef.current) clearTimeout(processingRef.current);
     setStep('select');
     setSelectedIds(new Set());
     setSelectedModel(null);
     setLabels([]);
     setSession(null);
-    setGeneratedAnnotations([]);
     setConfidenceThreshold(50);
+    setTaskId(null);
+    setStartError(null);
   }, []);
 
   return {
@@ -403,10 +263,11 @@ export function useAutoAnnotate(projectId: string, jobId?: string) {
     selectAll,
     deselectAll,
     models,
+    modelsLoading: modelsQuery.isLoading,
     selectedModel,
     setSelectedModel,
     labels,
-    labelPresets,
+    labelPresets: LABEL_PRESETS,
     addLabel,
     removeLabel,
     session,
@@ -421,6 +282,7 @@ export function useAutoAnnotate(projectId: string, jobId?: string) {
     statusFilter,
     setStatusFilter,
     allTags,
+    taskProgress,
     startProcessing,
     pauseProcessing,
     resumeProcessing,
@@ -429,5 +291,9 @@ export function useAutoAnnotate(projectId: string, jobId?: string) {
     bulkAcceptAbove,
     bulkRejectBelow,
     reset,
+    startError,
+    isLoading,
+    error,
+    refetch,
   };
 }

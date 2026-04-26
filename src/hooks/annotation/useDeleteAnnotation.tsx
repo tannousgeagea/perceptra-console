@@ -24,7 +24,6 @@ const useDeleteAnnotation = () => {
       }
 
       setSuccess(true);
-      console.log(`Annotation ${annotationID} deleted successfully!`);
     } catch (err) {
       setError((err as Error).message || 'An error occurred');
       console.error('Error saving annotation:', err);

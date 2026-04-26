@@ -27,7 +27,6 @@ const CreateProject: React.FC = () => {
     reset 
   } = useCreateProject({
     onSuccess: (data: ProjectResponse) => {
-      console.log('Project created successfully:', data);
     },
     onError: (error: any) => {
       console.error('Failed to create project:', error);
@@ -390,7 +389,6 @@ const CreateProject: React.FC = () => {
         onClose={() => {
           handleReset();
           // Navigate to projects list or the created project
-          console.log('Navigate to project or projects list');
         }}
         project={data}
       />

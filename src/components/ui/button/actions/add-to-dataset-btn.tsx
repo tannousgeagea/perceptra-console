@@ -37,7 +37,6 @@ const AddToDatasetButton: React.FC<AddToDatasetButtonProps> = ({
         }
         setShowModal(false)
     } catch(err) {
-        console.log(err)
         setShowError(true)
     }
   };

@@ -133,7 +133,6 @@ export function useJobImages() {
       return img;
     }));
 
-    console.log(`Updated image ${imageId} to status: ${newStatus}`);
   }, []);
 
   return {

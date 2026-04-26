@@ -133,7 +133,6 @@ export const FileUploader: React.FC = () => {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
 
-      console.log("File input change, raw files:", files ? Array.from(files).map(f => f.name) : "No files");
       if (!files || files.length === 0) return;
       ingestFiles(Array.from(files));
       event.target.value = '';

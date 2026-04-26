@@ -16,7 +16,6 @@ const CreateModel: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createModel = useCreateModel({
-    onSuccess: (model) => console.log('Created:', model.id)
   });
   
   const [formData, setFormData] = useState<ModelFormData>({

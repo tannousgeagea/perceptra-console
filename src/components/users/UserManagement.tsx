@@ -168,7 +168,6 @@ export function UserManagement() {
   }
 
 
-  console.log(users)
 
   return (
     <div className="space-y-6">
@@ -225,14 +224,9 @@ export function UserManagement() {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => {
-                    console.log(user.role)
                     const roleConfig = getRoleConfig(user.role);
                     const RoleIcon = roleConfig.icon;
 
-                    console.log('ROLE DEBUG:', {
-                      apiRole: user.role,
-                      normalized: user.role?.toLowerCase(),
-                    });
                     return (
                       <TableRow key={user.id}>
                         <TableCell>

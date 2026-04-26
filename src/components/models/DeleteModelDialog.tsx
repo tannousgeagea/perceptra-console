@@ -21,7 +21,6 @@ const DeleteModelDialog: React.FC<DeleteModelDialogProps> = ({
   const handleDelete = async () => {
     if (!model) return;
 
-    console.log("Deleting ...")
     setIsDeleting(true);
     
     // Simulate API delay

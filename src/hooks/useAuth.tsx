@@ -15,7 +15,6 @@ export const authService = {
     }
 
     const data = await res.json();
-    console.log(data)
     return {
       token: data.access_token,
       refreshToken: data.refresh_token,

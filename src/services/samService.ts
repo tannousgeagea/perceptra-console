@@ -82,7 +82,6 @@ export const samService = {
     organizationId: string, 
     token: string
   ): Promise<void> {
-    console.log("ProjectId: ", projectId)
     const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}`, {
       method: 'DELETE',
       headers: { 

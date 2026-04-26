@@ -183,7 +183,6 @@ const DeactivateButton = ({ userId }: { userId: string }) => {
 const UpdateUserForm = ({ userId }: { userId: string }) => {
   const { updateUser, isLoading } = useUpdateOrganizationUser({
     onSuccess: (data) => {
-      console.log('Changes:', data.changes);
     },
   });
 
@@ -217,7 +216,6 @@ const SilentUpdate = ({ userId }: { userId: string }) => {
   const { updateUser } = useUpdateOrganizationUser({
     showToast: false,
     onSuccess: (data) => {
-      console.log('User updated:', data.changes);
       // Custom success handling
     },
     onError: (error) => {
@@ -308,8 +306,6 @@ const AsyncUpdate = ({ userId }: { userId: string }) => {
         payload: { role: 'admin' } 
       });
       
-      console.log('Success:', result.message);
-      console.log('Changes made:', result.changes);
       
       // Do something else after success
     } catch (error) {

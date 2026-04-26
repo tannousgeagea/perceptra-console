@@ -29,7 +29,6 @@ export default function Billing() {
 
   const { mutate: createRateCard, isPending: pendingCreateRateCard } = useCreateRateCard({
     onSuccess: (data) => {
-      console.log('Created rate card:', data);
     },
     onError: (error) => {
       console.error('Failed:', error.message);
@@ -39,20 +38,17 @@ export default function Billing() {
 
   const { mutate: updateRateCard, isPending: pendingUpdateRateCard } = useUpdateRateCard({
     onSuccess: (data) => {
-      console.log('Updated:', data);
     },
   });
 
   const { mutate: deleteRateCard, isPending: pendingDeleteRateCard } = useDeleteRateCard({
     onSuccess: () => {
-      console.log('Deleted successfully');
       setShowDeleteDialog(false);
     },
   });
 
   const { mutate: duplicateRateCard, isPending: pendingDuplicateRateCard } = useDuplicateRateCard({
     onSuccess: (data) => {
-      console.log('Duplicated:', data);
     },
   });
 

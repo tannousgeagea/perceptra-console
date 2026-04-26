@@ -32,7 +32,6 @@ const UserProgressCard = ({
     if (onUserClick) {
       onUserClick(userProgress.userId);
     } else {
-      console.log(`Navigating to user detail: ${userProgress.userId}`);
     }
   };
 

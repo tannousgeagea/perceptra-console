@@ -19,7 +19,6 @@ const TrainValidSlider: React.FC<TrainValidSliderProps> = ({
 }) => {
   const [trainPercentage, setTrainPercentage] = useState<number>(defaultTrain);
 
-  console.log(isOpen)
   useEffect(() => {
     if (isOpen) setTrainPercentage(defaultTrain);
   }, [isOpen, defaultTrain]);

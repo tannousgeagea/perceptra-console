@@ -1,12 +1,15 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/ui/card';
 import { Badge } from '@/components/ui/ui/badge';
 import { Input } from '@/components/ui/ui/input';
+import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Search } from 'lucide-react';
 import { ModelItem } from '@/types/models';
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '@/services/apiClient';
 
 interface ModelSelectorProps {
+  projectId?: string;
   selectedModel: ModelItem | null;
   setSelectedModel: (model: ModelItem | null) => void;
   comparisonModel: ModelItem | null;
@@ -14,84 +17,76 @@ interface ModelSelectorProps {
   isComparisonMode: boolean;
 }
 
-const mockModels: ModelItem[] = [
-  {
-    id: 'yolov8n',
-    name: 'YOLOv8 Nano',
-    version: '8.0.1',
-    category: 'Object Detection',
-    description: 'Ultra-fast object detection',
-    accuracy: 0.87,
-    speed: 'fast'
-  },
-  {
-    id: 'yolov8s',
-    name: 'YOLOv8 Small',
-    version: '8.0.1',
-    category: 'Object Detection',
-    description: 'Balanced speed and accuracy',
-    accuracy: 0.91,
-    speed: 'medium'
-  },
-  {
-    id: 'yolov8m',
-    name: 'YOLOv8 Medium',
-    version: '8.0.1',
-    category: 'Object Detection',
-    description: 'High accuracy detection',
-    accuracy: 0.94,
-    speed: 'slow'
-  },
-  {
-    id: 'sam',
-    name: 'Segment Anything',
-    version: '1.0',
-    category: 'Segmentation',
-    description: 'Universal image segmentation',
-    accuracy: 0.96,
-    speed: 'medium'
-  }
-];
+function useDeployedModels(projectId?: string) {
+  return useQuery<ModelItem[]>({
+    queryKey: ['deployed-models', projectId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/v1/models/projects/${projectId}/models`);
+      if (!res.ok) throw new Error('Failed to fetch models');
+      const data: any[] = await res.json();
+      return data
+        .filter((m) => m.has_production_version)
+        .map((m): ModelItem => ({
+          id: m.id,
+          name: m.name,
+          version: m.production_version_number ? `v${m.production_version_number}` : '',
+          category: m.task ?? 'Object Detection',
+          description: m.description ?? '',
+          accuracy: 0,
+          speed: 'medium',
+          version_id: m.production_version_id,
+        }));
+    },
+    enabled: !!projectId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+const ModelCard = ({
+  model,
+  isSelected,
+  onClick,
+}: {
+  model: ModelItem;
+  isSelected: boolean;
+  onClick: () => void;
+}) => (
+  <div
+    className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+      isSelected
+        ? 'border-primary bg-primary/5'
+        : 'border-border hover:border-muted-foreground/40'
+    }`}
+    onClick={onClick}
+  >
+    <div className="flex justify-between items-start mb-2">
+      <h4 className="font-medium text-sm">{model.name}</h4>
+      {model.version && (
+        <Badge variant="secondary" className="text-xs">{model.version}</Badge>
+      )}
+    </div>
+    {model.description && (
+      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{model.description}</p>
+    )}
+    <Badge variant="outline" className="text-xs">{model.category}</Badge>
+  </div>
+);
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
+  projectId,
   selectedModel,
   setSelectedModel,
   comparisonModel,
   setComparisonModel,
-  isComparisonMode
+  isComparisonMode,
 }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const { data: models = [], isLoading } = useDeployedModels(projectId);
 
-  const filteredModels = mockModels.filter(model =>
-    model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    model.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const ModelCard = ({ model, isSelected, onClick }: { model: ModelItem, isSelected: boolean, onClick: () => void }) => (
-    <div
-      className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
-        isSelected
-          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-      }`}
-      onClick={onClick}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <h4 className="font-medium text-sm text-gray-900 dark:text-white">{model.name}</h4>
-        <Badge variant="secondary" className="text-xs">v{model.version}</Badge>
-      </div>
-      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{model.description}</p>
-      <div className="flex justify-between items-center">
-        <Badge variant="outline" className="text-xs">{model.category}</Badge>
-        <div className="flex items-center space-x-2">
-          <span className="text-xs text-gray-500">Acc: {(model.accuracy * 100).toFixed(0)}%</span>
-          <div className={`w-2 h-2 rounded-full ${
-            model.speed === 'fast' ? 'bg-green-500' :
-            model.speed === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-          }`} />
-        </div>
-      </div>
-    </div>
+  const filteredModels = models.filter(
+    (m) =>
+      m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -102,7 +97,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search models..."
               value={searchTerm}
@@ -112,24 +107,37 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Primary Model
-            </label>
-            <div className="max-h-48 overflow-y-auto space-y-2">
-              {filteredModels.map((model) => (
-                <ModelCard
-                  key={model.id}
-                  model={model}
-                  isSelected={selectedModel?.id === model.id}
-                  onClick={() => setSelectedModel(model)}
-                />
-              ))}
-            </div>
+            <label className="text-sm font-medium text-muted-foreground">Primary Model</label>
+            {!projectId ? (
+              <p className="text-xs text-muted-foreground py-4 text-center">
+                Select a project to load models.
+              </p>
+            ) : isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+              </div>
+            ) : filteredModels.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-4 text-center">
+                No deployed models found.
+              </p>
+            ) : (
+              <div className="max-h-48 overflow-y-auto space-y-2">
+                {filteredModels.map((model) => (
+                  <ModelCard
+                    key={model.id}
+                    model={model}
+                    isSelected={selectedModel?.id === model.id}
+                    onClick={() => setSelectedModel(model)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {isComparisonMode && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium text-muted-foreground">
                 Comparison Model
               </label>
               <div className="max-h-48 overflow-y-auto space-y-2">

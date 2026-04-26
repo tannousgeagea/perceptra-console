@@ -63,11 +63,16 @@ export async function apiFetch(
   const url = `${baseURL}${path}`;
   const { accessToken } = authStorage.getAuthData();
 
-  const buildHeaders = (token: string | null): HeadersInit => ({
-    'Content-Type': 'application/json',
-    ...options.headers,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  });
+  const buildHeaders = (token: string | null): HeadersInit => {
+    // Do not set Content-Type for FormData — the browser must set it with the boundary.
+    const base: Record<string, string> =
+      options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' };
+    return {
+      ...base,
+      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
 
   // First attempt
   const response = await fetch(url, {

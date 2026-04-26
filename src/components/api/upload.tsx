@@ -34,7 +34,6 @@ const handleUpload = async ({ files, setUploading, setUploadPercentage, setUploa
 
       if (response.status === 200) {
         setUploadComplete(true);
-        console.log('Upload successful!');
       } else {
         alert(`Upload Failed: ${JSON.stringify(response.data)}`);
       }
