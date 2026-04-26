@@ -89,7 +89,7 @@ const TrainingTabs: React.FC<Props> = ({
               </TabsContent>
 
               <TabsContent value="compute" className="pt-4">
-                <ComputeTab isTraining={isTraining} />
+                <ComputeTab form={form} isTraining={isTraining} />
               </TabsContent>
 
               <TabsContent value="advanced" className="pt-4">
