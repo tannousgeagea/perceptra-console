@@ -213,7 +213,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {version.tags.map((tag) => (
+                      {version?.tags?.map((tag) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
