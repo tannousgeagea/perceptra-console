@@ -195,7 +195,6 @@ export function ComputeSettings() {
     //   p.id === id ? { ...p, has_credentials: hasCredentials } : p
     // ));
 
-    console.log("Credential: ", id, hasCredentials)
   };
 
   const handleProfileUpdate = (

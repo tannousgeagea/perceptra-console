@@ -21,7 +21,6 @@ const DownloadVersionBtn: FC<DownloadVersionBtnProps> = ({ projectId, versionID 
             await downloadVersion(versionID);
             setSuccessMessage("Dataset Successfully downloaded !");
         } catch (error) {
-            console.log(error);
             setShowError(true);
         }
     };

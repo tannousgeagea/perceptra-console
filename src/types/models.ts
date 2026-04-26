@@ -161,6 +161,7 @@ export interface ModelItem {
   description: string;
   accuracy: number;
   speed: 'fast' | 'medium' | 'slow';
+  version_id?: string;
 }
 
 export interface ModelArtifact {
@@ -241,6 +242,7 @@ export interface ModelListItem {
   latest_status?: string;
   has_production_version?: boolean;
   production_version_number?: number;
+  production_version_id?: string;
   created_at: string;
   updated_at: string;
 }

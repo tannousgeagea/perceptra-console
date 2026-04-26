@@ -85,7 +85,6 @@ export function ComputeProfileCard({ profile, onDelete, onSetDefault, onCredenti
   const handleSaveCredentials = async (credentials: Record<string, string>) => {
     // Mock API call - simulate saving credentials
     await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log('Saving credentials for profile:', profile.id, credentials);
     toast.success('Credentials saved successfully');
     onCredentialsUpdate?.(profile.id, true);
   };

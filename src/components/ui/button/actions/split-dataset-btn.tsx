@@ -21,7 +21,6 @@ const SplitDatasetButton: FC<SplitDatasetButtonProps> = ({ projectId, onSplitCom
 
     const handleSplitDataset = async (): Promise<void> => {
         try {
-            console.log(TrainPercentage)
             const result = await splitDataset(projectId, TrainPercentage);
             setSuccessMessage(result.detail);
             setShowModal(false)

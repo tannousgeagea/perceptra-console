@@ -1,4 +1,6 @@
 import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/services/apiClient";
 import type {
   MetricsSummary,
   ClassMetrics,
@@ -11,229 +13,215 @@ import type {
   SamplingStrategy,
 } from "@/types/evaluation";
 
-// Mock data generators
-const generateMockSummary = (): MetricsSummary => ({
-  precision: 0.852,
-  recall: 0.785,
-  f1_score: 0.817,
-  tp: 1245,
-  fp: 298,
-  fn: 457,
-  edit_rate: 0.321,
-  hallucination_rate: 0.148,
-  miss_rate: 0.215,
-  precision_change: 0.023,
-  recall_change: -0.012,
-  f1_change: 0.005,
-  edit_rate_change: 0.031,
-  hallucination_change: -0.02,
-  miss_rate_change: 0.018,
-});
-
-const generateMockClassMetrics = (): ClassMetrics[] => [
-  { class_id: 1, class_name: "Person", color: "#10b981", precision: 0.92, recall: 0.88, f1_score: 0.90, tp: 450, fp: 38, fn: 61 },
-  { class_id: 2, class_name: "Car", color: "#3b82f6", precision: 0.87, recall: 0.82, f1_score: 0.84, tp: 312, fp: 47, fn: 69 },
-  { class_id: 3, class_name: "Bike", color: "#f59e0b", precision: 0.78, recall: 0.71, f1_score: 0.74, tp: 189, fp: 53, fn: 77 },
-  { class_id: 4, class_name: "Truck", color: "#8b5cf6", precision: 0.85, recall: 0.79, f1_score: 0.82, tp: 156, fp: 28, fn: 41 },
-  { class_id: 5, class_name: "Bus", color: "#ec4899", precision: 0.81, recall: 0.76, f1_score: 0.78, tp: 98, fp: 23, fn: 31 },
-  { class_id: 6, class_name: "Motorcycle", color: "#14b8a6", precision: 0.73, recall: 0.68, f1_score: 0.70, tp: 40, fp: 15, fn: 19 },
-];
-
-const generateMockEditDistribution = (): EditTypeDistribution[] => [
-  { type: "Perfect", count: 1360, percentage: 68 },
-  { type: "Minor Edit", count: 440, percentage: 22 },
-  { type: "Major Edit", count: 140, percentage: 7 },
-  { type: "Class Change", count: 60, percentage: 3 },
-];
-
-const generateMockTrends = (days: number): TemporalTrend[] => {
-  const trends: TemporalTrend[] = [];
-  const now = new Date();
-  
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    
-    // Add some variation
-    const noise = () => (Math.random() - 0.5) * 0.1;
-    
-    trends.push({
-      date: date.toISOString().split('T')[0],
-      precision: Math.max(0.6, Math.min(0.95, 0.85 + noise())),
-      recall: Math.max(0.55, Math.min(0.9, 0.78 + noise())),
-      f1_score: Math.max(0.58, Math.min(0.92, 0.81 + noise())),
-      edit_rate: Math.max(0.2, Math.min(0.5, 0.32 + noise())),
-    });
-  }
-  
-  return trends;
+const EMPTY_SUMMARY: MetricsSummary = {
+  precision: 0, recall: 0, f1_score: 0, tp: 0, fp: 0, fn: 0,
+  edit_rate: 0, hallucination_rate: 0, miss_rate: 0,
+  precision_change: 0, recall_change: 0, f1_change: 0,
+  edit_rate_change: 0, hallucination_change: 0, miss_rate_change: 0,
 };
 
-const generateMockAnomalies = (): Anomaly[] => [
-  {
-    id: "anom-1",
-    date: "2024-08-15",
-    severity: "critical",
-    metric_name: "F1 Score",
-    message: "F1 Score dropped 8.2% (Critical)",
-    previous_value: 0.817,
-    current_value: 0.735,
-    change_percentage: -8.2,
-  },
-  {
-    id: "anom-2",
-    date: "2024-08-12",
-    severity: "warning",
-    metric_name: "Edit Rate",
-    message: "Edit rate increased 5.1% (Warning)",
-    previous_value: 0.283,
-    current_value: 0.334,
-    change_percentage: 5.1,
-  },
+const CLASS_COLORS = [
+  "#10b981", "#3b82f6", "#f59e0b", "#8b5cf6",
+  "#ec4899", "#14b8a6", "#ef4444", "#f97316",
+  "#06b6d4", "#a855f7",
 ];
 
-const generateMockAlerts = (): Alert[] => [
-  {
-    id: 1,
-    severity: "critical",
-    metric_name: "F1 Score",
-    message: "F1 Score critically low: 73.5%",
-    current_value: 0.735,
-    threshold: 0.75,
-    created_at: "2024-08-15T02:03:00Z",
-    is_acknowledged: false,
-  },
-  {
-    id: 2,
-    severity: "critical",
-    metric_name: "Recall",
-    message: "Recall dropped 10.2% in 24h",
-    current_value: 0.72,
-    threshold: 0.75,
-    created_at: "2024-08-15T02:03:00Z",
-    is_acknowledged: false,
-  },
-  {
-    id: 3,
-    severity: "warning",
-    metric_name: "Hallucination Rate",
-    message: "Hallucination rate elevated",
-    current_value: 0.182,
-    threshold: 0.15,
-    created_at: "2024-08-14T23:30:00Z",
-    is_acknowledged: false,
-  },
-  {
-    id: 4,
-    severity: "warning",
-    metric_name: "Edit Rate",
-    message: "Edit rate above normal",
-    current_value: 0.35,
-    threshold: 0.30,
-    created_at: "2024-08-13T10:15:00Z",
-    is_acknowledged: true,
-  },
-];
+export const useEvaluationData = (projectId?: string) => {
+  const queryClient = useQueryClient();
+  const [trendDays, setTrendDays] = useState(30);
+  const [priorityStrategy, setPriorityStrategy] = useState<SamplingStrategy>("uncertainty");
+  const [priorityLimit, setPriorityLimit] = useState(20);
 
-const generateMockThresholds = (): AlertThreshold[] => [
-  { metric: "F1 Score", warning_threshold: 0.70, critical_threshold: 0.60, slack_enabled: true, email_enabled: true, condition: "lt" },
-  { metric: "Precision", warning_threshold: 0.75, critical_threshold: 0.65, slack_enabled: true, email_enabled: false, condition: "lt" },
-  { metric: "Recall", warning_threshold: 0.70, critical_threshold: 0.60, slack_enabled: true, email_enabled: true, condition: "lt" },
-  { metric: "Edit Rate", warning_threshold: 0.30, critical_threshold: 0.50, slack_enabled: false, email_enabled: true, condition: "gt" },
-];
+  // ── Summary ──────────────────────────────────────────────────────────────
+  const summaryQuery = useQuery<MetricsSummary>({
+    queryKey: ["evaluation-summary", projectId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/v1/evaluation/projects/${projectId}/summary`);
+      if (!res.ok) throw new Error("Failed to fetch evaluation summary");
+      const data = await res.json();
+      return {
+        precision: data.precision ?? 0,
+        recall: data.recall ?? 0,
+        f1_score: data.f1_score ?? 0,
+        tp: data.tp ?? 0,
+        fp: data.fp ?? 0,
+        fn: data.fn ?? 0,
+        edit_rate: data.edit_rate ?? 0,
+        hallucination_rate: data.hallucination_rate ?? 0,
+        miss_rate: data.miss_rate ?? 0,
+        precision_change: 0,
+        recall_change: 0,
+        f1_change: 0,
+        edit_rate_change: 0,
+        hallucination_change: 0,
+        miss_rate_change: 0,
+      } as MetricsSummary;
+    },
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-const generateMockPriorityImages = (): PriorityImage[] => [
-  {
-    image_id: "img-1023",
-    image_name: "img_1023.jpg",
-    priority_score: 0.92,
-    reasons: ["High confidence false positive"],
-    thumbnail_url: "/placeholder.svg",
-  },
-  {
-    image_id: "img-2047",
-    image_name: "img_2047.jpg",
-    priority_score: 0.87,
-    reasons: ["Under-represented class: bicycle"],
-    thumbnail_url: "/placeholder.svg",
-  },
-  {
-    image_id: "img-3156",
-    image_name: "img_3156.jpg",
-    priority_score: 0.78,
-    reasons: ["Mixed confidence predictions"],
-    thumbnail_url: "/placeholder.svg",
-  },
-  {
-    image_id: "img-4289",
-    image_name: "img_4289.jpg",
-    priority_score: 0.75,
-    reasons: ["Similar to known errors"],
-    thumbnail_url: "/placeholder.svg",
-  },
-  {
-    image_id: "img-5102",
-    image_name: "img_5102.jpg",
-    priority_score: 0.71,
-    reasons: ["Low confidence predictions"],
-    thumbnail_url: "/placeholder.svg",
-  },
-];
+  // ── Class metrics ────────────────────────────────────────────────────────
+  const classMetricsQuery = useQuery<ClassMetrics[]>({
+    queryKey: ["evaluation-classes", projectId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/v1/evaluation/projects/${projectId}/classes`);
+      if (!res.ok) throw new Error("Failed to fetch class metrics");
+      const data: any[] = await res.json();
+      return data.map((cls, i) => ({
+        class_id: cls.class_id ?? i,
+        class_name: cls.class_name ?? `Class ${i}`,
+        color: CLASS_COLORS[i % CLASS_COLORS.length],
+        precision: cls.precision ?? 0,
+        recall: cls.recall ?? 0,
+        f1_score: cls.f1_score ?? 0,
+        tp: cls.tp ?? 0,
+        fp: cls.fp ?? 0,
+        fn: cls.fn ?? 0,
+      }));
+    },
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-export const useEvaluationData = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [summary] = useState<MetricsSummary>(generateMockSummary);
-  const [classMetrics] = useState<ClassMetrics[]>(generateMockClassMetrics);
-  const [editDistribution] = useState<EditTypeDistribution[]>(generateMockEditDistribution);
-  const [trends, setTrends] = useState<TemporalTrend[]>(() => generateMockTrends(30));
-  const [anomalies] = useState<Anomaly[]>(generateMockAnomalies);
-  const [alerts, setAlerts] = useState<Alert[]>(generateMockAlerts);
-  const [thresholds, setThresholds] = useState<AlertThreshold[]>(generateMockThresholds);
-  const [priorityImages, setPriorityImages] = useState<PriorityImage[]>(generateMockPriorityImages);
+  // ── Temporal trends ──────────────────────────────────────────────────────
+  const trendsQuery = useQuery<TemporalTrend[]>({
+    queryKey: ["evaluation-trends", projectId, trendDays],
+    queryFn: async () => {
+      const res = await apiFetch(
+        `/api/v1/temporal/projects/${projectId}/trends?days=${trendDays}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch trends");
+      const data = await res.json();
+      return (data.trends ?? []).map((t: any) => ({
+        date: typeof t.date === "string" ? t.date.split("T")[0] : t.date,
+        precision: t.precision ?? 0,
+        recall: t.recall ?? 0,
+        f1_score: t.f1_score ?? 0,
+        edit_rate: t.edit_rate ?? 0,
+      }));
+    },
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const fetchTrends = useCallback((days: number) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setTrends(generateMockTrends(days));
-      setIsLoading(false);
-    }, 300);
+    setTrendDays(days);
   }, []);
 
-  const acknowledgeAlert = useCallback((alertId: number) => {
-    setAlerts((prev) =>
-      prev.map((alert) =>
-        alert.id === alertId ? { ...alert, is_acknowledged: true } : alert
-      )
-    );
+  // ── Alerts ───────────────────────────────────────────────────────────────
+  const alertsQuery = useQuery<Alert[]>({
+    queryKey: ["evaluation-alerts", projectId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/v1/temporal/projects/${projectId}/alerts`);
+      if (!res.ok) throw new Error("Failed to fetch alerts");
+      const data: any[] = await res.json();
+      return data.map((a) => ({
+        id: a.id,
+        severity: a.severity,
+        metric_name: a.metric_name,
+        message: a.message,
+        current_value: a.current_value ?? 0,
+        threshold: a.threshold_value ?? 0,
+        created_at: a.alert_date,
+        is_acknowledged: a.is_acknowledged ?? false,
+      }));
+    },
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  });
+
+  const acknowledgeAlertMutation = useMutation({
+    mutationFn: async (alertId: number) => {
+      const res = await apiFetch(
+        `/api/v1/temporal/projects/${projectId}/alerts/${alertId}/acknowledge`,
+        { method: "POST" }
+      );
+      if (!res.ok) throw new Error("Failed to acknowledge alert");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evaluation-alerts", projectId] });
+    },
+  });
+
+  const acknowledgeAlert = useCallback(
+    (alertId: number) => acknowledgeAlertMutation.mutate(alertId),
+    [acknowledgeAlertMutation]
+  );
+
+  // ── Thresholds ───────────────────────────────────────────────────────────
+  const thresholdsQuery = useQuery<AlertThreshold[]>({
+    queryKey: ["evaluation-thresholds", projectId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/v1/temporal/projects/${projectId}/thresholds`);
+      if (!res.ok) throw new Error("Failed to fetch thresholds");
+      const data: any[] = await res.json();
+      return data.map((t) => ({
+        metric: t.metric,
+        warning_threshold: t.warning_threshold,
+        critical_threshold: t.critical_threshold,
+        slack_enabled: false,
+        email_enabled: true,
+        condition: t.condition ?? (t.higher_is_better ? "lt" : "gt"),
+      }));
+    },
+    enabled: !!projectId,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const updateThresholds = useCallback((_newThresholds: AlertThreshold[]) => {
+    // Threshold persistence requires a backend PUT endpoint (Phase 2+).
+    // Local-only update is intentionally omitted.
   }, []);
 
-  const updateThresholds = useCallback((newThresholds: AlertThreshold[]) => {
-    setThresholds(newThresholds);
-  }, []);
+  // ── Priority images (active learning) ───────────────────────────────────
+  const priorityQuery = useQuery<PriorityImage[]>({
+    queryKey: ["evaluation-priority", projectId, priorityStrategy, priorityLimit],
+    queryFn: async () => {
+      const strategyParam = priorityStrategy.replace('-', '_');
+      const res = await apiFetch(
+        `/api/v1/active-learning/projects/${projectId}/suggest?strategy=${strategyParam}&limit=${priorityLimit}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch priority images");
+      const data: any[] = await res.json();
+      return data.map((img) => ({
+        image_id: img.image_id,
+        image_name: img.image_name,
+        priority_score: img.priority_score ?? 0,
+        reasons: img.reasons ?? [],
+        thumbnail_url: "",
+      }));
+    },
+    enabled: !!projectId,
+    staleTime: 2 * 60 * 1000,
+  });
 
   const generatePriorityQueue = useCallback(
     (strategy: SamplingStrategy, batchSize: number) => {
-      setIsLoading(true);
-      setTimeout(() => {
-        // Simulate different ordering based on strategy
-        const images = generateMockPriorityImages().slice(0, batchSize);
-        setPriorityImages(images);
-        setIsLoading(false);
-      }, 500);
+      setPriorityStrategy(strategy);
+      setPriorityLimit(batchSize);
     },
     []
   );
 
+  // ── Combined loading state ───────────────────────────────────────────────
+  const isLoading =
+    summaryQuery.isLoading ||
+    classMetricsQuery.isLoading ||
+    trendsQuery.isLoading ||
+    alertsQuery.isLoading;
+
   return {
     isLoading,
-    summary,
-    classMetrics,
-    editDistribution,
-    trends,
-    anomalies,
-    alerts,
-    thresholds,
-    priorityImages,
+    summary: summaryQuery.data ?? EMPTY_SUMMARY,
+    classMetrics: classMetricsQuery.data ?? [],
+    editDistribution: [] as EditTypeDistribution[],
+    trends: trendsQuery.data ?? [],
+    anomalies: [] as Anomaly[],
+    alerts: alertsQuery.data ?? [],
+    thresholds: thresholdsQuery.data ?? [],
+    priorityImages: priorityQuery.data ?? [],
     fetchTrends,
     acknowledgeAlert,
     updateThresholds,

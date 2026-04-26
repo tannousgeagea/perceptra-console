@@ -5,6 +5,7 @@ export interface AIModel {
   supportedTypes: AnnotationType[];
   description: string;
   accuracy: number;
+  productionVersionId?: string;
 }
 
 export type AnnotationType = 'bounding-box' | 'polygon' | 'segmentation' | 'classification';

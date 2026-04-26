@@ -139,7 +139,6 @@ const BoundingBox: React.FC<Props> = ({ box,isSelected, isHighlighted, tool, onS
   }, [isDragging, resizing, handleMouseMove, handleMouseUp]);
 
   // useEffect(() => {
-  //   console.log(`Box ${box.id} rendered`);
   // });
 
   const { width: pixelWidth, height: pixelHeight } =

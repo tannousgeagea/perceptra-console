@@ -155,7 +155,6 @@ export function AddImagesToVersionDialog({
   // Show "select all matching" banner when user selected full page but there are more
   const showSelectAllBanner = allPageSelected && !allMatchingSelected && (availableImages?.total || 0) > pageSize;
 
-  console.log(selectedIds)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">

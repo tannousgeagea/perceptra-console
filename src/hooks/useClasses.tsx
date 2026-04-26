@@ -17,7 +17,6 @@ export const useClassesApi = () => {
     if (!currentOrganization) throw new Error("No organization selected");
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
       const classes = await classesApi.getClasses(currentOrganization.id, projectId);
       return classes;
     } catch (err) {

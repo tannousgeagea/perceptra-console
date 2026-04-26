@@ -33,7 +33,6 @@ const SplitJobModal = ({ isOpen, onClose, job, users, onSplitJob }: SplitJobModa
   const maxSlices = Math.min(job.image_count, 10);
   
 
-  console.log(typeof users[0].id)
   const handleNumberOfSlicesChange = (value: number) => {
     const slices = Math.max(minSlices, Math.min(maxSlices, value));
     setNumberOfSlices(slices);

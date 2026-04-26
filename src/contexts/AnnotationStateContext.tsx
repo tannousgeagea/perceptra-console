@@ -36,7 +36,6 @@ export const AnnotationStateProvider: React.FC<{ children: React.ReactNode }> = 
   const [onPolygonFinalized, setOnPolygonFinalized] = useState<((points: Point[]) => void) | undefined>();
 
 
-  // console.log("Context: ", hoveredBoxId)
   const addPointToCurrentPolygon = useCallback((point: Point) => {
     setCurrentPolygon(prev => prev ? [...prev, point] : [point]);
   }, []);

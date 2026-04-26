@@ -53,23 +53,19 @@ const ModelsList: React.FC = () => {
   const { data: models, isLoading, error  } = useProjectModels(projectId!);
   const updateModel = useUpdateModel({
     onSuccess: (data) => {
-      console.log('Model updated:', data.id);
     }
   });
 
   const deleteModel = useDeleteModel();
   const duplicateModel = useDuplicateModel({
     onSuccess: (data) => {
-      console.log('Duplicated model:', data.id);
     }
   });
 
   // Use the hook with custom callbacks
   const triggerTraining = useTriggerTraining({
     onSuccess: (data) => {
-      console.log('Training started:', data);
       // Or show the task details
-      console.log(`Training task ${data.task_id} on ${data.compute_provider} ${data.instance_type}`);
     },
     onError: (error) => {
       console.error('Failed to start training:', error);

@@ -114,7 +114,6 @@ export const ModelService = {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         // In a real app, this would update the database
-        console.log(`Setting tag ${tag} to ${value} for version ${versionId} of model ${modelId}`);
         resolve();
       }, 500);
     });

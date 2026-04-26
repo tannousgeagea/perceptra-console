@@ -68,7 +68,6 @@ export const FilterBar = ({
 
   const hasActiveFilters = dateRange?.from || dateRange?.to || searchQuery || selectedProject;
 
-  console.log(showFilters)
   return (
     <div className="bg-card border-b border-border">
       <div className="px-6 py-4">

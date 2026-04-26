@@ -101,7 +101,6 @@ export function AgentManagement() {
   const handleRegistrationSuccess = (response: RegisterAgentResponse) => {
     // Reload agents to get the new one
     // loadAgents();
-    console.log(response)
   };
 
 

@@ -21,7 +21,6 @@ const CreateDatasetVersion: FC<CreateDatasetVersionProps> = ({ projectId }) => {
         try {
             const newVersion = await createVersion(projectId);
             if (newVersion) {
-                console.log(newVersion)
                 setSuccessMessage("Version created successfully!");
                 setTimeout(() => {
                   navigate(`/projects/${projectId}/versions`);

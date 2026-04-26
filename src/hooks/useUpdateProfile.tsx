@@ -188,7 +188,6 @@ const UpdateFirstName = () => {
 const ProfileForm = () => {
   const { updateProfile, isLoading } = useUpdateProfile({
     onSuccess: (updatedUser) => {
-      console.log('Profile updated:', updatedUser);
       // Redirect or show modal
     },
     onError: (error) => {

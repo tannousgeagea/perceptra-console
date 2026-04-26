@@ -45,7 +45,6 @@ export const useRemoveImagesFromVersion = (versionId: string) => {
     
     setIsLoading(false);
     
-    console.log('Removing images from version:', versionId, imageIds);
     
     return { success: true };
   };
@@ -75,7 +74,6 @@ export function useExportVersion() {
       });
       
       // In production, this would return a download URL or job ID
-      console.log('Exporting version:', versionId, config);
       
       // Simulate download
       setTimeout(() => {

@@ -80,7 +80,6 @@ export function DeleteConfirmDialog({
   const shouldRenderTrigger = controlledOpen === undefined;
 
 
-  console.log(isLoading)
   return (
     <>
       {/* Trigger (only if uncontrolled) */}

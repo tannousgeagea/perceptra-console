@@ -27,7 +27,6 @@ export function DataLakeSelectionHeader({
   if (selectedCount === 0) return null;
 
 
-  console.log(projects)
   return (
     <div className="bg-primary text-primary-foreground px-4 py-3 rounded-lg flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-4">
@@ -75,7 +74,6 @@ export function DataLakeSelectionHeader({
           variant="secondary"
           size="sm"
           className="gap-2"
-          onClick={() => console.log('Download selected')}
         >
           <Download className="w-4 h-4" />
           Download
@@ -85,7 +83,6 @@ export function DataLakeSelectionHeader({
           variant="destructive"
           size="sm"
           className="gap-2"
-          onClick={() => console.log('Delete selected')}
         >
           <Trash2 className="w-4 h-4" />
           Delete

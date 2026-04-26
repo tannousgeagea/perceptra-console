@@ -57,7 +57,6 @@ export function useSearchParser(searchText: string): ParsedQuery {
       }
     });
 
-    console.log(parsed)
 
     return parsed;
   }, [searchText]);
