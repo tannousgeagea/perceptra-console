@@ -50,6 +50,8 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ model, projectId }) => {
       batchSize: 32,
       learningRate: 0.001,
       advancedConfig: false,
+      computeProfileId: "",
+      agentId: "",
     },
   });
 
