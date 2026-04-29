@@ -106,7 +106,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   const [isDirty, setIsDirty] = useState(false);
   const [isLoadingAnnotations, setIsLoadingAnnotation] = useState(false);
   const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
-  const [currentImageId, setCurrentImageId] = useState(image.image.id);
+  const [currentImageId, setCurrentImageId] = useState(image.id);
   const { currentOrganization } = useCurrentOrganization();
   
   // CRITICAL: Stable zoom instance (persists across image changes)
@@ -125,27 +125,29 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     initialScale: 1,
   });
 
+
+  console.log(image)
   const { mutate: createAnnotation } = useCreateAnnotation(
     projectId!,
-    Number(image.image.id),
+    Number(image.id),
     {
       // Optimistically update cache before server responds
       onMutate: async (newAnnotation: CreateAnnotationPayload) => {
         // Cancel outgoing refetches
         await queryClient.cancelQueries({ 
-          queryKey: ['annotations', projectId, Number(image.image.id)] 
+          queryKey: ['annotations', projectId, Number(image.id)] 
         });
 
         // Snapshot previous value
         const previousAnnotations = queryClient.getQueryData([
           'annotations', 
           projectId, 
-          Number(image.image.id)
+          Number(image.id)
         ]);
 
         // Optimistically update cache
         queryClient.setQueryData(
-          ['annotations', projectId, Number(image.image.id)],
+          ['annotations', projectId, Number(image.id)],
           (old: any) => {
             if (!old) return old;
             return {
@@ -178,7 +180,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
       onError: (err, newAnnotation, context) => {
         if (context?.previousAnnotations) {
           queryClient.setQueryData(
-            ['annotations', projectId, Number(image.image.id)],
+            ['annotations', projectId, Number(image.id)],
             context.previousAnnotations
           );
         }
@@ -206,7 +208,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   // IMPERATIVE API: Load new image without remounting
   useImperativeHandle(ref, () => ({
     loadImage: (newImage: ProjectImageOut) => {
-      setCurrentImageId(newImage.image.id);
+      setCurrentImageId(newImage.id);
       
       // Reset zoom if configured
       if (!preserveZoom) {
@@ -247,7 +249,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   // Auto-load on mount and when image prop changes
   useEffect(() => {
     // Load on: (1) image change OR (2) first mount
-    if (image.image.id !== currentImageId || !hasSyncedInitial) {
+    if (image.id !== currentImageId || !hasSyncedInitial) {
       setIsLoadingAnnotation(true);
       const annotations = image.annotations || [];
       const boxes = annotations.map(ann => ({
@@ -261,7 +263,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         class_id: parseInt(ann.class_id),
       }));
       setAllBoxes(boxes);
-      setCurrentImageId(image.image.id);
+      setCurrentImageId(image.id);
       setHasSyncedInitial(true);
       setIsDirty(false);
       setIsLoadingAnnotation(false);
@@ -270,7 +272,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         resetZoomInternal();
       }
     }
-  }, [image.image.id, currentImageId, hasSyncedInitial, preserveZoom, resetZoomInternal, setAllBoxes, image.annotations]);
+  }, [image.id, currentImageId, hasSyncedInitial, preserveZoom, resetZoomInternal, setAllBoxes, image.annotations]);
 
   const getRandomColor = (): string => {
     const letters = "0123456789ABCDEF";
@@ -327,19 +329,19 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     if (id) {
       // Cancel queries
       await queryClient.cancelQueries({ 
-        queryKey: ['annotations', projectId, Number(image.image.id)] 
+        queryKey: ['annotations', projectId, Number(image.id)] 
       });
 
       // Snapshot
       const previousAnnotations = queryClient.getQueryData([
         'annotations', 
         projectId, 
-        Number(image.image.id)
+        Number(image.id)
       ]);
 
       // Optimistically remove from cache
       queryClient.setQueryData(
-        ['annotations', projectId, Number(image.image.id)],
+        ['annotations', projectId, Number(image.id)],
         (old: any) => {
           Canvas.displayName = 'Canvas';if (!old) return old;
           return {
@@ -359,7 +361,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
           onError: () => {
             // Rollback on error
             queryClient.setQueryData(
-              ['annotations', projectId, Number(image.image.id)],
+              ['annotations', projectId, Number(image.id)],
               previousAnnotations
             );
             toast.error('Failed to delete annotation');
@@ -372,7 +374,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
 
       deleteBox(id)
     }
-  }, [projectId, image.image.id, deleteAnnotation, queryClient]);
+  }, [projectId, image.id, deleteAnnotation, queryClient]);
 
   // CRITICAL: Now uses Map.set internally - O(1) operation
   const updateBoxPosition = useCallback((id: string, updates: Partial<Box>) => {
@@ -632,7 +634,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         >
           <div className="annotation-canvas relative bg-[beige] justify-center items-center">
             <img
-              key={image.image.id}
+              key={image.id}
               src={image.image.download_url}
               alt="Sample image"
               className="object-contain select-none w-full max-h-[800px]"

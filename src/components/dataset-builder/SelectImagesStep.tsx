@@ -8,16 +8,20 @@ import { Search, AlertCircle, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBatchFinalizeImages } from '@/hooks/useProjectImageUpdate';
 import { ProjectImage } from '@/types/dataset';
+import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
+import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
+import { X } from 'lucide-react';
 
 interface SelectImagesStepProps {
   projectId: string;
   images: ProjectImage[];
+  project_image_ids?: string[];
+  total_images: number;
   onComplete: (imageIds: number[], finalizedCount: number) => void;
 }
 
-export function SelectImagesStep({ projectId, images, onComplete }: SelectImagesStepProps) {
+export function SelectImagesStep({ projectId, images, project_image_ids, total_images, onComplete }: SelectImagesStepProps) {
   const [searchText, setSearchText] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());  
   const { mutateAsync: batchFinalize, isPending } = useBatchFinalizeImages(projectId, {
     onSuccess: (data) => {
       toast.success(
@@ -37,32 +41,22 @@ export function SelectImagesStep({ projectId, images, onComplete }: SelectImages
     return images.filter(img => img.name.toLowerCase().includes(query));
   }, [images, searchText]);
 
-  const handleToggleImage = (imageId: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(imageId)) {
-      newSelected.delete(imageId);
-    } else {
-      newSelected.add(imageId);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const handleToggleAll = () => {
-    if (selectedIds.size === filteredImages.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredImages.map(img => img.id)));
-    }
-  };
+  const pageIds = filteredImages.map(img => img.project_image_id);
+  const selection = useSelectAllMatching({
+    pageIds,
+    totalMatching: total_images,
+    allMatchingIds: project_image_ids,
+    resetKey: `${searchText}`,
+  });
 
   const handleFinalize = async () => {
-    if (selectedIds.size === 0) {
+    if (selection.selectedCount === 0) {
       toast.error("Please select at least one image to finalize.");
       return;
     }
 
     try {
-      const imageIds = Array.from(selectedIds).map(id => parseInt(id));
+      const imageIds = Array.from(selection.selectedIds).map(id => parseInt(id));
       const response = await batchFinalize(imageIds); // ✅ Added 'await' and fixed typo 'resonse'
       
       onComplete(imageIds, response.finalized_count);
@@ -86,12 +80,31 @@ export function SelectImagesStep({ projectId, images, onComplete }: SelectImages
         <Button
           variant="outline"
           size="sm"
-          onClick={handleToggleAll}
+          onClick={selection.togglePage}
           disabled={filteredImages.length === 0}
         >
-          {selectedIds.size === filteredImages.length ? 'Deselect All' : 'Select All'}
+          {selection.selectedCount === filteredImages.length ? 'Deselect All' : 'Select All'}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={selection.clear}
+        >
+          <X className="w-4 h-4 mr-1" />
+          Clear
         </Button>
       </div>
+
+
+      <SelectAllMatchingBanner
+        showSelectAllMatchingPrompt={selection.showSelectAllMatchingPrompt}
+        allMatchingSelected={selection.allMatchingSelected}
+        selectedCount={selection.selectedCount}
+        pageSize={pageIds.length}
+        totalMatching={total_images}
+        onSelectAllMatching={selection.selectAllMatching}
+        onClear={selection.clear}
+      />
 
       <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
         <AlertCircle className="h-4 w-4 text-primary" />
@@ -111,9 +124,9 @@ export function SelectImagesStep({ projectId, images, onComplete }: SelectImages
               <div
                 key={image.id}
                 className={`relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md ${
-                  selectedIds.has(image.id) ? 'border-primary shadow-md' : 'border-border'
+                  selection.selectedIds.has(image.project_image_id) ? 'border-primary shadow-md' : 'border-border'
                 }`}
-                onClick={() => handleToggleImage(image.id)}
+                onClick={() => selection.toggle(image.project_image_id)}
               >
                 <div className="aspect-video bg-accent/50">
                   <img
@@ -124,8 +137,8 @@ export function SelectImagesStep({ projectId, images, onComplete }: SelectImages
                 </div>
                 <div className="absolute top-2 left-2">
                   <Checkbox
-                    checked={selectedIds.has(image.id)}
-                    onCheckedChange={() => handleToggleImage(image.id)}
+                    checked={selection.selectedIds.has(image.project_image_id)}
+                    onCheckedChange={() => selection.toggle(image.project_image_id)}
                     className="bg-background shadow-md"
                   />
                 </div>
@@ -153,9 +166,9 @@ export function SelectImagesStep({ projectId, images, onComplete }: SelectImages
 
       <div className="flex items-center justify-between pt-4 border-t">
         <span className="text-sm font-medium">
-          {selectedIds.size} image(s) selected
+          {selection.selectedCount} image(s) selected
         </span>
-        <Button onClick={handleFinalize} disabled={isPending || selectedIds.size === 0} size="lg">
+        <Button onClick={handleFinalize} disabled={isPending || selection.selectedCount === 0} size="lg">
           {isPending ? 'Finalizing...' : 'Finalize & Continue'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>

@@ -58,7 +58,7 @@ const AnnotationTool = () => {
   );
 
   const imageIdInteger = useMemo(
-    () => jobImages?.images?.map((img) => img.id) || [],
+    () => jobImages?.images?.map((img) => img.project_image_id) || [],
     [jobImages]
   );
 
@@ -115,7 +115,6 @@ const AnnotationTool = () => {
 
   const hasPreviousImage = currentIndex > 0;
   const previousImageId = hasPreviousImage ? imageIdInteger[currentIndex - 1] : undefined;
-
 
   if (isLoading || isError || !image) {
     return (

@@ -14,6 +14,8 @@ import { useBulkOperations } from '@/hooks/useBulkOperation';
 import { useUserProjects } from '@/hooks/useUserProjects';
 import { PaginationControls } from "@/components/ui/ui/pagination-control";
 import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
+import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
+import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
 import { Button } from '@/components/ui/ui/button';
 import { FolderPlus, Download } from 'lucide-react';
 import {
@@ -30,7 +32,6 @@ import { useSimilarityScan } from '@/hooks/useSimilarityScan';
 import { useSimilarityStore } from '@/stores/similarityStore';
 
 const DataLake: React.FC = () => {
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("");
   const { toast } = useToast();
 
@@ -38,7 +39,6 @@ const DataLake: React.FC = () => {
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchText, setSearchText] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
 
@@ -59,6 +59,14 @@ const DataLake: React.FC = () => {
   const { data, isLoading, error } = useImages(apiParams);
   const { data: projects, isLoading: isLoadingProjects, error: errorProjects } = useUserProjects();
 
+  const pageIds = data?.images.map((img) => img.id) ?? [];
+  const selection = useSelectAllMatching({
+    pageIds,
+    totalMatching: data?.total ?? 0,
+    allMatchingIds: data?.image_ids,
+    resetKey: `${searchText}|${itemsPerPage}`,
+  });
+
   // Similarity scan
   const scan = useSimilarityScan();
   const [scanDrawerOpen, setScanDrawerOpen] = useState(false);
@@ -74,68 +82,36 @@ const DataLake: React.FC = () => {
     setScanDrawerOpen(true);
   }, [scan]);
 
-
-  const handleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleSelectAll = useCallback(
-    (checked: boolean) => {
-      if (checked && data?.images) {
-        setSelectedIds(new Set(data.images.map((img) => img.id)));
-      } else {
-        setSelectedIds(new Set());
-      }
-    },
-    [data?.images]
-  );
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
-
   const handleBulkDelete = useCallback(async () => {
-    const selectedImageUUIDs = data?.images
-      .filter((img) => selectedIds.has(String(img.id)))
-      .map((img) => img.image_id);
+    const selectedImageUUIDs = Array.from(selection.selectedIds)
 
     if (!selectedImageUUIDs) return null;
     const ids = Array.from(selectedImageUUIDs)
     try {
       await runBulkDeleteImages(ids);
       toast({ title: 'Deletion Complete', description: `${ids.length} images deleted.` });
-      setSelectedIds(new Set());
+      selection.clear();
     } catch {
       toast({ title: 'Deletion Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkDeleteImages, toast]);
+  }, [selection, runBulkDeleteImages, toast]);
 
   const handleBulkTag = useCallback(async (tags: string[]) => {
-    const selectedImageUUIDs = data?.images
-      .filter((img) => selectedIds.has(String(img.id)))
-      .map((img) => img.image_id);
+    const selectedImageUUIDs = Array.from(selection.selectedIds)
 
     if (!selectedImageUUIDs) return null;
     try {
       await runBulkTag(selectedImageUUIDs, tags);
       toast({ title: 'Tagging Complete', description: `Tags applied to ${selectedImageUUIDs.length} images.` });
-      setSelectedIds(new Set());
+      selection.clear()
     } catch {
       toast({ title: 'Tagging Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkTag, toast]);
+  }, [selection, runBulkTag, toast]);
 
 
   const handleAddToProject = () => {
-    if (selectedIds.size === 0 || !selectedProject) {
+    if (selection.selectedCount === 0 || !selectedProject) {
       toast({
         title: 'Selection required',
         description: 'Please select images and a project first.',
@@ -148,17 +124,21 @@ const DataLake: React.FC = () => {
     addImagesToProject(
       {
         project_id: selectedProject,
-        image_ids: selectedImages,
+        image_ids: Array.from(selection.selectedIds),
       },
       {
         onSuccess: () => {
           // Clear selections after successful addition
-          setSelectedImages([]);
+          selection.clear()
           setSelectedProject('');
         },
       }
     );
   };
+
+
+  console.log(selection.selectedIds)
+  console.log(selection.selectedCount)
 
   if (error || errorProjects) {
     return (
@@ -185,10 +165,10 @@ const DataLake: React.FC = () => {
       <DataLakeFilters searchText={searchText} onSearchChange={setSearchText} />
 
       <BulkOperationBar
-        selectedCount={selectedIds.size}
+        selectedCount={selection.selectedCount}
         totalCount={data?.images.length || 0}
-        onSelectAll={() => handleSelectAll(true)}
-        onClearSelection={handleClearSelection}
+        onSelectAll={selection.togglePage}
+        onClearSelection={selection.clear}
         actions={[
           {
             id: 'delete',
@@ -196,7 +176,7 @@ const DataLake: React.FC = () => {
             icon: <Trash2 className="w-4 h-4" />,
             variant: 'destructive',
             requiresConfirm: true,
-            confirmTitle: `Delete ${selectedIds.size} images?`,
+            confirmTitle: `Delete ${selection.selectedCount} images?`,
             confirmDescription: 'This action cannot be undone. The selected images will be permanently removed from the data lake.',
             onClick: handleBulkDelete,
           },
@@ -224,13 +204,23 @@ const DataLake: React.FC = () => {
               variant="secondary"
               size="sm"
               className="gap-2"
-              onClick={() => toast({ title: 'Download started', description: `Downloading ${selectedIds.size} images...` })}
+              onClick={() => toast({ title: 'Download started', description: `Downloading ${selection.selectedCount} images...` })}
             >
               <Download className="w-4 h-4" />
               Download
             </Button>
           </div>
         }
+      />
+
+      <SelectAllMatchingBanner
+        showSelectAllMatchingPrompt={selection.showSelectAllMatchingPrompt}
+        allMatchingSelected={selection.allMatchingSelected}
+        selectedCount={selection.selectedCount}
+        pageSize={pageIds.length}
+        totalMatching={data?.total ?? 0}
+        onSelectAllMatching={selection.selectAllMatching}
+        onClear={selection.clear}
       />
 
       {isLoading ? (
@@ -249,13 +239,13 @@ const DataLake: React.FC = () => {
       ) : (
         <>
           {viewMode === 'grid' ? (
-            <ImageGrid images={data.images} selectedIds={selectedIds} onSelect={handleSelect} />
+            <ImageGrid images={data.images} selectedIds={selection.selectedIds} onSelect={selection.toggle} />
           ) : (
             <ImageTable
               images={data.images}
-              selectedIds={selectedIds}
-              onSelect={handleSelect}
-              onSelectAll={handleSelectAll}
+              selectedIds={selection.selectedIds}
+              onSelect={selection.toggle}
+              onSelectAll={(checked) => (checked ? selection.togglePage() : selection.clear())}
             />)}
 
           <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
@@ -265,13 +255,11 @@ const DataLake: React.FC = () => {
               itemsPerPage={itemsPerPage}
               onPageChange={(page) => {
                 setCurrentPage(page);
-                setSelectedIds(new Set());
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onItemsPerPageChange={(perPage) => {
                 setItemsPerPage(perPage);
                 setCurrentPage(1);
-                setSelectedIds(new Set());
               }}
             />
           </div>

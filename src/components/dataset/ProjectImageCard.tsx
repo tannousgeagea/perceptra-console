@@ -53,7 +53,7 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <Checkbox
             checked={selected}
-            onCheckedChange={() => onSelect(image.id)}
+            onCheckedChange={() => onSelect(image.project_image_id)}
             className="w-6 h-6"
           />
         </div>
