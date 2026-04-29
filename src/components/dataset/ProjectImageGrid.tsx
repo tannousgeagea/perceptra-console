@@ -16,7 +16,7 @@ export function ProjectImageGrid({ images, selectedIds, onSelect, showAnnotation
         <ProjectImageCard
           key={image.id}
           image={image}
-          selected={selectedIds.has(image.id)}
+          selected={selectedIds.has(image.project_image_id)}
           onSelect={onSelect}
           showAnnotations={showAnnotations}
         />

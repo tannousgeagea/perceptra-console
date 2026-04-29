@@ -77,6 +77,7 @@ export interface ImagesResponse {
   total: number;
   page: number;
   page_size: number;
+  image_ids: string[];
   images: ImageRecord[];
 }
 
@@ -136,6 +137,8 @@ export interface JobImagesResponse {
   reviewed: number;
   annotated: number;
   job: JobInfo;
+  project_image_ids: string[];
+  image_ids: string[];
   images: ProjectImage[];
 }
 

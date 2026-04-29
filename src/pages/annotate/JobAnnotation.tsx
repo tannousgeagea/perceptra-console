@@ -5,6 +5,8 @@ import { JobAnnotationTabs } from '@/components/job-annotation/JobAnnotationTabs
 import { JobImageGrid } from '@/components/job-annotation/JobImageGrid';
 import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
 import { useBulkOperations } from '@/hooks/useBulkOperation';
+import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
+import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
 import { DatasetBuilder } from '@/components/dataset-builder/DatasetBuilder';
 import { useJobImages } from '@/hooks/useJobImages';
 import { Skeleton } from '@/components/ui/ui/skeleton';
@@ -26,7 +28,6 @@ export default function JobAnnotation() {
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [itemsPerPage, setItemsPerPage] = useState(initialLimit);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const [imageSize, setImageSize] = useState<'sm' | 'md' | 'lg'>('md');
@@ -93,54 +94,53 @@ export default function JobAnnotation() {
     return matchesSearch;
   }) || [];
 
-  const selectionMode = selectedIds.size > 0;
-  
-  const handleToggleSelect = useCallback((imageId: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(imageId)) next.delete(imageId);
-      else next.add(imageId);
-      return next;
-    });
-  }, []);
+  const pageIds = filteredImages.map(img => img.project_image_id);
+  const selection = useSelectAllMatching({
+    pageIds,
+    totalMatching: data?.total ?? 0,
+    allMatchingIds: data?.project_image_ids,
+    resetKey: `${searchText}|${activeStatus}|${itemsPerPage}`,
+  });
 
+  const selectionMode = selection.selectedCount > 0;
+  
   const handleBulkReview = useCallback(async () => {
-    const ids = Array.from(selectedIds);
+    const ids = Array.from(selection.selectedIds);
     try {
       await runBulkReview(ids);
       toast({ title: 'Review Complete', description: `${ids.length} images reviewed.` });
-      setSelectedIds(new Set());
+      selection.clear();
       refetch();
     } catch {
       toast({ title: 'Review Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkReview, toast, refetch]);
+  }, [selection, runBulkReview, toast, refetch]);
 
   const handleBulkDelete = useCallback(async () => {
-    const ids = Array.from(selectedIds);
+    const ids = Array.from(selection.selectedIds);
     try {
       await runBulkDeleteProject(ids);
       toast({ title: 'Deletion Complete', description: `${ids.length} images deleted.` });
-      setSelectedIds(new Set());
+      selection.clear();
       refetch();
     } catch {
       toast({ title: 'Deletion Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkDeleteProject, toast, refetch]);
+  }, [selection, runBulkDeleteProject, toast, refetch]);
 
   const handleBulkTag = useCallback(async (tags: string[]) => {
     const selectedImageUUIDs = filteredImages
-      .filter((img) => selectedIds.has(String(img.id)))
-      .map((img) => img.image_id);
+      .filter((img) => selection.selectedIds.has(String(img.project_image_id)))
+      .map((img) => img.id);
     try {
       await runBulkTag(selectedImageUUIDs, tags);
       toast({ title: 'Tagging Complete', description: `Tags applied to ${selectedImageUUIDs.length} images.` });
-      setSelectedIds(new Set());
+      selection.clear();
       refetch();
     } catch {
       toast({ title: 'Tagging Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkTag, toast, refetch]);
+  }, [selection, runBulkTag, toast, refetch]);
 
   // Get the count for the current active status
   const getCurrentStatusCount = () => {
@@ -150,6 +150,7 @@ export default function JobAnnotation() {
     return 0;
   };
 
+  const totat_records = data?.total ?? 0;
   return (
     <div className="min-h-screen w-full bg-background">
       <div className="mx-auto p-6 space-y-6">
@@ -164,10 +165,10 @@ export default function JobAnnotation() {
         />
 
         <BulkOperationBar
-          selectedCount={selectedIds.size}
+          selectedCount={selection.selectedCount}
           totalCount={filteredImages.length}
-          onSelectAll={() => setSelectedIds(new Set(filteredImages.map(img => img.id)))}
-          onClearSelection={() => setSelectedIds(new Set())}
+          onSelectAll={selection.togglePage}
+          onClearSelection={selection.clear}
           actions={[
             {
               id: 'review',
@@ -182,7 +183,7 @@ export default function JobAnnotation() {
               icon: <Trash2 className="w-4 h-4" />,
               variant: 'destructive',
               requiresConfirm: true,
-              confirmTitle: `Delete ${selectedIds.size} images?`,
+              confirmTitle: `Delete ${selection.selectedCount} images?`,
               confirmDescription: 'This action cannot be undone. The selected images and all their annotations will be permanently removed.',
               onClick: handleBulkDelete,
             },
@@ -191,6 +192,16 @@ export default function JobAnnotation() {
           onCancelOperation={cancelOperation}
           onOperationComplete={clearOperation}
           onBulkTag={handleBulkTag}
+        />
+
+        <SelectAllMatchingBanner
+          showSelectAllMatchingPrompt={selection.showSelectAllMatchingPrompt}
+          allMatchingSelected={selection.allMatchingSelected}
+          selectedCount={selection.selectedCount}
+          pageSize={pageIds.length}
+          totalMatching={data?.total ?? 0}
+          onSelectAllMatching={selection.selectAllMatching}
+          onClear={selection.clear}
         />
 
         <JobAnnotationTabs
@@ -232,9 +243,9 @@ export default function JobAnnotation() {
             <JobImageGrid
               images={filteredImages}
               imageSize={imageSize}
-              selectedIds={selectedIds}
+              selectedIds={selection.selectedIds}
               selectionMode={selectionMode}
-              onToggleSelect={handleToggleSelect}
+              onToggleSelect={selection.toggle}
               onImageClick={(index: number, image_id: string) => handleImageClick(index, image_id)}
             />
 
@@ -261,6 +272,8 @@ export default function JobAnnotation() {
           projectId={projectId}
           open={datasetBuilderOpen}
           images={data?.images.filter(img => img.status === 'reviewed') || []}
+          project_image_ids={data?.project_image_ids}
+          total_images={totat_records}
           onOpenChange={setDatasetBuilderOpen}
         />
       </div>

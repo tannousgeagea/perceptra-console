@@ -13,6 +13,8 @@ import { useSearchParser } from '@/hooks/useSearchParser';
 import { buildImageQuery } from '@/hooks/useImages';
 import { PaginationControls } from '@/components/ui/ui/pagination-control';
 import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
+import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
+import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
 import { useBulkOperations } from '@/hooks/useBulkOperation';
 import { useToast } from '@/hooks/use-toast';
 import { ScanConfigDrawer } from '@/components/similarity/ScanConfigDrawer';
@@ -24,7 +26,6 @@ export default function ProjectDataset() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const [searchText, setSearchText] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,63 +60,61 @@ export default function ProjectDataset() {
     limit: itemsPerPage,
   });
 
-  const handleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
+  const pageIds = data?.images.map((img) => img.project_image_id) ?? [];
+  const selection = useSelectAllMatching({
+    pageIds,
+    totalMatching: data?.total ?? 0,
+    allMatchingIds: data?.image_ids,
+    resetKey: `${searchText}|${itemsPerPage}`,
+  });
 
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
 
   const handleBulkReview = useCallback(async () => {
-    const ids = Array.from(selectedIds);
+    const ids = Array.from(selection.selectedIds);
     try {
       await runBulkReview(ids);
       toast({ title: 'Review Complete', description: `${ids.length} images reviewed.` });
-      setSelectedIds(new Set());
+      selection.clear();
       refetch();
     } catch {
       toast({ title: 'Review Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkReview, toast, refetch]);
+  }, [selection, runBulkReview, toast, refetch]);
 
   const handleBulkDelete = useCallback(async () => {
-    const ids = Array.from(selectedIds);
+    const ids = Array.from(selection.selectedIds);
     try {
       await runBulkDeleteProject(ids);
       toast({ title: 'Deletion Complete', description: `${ids.length} images deleted.` });
-      setSelectedIds(new Set());
+      selection.clear();
       refetch();
     } catch {
       toast({ title: 'Deletion Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkDeleteProject, toast, refetch]);
+  }, [selection, runBulkDeleteProject, toast, refetch]);
 
   const handleBulkTag = useCallback(async (tags: string[]) => {
     const selectedImageUUIDs = data?.images
-      .filter((img) => selectedIds.has(String(img.id)))
-      .map((img) => img.image_id);
+      .filter((img) => selection.selectedIds.has(String(img.project_image_id)))
+      .map((img) => img.id);
 
     if (!selectedImageUUIDs) return null;
     
     try {
       await runBulkTag(selectedImageUUIDs, tags);
       toast({ title: 'Tagging Complete', description: `Tags applied to ${selectedImageUUIDs.length} images.` });
-      setSelectedIds(new Set());
+      selection.clear();
       refetch();
     } catch {
       toast({ title: 'Tagging Failed', variant: 'destructive' });
     }
-  }, [selectedIds, runBulkTag, toast, refetch]);
+  }, [selection, runBulkTag, toast, refetch]);
 
+
+  console.log(selection.selectedIds)
   return (
     <div className="min-h-screen w-full p-6 space-y-6 bg-background">
       <div className='space-y-6'>
@@ -125,7 +124,7 @@ export default function ProjectDataset() {
           annotated={data?.annotated || 0}
           unannotated={data?.unannotated || 0}
           reviewed={data?.reviewed || 0}
-          selectedCount={selectedIds.size}
+          selectedCount={selection.selectedCount}
           onRefresh={handleRefresh}
           onUpload={() => navigate(`/projects/${projectId}/upload`)}
           onFindDuplicates={handleFindDuplicates}
@@ -141,10 +140,10 @@ export default function ProjectDataset() {
         />
 
         <BulkOperationBar
-          selectedCount={selectedIds.size}
+          selectedCount={selection.selectedCount}
           totalCount={data?.images.length || 0}
-          onSelectAll={() => setSelectedIds(new Set(data?.images.map(img => img.id) || []))}
-          onClearSelection={() => setSelectedIds(new Set())}
+          onSelectAll={selection.togglePage}
+          onClearSelection={selection.clear}
           actions={[
             {
               id: 'review',
@@ -159,7 +158,7 @@ export default function ProjectDataset() {
               icon: <Trash2 className="w-4 h-4" />,
               variant: 'destructive',
               requiresConfirm: true,
-              confirmTitle: `Delete ${selectedIds.size} images?`,
+              confirmTitle: `Delete ${selection.selectedCount} images?`,
               confirmDescription: 'This action cannot be undone. The selected images and all their annotations will be permanently removed.',
               onClick: handleBulkDelete,
             },
@@ -168,6 +167,16 @@ export default function ProjectDataset() {
           onCancelOperation={cancelOperation}
           onOperationComplete={clearOperation}
           onBulkTag={handleBulkTag}
+        />
+
+        <SelectAllMatchingBanner
+          showSelectAllMatchingPrompt={selection.showSelectAllMatchingPrompt}
+          allMatchingSelected={selection.allMatchingSelected}
+          selectedCount={selection.selectedCount}
+          pageSize={pageIds.length}
+          totalMatching={data?.total ?? 0}
+          onSelectAllMatching={selection.selectAllMatching}
+          onClear={selection.clear}
         />
 
         {error && (
@@ -198,21 +207,18 @@ export default function ProjectDataset() {
             {viewMode === 'grid' ? (
               <ProjectImageGrid
                 images={data?.images || []}
-                selectedIds={selectedIds}
-                onSelect={handleSelect}
+                selectedIds={selection.selectedIds}
+                onSelect={selection.toggle}
                 showAnnotations={showAnnotations}
               />
             ) : (
               <ProjectImageTable
                 images={data?.images || []}
-                selectedIds={selectedIds}
-                onSelect={handleSelect}
+                selectedIds={selection.selectedIds}
+                onSelect={selection.toggle}
                 onSelectAll={(checked) => {
-                  if (checked) {
-                    setSelectedIds(new Set(data?.images.map(img => img.id) || []));
-                  } else {
-                    setSelectedIds(new Set());
-                  }
+                  if (checked) selection.togglePage();
+                  else selection.clear();
                 }}
               />
             )}
@@ -223,13 +229,11 @@ export default function ProjectDataset() {
                 itemsPerPage={itemsPerPage}
                 onPageChange={(page) => {
                   setCurrentPage(page);
-                  setSelectedIds(new Set());
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onItemsPerPageChange={(perPage) => {
                   setItemsPerPage(perPage);
                   setCurrentPage(1);
-                  setSelectedIds(new Set());
                 }}
                 className='pr-[32rem]'
               />

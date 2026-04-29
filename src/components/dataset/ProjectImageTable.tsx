@@ -67,12 +67,12 @@ export function ProjectImageTable({
               <TableRow
                 key={image.id}
                 className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onSelect(image.id)}
+                onClick={() => onSelect(image.project_image_id)}
               >
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={selectedIds.has(image.id)}
-                    onCheckedChange={() => onSelect(image.id)}
+                    checked={selectedIds.has(image.project_image_id)}
+                    onCheckedChange={() => onSelect(image.project_image_id)}
                     aria-label={`Select ${image.original_filename}`}
                   />
                 </TableCell>

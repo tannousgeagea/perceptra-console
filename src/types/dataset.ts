@@ -18,6 +18,7 @@ export interface Annotation {
 
 export interface ProjectImage {
   id: string;
+  project_image_id: string;
   image_id: string;
   name: string;
   original_filename: string;
@@ -57,7 +58,8 @@ export interface ProjectImagesResponse {
   annotated: number;
   unannotated: number;
   reviewed: number;
-  image_ids: number[];
+  image_ids: string[];
+  project_image_ids: string[];
   images: ProjectImage[];
 }
 

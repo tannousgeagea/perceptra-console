@@ -23,7 +23,7 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
 
   const handleCardClick = () => {
     if (selectionMode && onToggleSelect) {
-      onToggleSelect(image.id);
+      onToggleSelect(image.project_image_id);
     } else {
       handleClick()
     }
@@ -79,7 +79,7 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
             checked={selected}
             onClick={(e) => {
               e.stopPropagation();
-              onToggleSelect?.(image.id);
+              onToggleSelect?.(image.project_image_id);
             }}
             className={cn(
               'bg-background/80 backdrop-blur border-border transition-opacity',

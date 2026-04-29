@@ -78,7 +78,7 @@ export function AddImagesToVersionDialog({
 
   const handleTogglePageAll = useCallback(() => {
     if (!availableImages) return;
-    const pageIds = availableImages.images.map(img => img.id);
+    const pageIds = availableImages.images.map(img => img.project_image_id);
     const allPageSelected = pageIds.every(id => selectedIds.has(id));
 
     setAllMatchingSelected(false);
@@ -98,16 +98,16 @@ export function AddImagesToVersionDialog({
   }, [availableImages, selectedIds]);
 
   const handleSelectAllMatching = useCallback(() => {
-    if (!availableImages?.image_ids?.length) return;
+    if (!availableImages?.project_image_ids?.length) return;
 
     setAllMatchingSelected(true);
 
     setSelectedIds(prev => {
       const next = new Set(prev);
-      availableImages.image_ids.forEach(id => next.add(String(id)));
+      availableImages.project_image_ids.forEach(id => next.add(String(id)));
       return next;
     });
-  }, [availableImages?.image_ids]);
+  }, [availableImages?.project_image_ids]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -148,7 +148,7 @@ export function AddImagesToVersionDialog({
     }
   };
 
-  const pageIds = availableImages?.images.map(img => img.id) || [];
+  const pageIds = availableImages?.images.map(img => img.project_image_id) || [];
   const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id));
   const effectiveSelectedCount = allMatchingSelected ? (availableImages?.total || 0) : selectedIds.size;
 
@@ -274,9 +274,9 @@ export function AddImagesToVersionDialog({
                   <div
                     key={image.id}
                     className={`relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md ${
-                      selectedIds.has(image.id) ? 'border-primary shadow-md' : 'border-border'
+                      selectedIds.has(image.project_image_id) ? 'border-primary shadow-md' : 'border-border'
                     }`}
-                    onClick={() => handleToggleImage(image.id)}
+                    onClick={() => handleToggleImage(image.project_image_id)}
                   >
                     <div className="aspect-video bg-accent/50">
                       <img
@@ -289,8 +289,8 @@ export function AddImagesToVersionDialog({
                     </div>
                     <div className="absolute top-2 left-2">
                       <Checkbox
-                        checked={selectedIds.has(image.id)}
-                        onCheckedChange={() => handleToggleImage(image.id)}
+                        checked={selectedIds.has(image.project_image_id)}
+                        onCheckedChange={() => handleToggleImage(image.project_image_id)}
                         className="bg-background"
                       />
                     </div>

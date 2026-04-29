@@ -22,10 +22,10 @@ export function JobImageGrid({ images, imageSize, selectedIds, selectionMode, on
     <div className={cn('grid', gridClasses[imageSize])}>
       {images.map((image, index) => (
         <JobImageCard
-          key={image.id}
+          key={image.project_image_id}
           image={image}
           size={imageSize}
-          selected={selectedIds.has(image.id)}
+          selected={selectedIds.has(image.project_image_id)}
           selectionMode={selectionMode}
           onToggleSelect={onToggleSelect}
           handleClick={() => onImageClick(index, image.image_id)}

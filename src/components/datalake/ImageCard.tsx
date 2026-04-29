@@ -23,7 +23,7 @@ export function ImageCard({ image, selected, onSelect }: ImageCardProps) {
         <Checkbox
           checked={selected}
           onCheckedChange={() => onSelect(image.id)}
-          className="bg-white dark:bg-gray-800 data-[state=checked]:bg-primary"
+          className="bg-white data-[state=checked]:bg-primary"
         />
       </div>
 

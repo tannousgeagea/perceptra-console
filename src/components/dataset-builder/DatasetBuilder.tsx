@@ -6,17 +6,18 @@ import { Progress } from '@/components/ui/ui/progress';
 import { CheckCircle2 } from 'lucide-react';
 import { ProjectImage } from '@/types/dataset';
 
-
 interface DatasetBuilderProps {
   projectId: string;
   images: ProjectImage[];
+  project_image_ids?: string[]
+  total_images: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 type BuilderStep = 'select' | 'split' | 'complete';
 
-export function DatasetBuilder({ projectId, images, open, onOpenChange }: DatasetBuilderProps) {
+export function DatasetBuilder({ projectId, images, project_image_ids, total_images, open, onOpenChange }: DatasetBuilderProps) {
   const [currentStep, setCurrentStep] = useState<BuilderStep>('select');
   const [selectedImageIds, setSelectedImageIds] = useState<number[]>([]);
   const [finalizedCount, setFinalizedCount] = useState(0);
@@ -73,6 +74,8 @@ export function DatasetBuilder({ projectId, images, open, onOpenChange }: Datase
               <SelectImagesStep 
                 projectId={projectId}
                 images={images}
+                project_image_ids={project_image_ids}
+                total_images={total_images}
                 onComplete={handleImagesFinalized} 
               />
             )}
