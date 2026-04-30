@@ -38,6 +38,8 @@ const ModelDetail: React.FC = () => {
     });
   };
 
+
+  console.log("Model Detail Data:", model);
   // Get the model type label for display
   const getModelTypeLabel = (type: string): string => {
     switch (type) {

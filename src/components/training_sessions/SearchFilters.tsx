@@ -29,10 +29,13 @@ const SessionFilters: React.FC<SessionFiltersProps> = ({
   onStatusChange,
 }) => {
   const statusOptions = [
+    { id: 'pending', name: 'Pending' },
+    { id: 'queued', name: 'Queued' },
+    { id: 'initializing', name: 'Initializing' },
     { id: 'running', name: 'Running' },
     { id: 'completed', name: 'Completed' },
     { id: 'failed', name: 'Failed' },
-    { id: 'pending', name: 'Pending' },
+    { id: 'cancelled', name: 'Cancelled' },
   ];
 
   return (

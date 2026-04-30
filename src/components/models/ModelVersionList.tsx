@@ -236,7 +236,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "production", true)}
                             >
-                              {version.tags.includes("production") && (
+                              {version?.tags?.includes("production") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Production
@@ -244,7 +244,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "staging", true)}
                             >
-                              {version.tags.includes("staging") && (
+                              {version?.tags?.includes("staging") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Staging
@@ -252,7 +252,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "baseline", true)}
                             >
-                              {version.tags.includes("baseline") && (
+                              {version?.tags?.includes("baseline") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Baseline
@@ -260,7 +260,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "experimental", true)}
                             >
-                              {version.tags.includes("experimental") && (
+                              {version?.tags?.includes("experimental") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Experimental
