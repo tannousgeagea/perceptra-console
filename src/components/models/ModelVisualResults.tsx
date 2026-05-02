@@ -230,7 +230,7 @@ const ModelVisualResults: React.FC<{ model: ModelDetail }> = ({ model }) => {
                         value={version.id}
                       >
                         v{version.version_number}
-                        {version.tags.includes("production") ? " (Production)" : ""}
+                        {version?.tags?.includes("production") ? " (Production)" : ""}
                       </SelectItem>
                     ))}
                 </SelectContent>

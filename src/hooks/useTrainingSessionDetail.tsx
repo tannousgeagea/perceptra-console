@@ -1,24 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
+import { apiFetch } from "@/services/apiClient";
 import { TrainingSession } from "@/types/training_session";
+
+const TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled"]);
 
 export const useTrainingSessionDetail = (sessionId: string) => {
   return useQuery<TrainingSession>({
     queryKey: ["training-session", sessionId],
     queryFn: async () => {
-      const res = await fetch(`${baseURL}/api/v1/training-sessions/${sessionId}`, {
-        headers: { Accept: "application/json" },
-      });
+      const res = await apiFetch(`/api/v1/training-sessions/${sessionId}`);
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Failed to fetch session detail");
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `Failed to fetch session (${res.status})`);
       }
 
-      return await res.json();
+      return res.json();
     },
     enabled: !!sessionId,
     staleTime: 5000,
-    refetchInterval: 3000, // optional live refresh
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return 3000;
+      return TERMINAL_STATUSES.has(data.status) ? false : 3000;
+    },
   });
 };

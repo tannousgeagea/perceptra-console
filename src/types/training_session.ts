@@ -1,40 +1,52 @@
-export type Status = 'running' | 'completed' | 'failed' | 'pending';
+export type Status =
+  | 'pending'
+  | 'queued'
+  | 'initializing'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
 
-interface MetricPoint {
+export interface EpochMetric {
   epoch: number;
-  [key: string]: number;
+  timestamp: string;
+  is_best: boolean;
+  metrics: Record<string, number>;
 }
 
-interface ModelVersion {
+export interface ModelVersion {
   id: number;
-  version: number;
-} 
+  version: string | number;
+}
 
 export interface TrainingSession {
   id: string;
+  session_id: string;
   modelName: string;
   projectName: string;
+  modelVersionId: string;
+  modelVersionName: string;
   status: Status;
   createdAt: string;
   updatedAt: string;
+  startedAt?: string;
+  completedAt?: string;
   progress: number;
-  metrics?: {
-    accuracy?: number;
-    f1Score?: number;
-    precision?: number;
-    recall?: number;
-    [key: string]: number | undefined;
-  };
-  configuration?: {
-    epochs: number;
-    batchSize: number;
-    learningRate: number;
-    optimizer: string;
-    [key: string]: number | string;
-  };
+  currentEpoch: number;
+  totalEpochs: number;
+  duration?: string;
+  estimatedTimeRemaining?: string;
+  computeResource?: string;
+  triggeredBy?: string;
+  currentMetrics?: Record<string, number>;
+  bestMetrics?: Record<string, number>;
+  configuration?: Record<string, string | number | boolean>;
   logs?: string[];
+  errorMessage?: string;
+  errorTraceback?: string;
+  epochMetrics?: EpochMetric[];
+  // Backward compat for hooks that use model_version.id
   model_version: ModelVersion;
-  metricsData?: MetricPoint[]
 }
 
 export interface Project {

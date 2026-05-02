@@ -1,9 +1,11 @@
 
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, Check, TagIcon, Database } from "lucide-react";
+import { Download, Check, TagIcon, Database, Activity, ExternalLink } from "lucide-react";
 import { VersionTag } from "@/types/models";
 import { ModelArtifact, ModelDetail, ModelVersion } from "@/types/models";
+import { TrainingSession } from "@/types/training_session";
 import { ModelService } from "./ModelService";
 import { Button } from "@/components/ui/ui/button";
 import {
@@ -34,11 +36,21 @@ import {
 interface ModelVersionsListProps {
   model: ModelDetail;
   projectId: string;
+  sessions?: TrainingSession[];
 }
 
-const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId }) => {
+const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId, sessions = [] }) => {
   const queryClient = useQueryClient();
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
+
+  // Build a map: version_name → session for quick lookup
+  const sessionByVersion = React.useMemo(() => {
+    const map = new Map<string, TrainingSession>();
+    sessions.forEach((s) => {
+      if (s.modelVersionName) map.set(s.modelVersionName, s);
+    });
+    return map;
+  }, [sessions]);
 
   // Format date for display
   const formatDate = (dateString: string): string => {
@@ -154,6 +166,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
               <TableHead>Created</TableHead>
               <TableHead>By</TableHead>
               <TableHead>Tags</TableHead>
+              <TableHead>Session</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -220,6 +233,28 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                       ))}
                     </div>
                   </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const vname = version.version_name ?? `v${version.version_number}`;
+                      const session = sessionByVersion.get(vname);
+                      if (!session) {
+                        return <span className="text-xs text-muted-foreground">—</span>;
+                      }
+                      const isActive = ["pending", "queued", "initializing", "running"].includes(session.status);
+                      return (
+                        <Link
+                          to={`/projects/${projectId}/sessions/${session.id}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {isActive && (
+                            <Activity className="h-3 w-3 animate-pulse text-blue-500" />
+                          )}
+                          <ExternalLink className="h-3 w-3" />
+                          View
+                        </Link>
+                      );
+                    })()}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {version.status === "trained" && (
@@ -236,7 +271,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "production", true)}
                             >
-                              {version.tags.includes("production") && (
+                              {version?.tags?.includes("production") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Production
@@ -244,7 +279,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "staging", true)}
                             >
-                              {version.tags.includes("staging") && (
+                              {version?.tags?.includes("staging") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Staging
@@ -252,7 +287,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "baseline", true)}
                             >
-                              {version.tags.includes("baseline") && (
+                              {version?.tags?.includes("baseline") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Baseline
@@ -260,7 +295,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId 
                             <DropdownMenuItem
                               onClick={() => handleSetTag(version, "experimental", true)}
                             >
-                              {version.tags.includes("experimental") && (
+                              {version?.tags?.includes("experimental") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Experimental

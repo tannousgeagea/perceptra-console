@@ -114,7 +114,7 @@ const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                     .map((version) => (
                       <SelectItem key={version.id} value={version.id}>
                         v{version.version_number}
-                        {version.tags.includes("production")
+                        {version?.tags?.includes("production")
                           ? " (Production)"
                           : ""}
                       </SelectItem>
@@ -147,7 +147,7 @@ const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                           className="px-4 py-3 text-left text-sm font-medium"
                         >
                           v{version.version_number}
-                          {version.tags.includes("production")
+                          {version?.tags?.includes("production")
                             ? " (Production)"
                             : ""}
                         </th>
@@ -199,7 +199,7 @@ const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                             key={version.id}
                             dataKey={`v${version.version_number}`}
                             name={`Version ${version.version_number}`}
-                            fill={version.tags.includes("production") ? "#8884d8" : "#82ca9d"}
+                            fill={version?.tags?.includes("production") ? "#8884d8" : "#82ca9d"}
                           />
                         ))}
                       </BarChart>

@@ -1,20 +1,18 @@
-import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { useParams } from 'react-router-dom';
-import SessionDetail from '@/components/training_sessions/SessionDetails';
-import SessionHeader from '@/components/training_sessions/SessionHeader';
-import { Loader2 } from 'lucide-react';
+import React from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Loader2, AlertTriangle, BarChart2, Activity, ImageIcon, FileText } from 'lucide-react';
 import { useTrainingSessionDetail } from '@/hooks/useTrainingSessionDetail';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
-import ValidationImages from '@/components/validation/ValidationImages';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
+import SessionHeader from '@/components/training_sessions/SessionHeader';
+import SessionDetail from '@/components/training_sessions/SessionDetails';
 import ConfigurationLogs from '@/components/training_sessions/ConfigurationLogs';
-import { useValidationImages } from "@/hooks/useValidationImages";
+import ValidationImages from '@/components/validation/ValidationImages';
 import ValidationMetricsCharts from '@/components/validation/ValidationMetricsCharts';
+import { useValidationImages } from '@/hooks/useValidationImages';
 import { useValidationMetrics } from '@/hooks/useValidationMetrics';
 
 const SessionDetailPage: React.FC = () => {
-  const { projectId, sessionId } = useParams<{ projectId: string, sessionId: string }>();
+  const { projectId, sessionId } = useParams<{ projectId: string; sessionId: string }>();
 
   const {
     data: session,
@@ -22,9 +20,10 @@ const SessionDetailPage: React.FC = () => {
     isError,
     error,
     refetch,
-  } = useTrainingSessionDetail(sessionId || '');
+  } = useTrainingSessionDetail(sessionId ?? '');
 
   const modelVersionId = session?.model_version?.id;
+
   const {
     data: validationData,
     isLoading: imagesLoading,
@@ -32,32 +31,40 @@ const SessionDetailPage: React.FC = () => {
     error: imagesErrorMsg,
   } = useValidationImages(modelVersionId, 100, 0);
 
+  const {
+    data: valMetrics,
+    isLoading: metricsLoading,
+    error: metricsError,
+  } = useValidationMetrics(modelVersionId);
 
-  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useValidationMetrics(modelVersionId);
-  if (isLoading || !session) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-10 text-muted-foreground">
-        <Loader2 className="animate-spin mr-2 h-5 w-5" />
-        Loading session...
+      <div className="flex items-center justify-center min-h-[60vh] text-gray-500 dark:text-gray-400">
+        <Loader2 className="animate-spin h-6 w-6 mr-3" />
+        <span>Loading training session…</span>
       </div>
     );
   }
 
-  if (isError) {
+  if (isError || !session) {
     return (
-      <div className="text-red-500 py-10 text-center">
-        Error: {(error as Error).message}
-      </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">Session with ID {sessionId} not found</p>
-          <Link to="/" className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back to sessions list
+      <div className="max-w-lg mx-auto mt-16 text-center">
+        <div className="bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/60 p-8">
+          <AlertTriangle className="h-10 w-10 text-red-500 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">
+            Session not found
+          </h2>
+          <p className="text-sm text-red-600 dark:text-red-400 mb-6">
+            {isError
+              ? (error as Error).message
+              : `Session ${sessionId} could not be loaded.`}
+          </p>
+          <Link
+            to={`/projects/${projectId}/sessions`}
+            className="inline-flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to sessions
           </Link>
         </div>
       </div>
@@ -65,56 +72,87 @@ const SessionDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 p-6 w-full sm:px-6 lg:px-8 py-8">
-      <SessionHeader session={session} projectId={projectId || ''}/>
-      <Tabs defaultValue="metrics" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="metrics">Training Metrics</TabsTrigger>
-            <TabsTrigger value="validation">Validation Curves</TabsTrigger>
-            <TabsTrigger value="images">Validation Images</TabsTrigger>
-            <TabsTrigger value="logs">Logs & Config</TabsTrigger>
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6 mx-auto">
+      <SessionHeader session={session} projectId={projectId ?? ''} />
+
+      <Tabs defaultValue="metrics" className="space-y-5">
+        <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsTrigger value="metrics" className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm">
+            <BarChart2 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Training</span> Metrics
+          </TabsTrigger>
+          <TabsTrigger value="validation" className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm">
+            <Activity className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Validation</span> Curves
+          </TabsTrigger>
+          <TabsTrigger value="images" className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm">
+            <ImageIcon className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Val</span> Images
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="flex items-center gap-1.5 py-2.5 text-xs sm:text-sm">
+            <FileText className="h-3.5 w-3.5" />
+            Logs &amp; Config
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="metrics" className="space-y-6">
+        {/* Training Metrics + Epoch Loop */}
+        <TabsContent value="metrics" className="space-y-5">
           <SessionDetail session={session} />
         </TabsContent>
 
-        <TabsContent value="validation" className="space-y-6">
+        {/* Validation Curves */}
+        <TabsContent value="validation" className="space-y-5">
           {metricsLoading ? (
-            <div className="flex items-center justify-center text-muted-foreground">
-              <Loader2 className="animate-spin mr-2 h-4 w-4" />
-              Loading validation metrics...
+            <div className="flex items-center justify-center py-16 text-gray-400">
+              <Loader2 className="animate-spin h-5 w-5 mr-2" />
+              Loading validation metrics…
             </div>
-          ): metricsError ? (
-            <div className="text-red-500 text-center">
-              {(metricsError as Error).message}
+          ) : metricsError ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {(metricsError as Error).message}
+                </p>
+              </div>
             </div>
-          ) : metrics ? (
-            <ValidationMetricsCharts metricsData={metrics} />
-          ) : null}
+          ) : valMetrics ? (
+            <ValidationMetricsCharts metricsData={valMetrics} />
+          ) : (
+            <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
+              No validation metrics available for this version.
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="images" className="space-y-6">
+        {/* Validation Images */}
+        <TabsContent value="images" className="space-y-5">
           {imagesLoading ? (
-            <div className="flex items-center justify-center text-muted-foreground">
-              <Loader2 className="animate-spin mr-2 h-4 w-4" />
-              Loading validation images...
+            <div className="flex items-center justify-center py-16 text-gray-400">
+              <Loader2 className="animate-spin h-5 w-5 mr-2" />
+              Loading validation images…
             </div>
           ) : imagesError ? (
-            <div className="text-red-500 text-center">
-              {(imagesErrorMsg as Error).message}
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {(imagesErrorMsg as Error).message}
+                </p>
+              </div>
             </div>
           ) : (
-            <ValidationImages 
-              validationImages={validationData?.results || []} 
+            <ValidationImages
+              validationImages={validationData?.results ?? []}
               modelVersionId={modelVersionId}
               onValidationComplete={() => refetch()}
             />
           )}
         </TabsContent>
 
-        <TabsContent value="logs" className="space-y-6">
-          <ConfigurationLogs session={session}  />
+        {/* Logs & Config */}
+        <TabsContent value="logs" className="space-y-5">
+          <ConfigurationLogs session={session} />
         </TabsContent>
       </Tabs>
     </div>
