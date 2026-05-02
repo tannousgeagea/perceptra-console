@@ -1,17 +1,22 @@
-
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import {
+  ArrowLeft,
   BarChart4,
   Clock,
   Code,
-  Database,
   Layers,
   Plus,
   RefreshCw,
   Settings,
   Tag,
   Trophy,
+  Activity,
+  AlertTriangle,
+  Calendar,
+  User,
+  GitBranch,
+  Cpu,
 } from "lucide-react";
 import { Badge } from "@/components/ui/ui/badge";
 import { Button } from "@/components/ui/ui/button";
@@ -23,72 +28,89 @@ import ModelMetricsView from "@/components/models/ModelMetricView";
 import ModelDeploymentView from "@/components/models/ModelDeploymentView";
 import ModelEvaluationsView from "@/components/models/ModelEvaluationsView";
 import RetrainingPolicyView from "@/components/models/RetrainingPolicyView";
+import ModelTrainingSessions from "@/components/models/ModelTrainingSessions";
 import { useModelDetail } from "@/hooks/useModels";
+import { useTrainingSessions } from "@/hooks/useTrainingSessions";
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+const TASK_CONFIG: Record<string, { label: string; color: string }> = {
+  "classification": {
+    label: "Classification",
+    color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
+  },
+  "object-detection": {
+    label: "Object Detection",
+    color: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
+  },
+  "segmentation": {
+    label: "Segmentation",
+    color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800",
+  },
+  "llm": {
+    label: "Language Model",
+    color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
+  },
+  "vlm": {
+    label: "Vision-Language",
+    color: "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800",
+  },
+};
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// ── Stat card ─────────────────────────────────────────────────────────────────
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, label, value, sub }) => (
+  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+    <div className="flex items-center gap-2 text-gray-400 mb-2">
+      {icon}
+      <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+    </div>
+    <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{value}</div>
+    {sub && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{sub}</p>}
+  </div>
+);
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 const ModelDetail: React.FC = () => {
   const { projectId, modelId } = useParams<{ projectId: string; modelId: string }>();
   const { data: model, isLoading, error } = useModelDetail(modelId!);
-    // Format date for display
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
+  // Pre-fetch sessions so the Versions tab can show session links immediately
+  const { data: sessionsData } = useTrainingSessions({
+    projectId,
+    modelUuid: modelId,
+    limit: 50,
+    enabled: !!modelId && !!projectId,
+  });
+  const sessions = sessionsData?.results ?? [];
 
-  console.log("Model Detail Data:", model);
-  // Get the model type label for display
-  const getModelTypeLabel = (type: string): string => {
-    switch (type) {
-      case "classification":
-        return "Classification";
-      case "object-detection":
-        return "Object Detection";
-      case "segmentation":
-        return "Segmentation";
-      case "llm":
-        return "Language Model";
-      case "vlm":
-        return "Vision-Language Model";
-      default:
-        return type;
-    }
-  };
-
-  // Get badge color based on model type
-  const getModelTypeColor = (type: string): string => {
-    switch (type) {
-      case "classification":
-        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
-      case "object-detection":
-        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
-      case "segmentation":
-        return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800";
-      case "llm":
-        return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800";
-      case "vlm":
-        return "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
-    }
-  };
+  // Count active sessions for the tab badge
+  const activeSessions = sessions.filter((s) =>
+    ["pending", "queued", "initializing", "running"].includes(s.status)
+  ).length;
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6 w-full">
-        <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-80" />
-          </div>
-          <Skeleton className="h-10 w-36" />
-        </div>
-        <div className="flex gap-4 flex-wrap">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-6 w-32" />
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6 mx-auto">
+        <Skeleton className="h-40 w-full rounded-xl" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -98,90 +120,168 @@ const ModelDetail: React.FC = () => {
 
   if (error || !model) {
     return (
-      <div className="bg-destructive/10 p-6 rounded-lg">
-        <h3 className="font-bold text-destructive mb-2">Error Loading Model</h3>
-        <p className="mb-4">We couldn't load the model details. Please try again.</p>
-        <Button asChild>
-          <Link to={`/projects/${projectId}/models`}>Back to Models</Link>
-        </Button>
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 max-w-lg mx-auto">
+        <div className="bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/60 p-8 text-center">
+          <AlertTriangle className="h-10 w-10 text-red-500 mx-auto mb-4" />
+          <h3 className="font-semibold text-red-800 dark:text-red-300 mb-2">Error Loading Model</h3>
+          <p className="text-sm text-red-600 dark:text-red-400 mb-6">
+            {(error as Error)?.message ?? "We couldn't load the model details."}
+          </p>
+          <Button asChild variant="outline">
+            <Link to={`/projects/${projectId}/models`}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Models
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
-  // Get production version if exists
-  const productionVersion = model.production_version
+  const productionVersion = model.production_version;
+  const latestVersion = model.latest_version ?? model.versions[model.versions.length - 1];
+  const taskCfg = TASK_CONFIG[model.task] ?? { label: model.task, color: "bg-gray-100 text-gray-800" };
 
   return (
-    <div className="space-y-6 p-6 w-full">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight">{model.name}</h1>
-            <Badge
-              variant="outline"
-              className={`${getModelTypeColor(model.task)} border-0`}
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6 mx-auto">
+
+      {/* Back link */}
+      <Link
+        to={`/projects/${projectId}/models`}
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to models
+      </Link>
+
+      {/* Hero header */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h1 className="text-2xl font-bold text-white">{model.name}</h1>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${taskCfg.color}`}
+                >
+                  {taskCfg.label}
+                </span>
+                {model.framework && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-medium">
+                    <Cpu className="h-3 w-3" />
+                    {model.framework.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              {model.description && (
+                <p className="text-blue-100 text-sm max-w-xl">{model.description}</p>
+              )}
+              {model.tags && model.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {model.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/15 text-white text-xs"
+                    >
+                      <Tag className="h-2.5 w-2.5" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Button
+              asChild
+              className="flex-shrink-0 bg-white text-indigo-700 hover:bg-blue-50 border-0 shadow-sm font-semibold"
             >
-              {getModelTypeLabel(model.task)}
-            </Badge>
+              <Link to={`/projects/${projectId}/models/${modelId}/train`}>
+                <Plus className="h-4 w-4 mr-2" />
+                Train New Version
+              </Link>
+            </Button>
           </div>
-          <p className="text-muted-foreground">{model.description}</p>
         </div>
-        <Button asChild>
-          <Link to={`/projects/${projectId}/models/${modelId}/train`}>
-            <Plus className="mr-2 h-4 w-4" /> Train New Version
-          </Link>
-        </Button>
+
+        {/* Meta row */}
+        <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-x-6 gap-y-1">
+          {model.created_by && (
+            <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+              <User className="h-3.5 w-3.5" />
+              {model.created_by}
+            </span>
+          )}
+          <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <Calendar className="h-3.5 w-3.5" />
+            Created {formatDate(model.created_at)}
+          </span>
+          <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <Clock className="h-3.5 w-3.5" />
+            Updated {formatDate(model.updated_at)}
+          </span>
+        </div>
       </div>
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Layers className="h-4 w-4" />
-            <span className="text-sm font-medium">Versions</span>
-          </div>
-          <p className="text-2xl font-bold">{model.versions.length}</p>
-        </div>
-        
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Tag className="h-4 w-4" />
-            <span className="text-sm font-medium">Production</span>
-          </div>
-          <p className="text-2xl font-bold">
-            {productionVersion ? `v${productionVersion.version_number}` : "None"}
-          </p>
-        </div>
-        
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Clock className="h-4 w-4" />
-            <span className="text-sm font-medium">Last Update</span>
-          </div>
-          <p className="text-lg font-medium">{formatDate(model.updated_at)}</p>
-        </div>
-        
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Database className="h-4 w-4" />
-            <span className="text-sm font-medium">Created By</span>
-          </div>
-          <p className="text-sm font-medium truncate">{model.created_by}</p>
-        </div>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Layers className="h-4 w-4" />}
+          label="Versions"
+          value={model.versions.length}
+          sub={latestVersion ? `Latest: ${latestVersion.version_name ?? `v${latestVersion.version_number}`}` : undefined}
+        />
+        <StatCard
+          icon={<Tag className="h-4 w-4" />}
+          label="Production"
+          value={productionVersion
+            ? (productionVersion.version_name ?? `v${productionVersion.version_number}`)
+            : "—"}
+          sub={productionVersion ? "Active deployment" : "No production version"}
+        />
+        <StatCard
+          icon={<Activity className="h-4 w-4" />}
+          label="Sessions"
+          value={
+            <span className="flex items-center gap-2">
+              {sessionsData?.total ?? "—"}
+              {activeSessions > 0 && (
+                <span className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 font-normal">
+                  <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse inline-block" />
+                  {activeSessions} running
+                </span>
+              )}
+            </span>
+          }
+          sub="Training sessions total"
+        />
+        <StatCard
+          icon={<GitBranch className="h-4 w-4" />}
+          label="Framework"
+          value={model.framework ? model.framework.toUpperCase() : "—"}
+          sub={model.task}
+        />
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="versions" className="w-full">
-        <TabsList className="flex flex-wrap gap-1 h-auto w-full max-w-3xl">
+      <Tabs defaultValue="training" className="w-full">
+        <TabsList className="flex flex-wrap gap-1 h-auto w-full">
+          <TabsTrigger value="training" className="flex items-center gap-1.5 relative">
+            <Activity className="h-4 w-4" />
+            Training
+            {activeSessions > 0 && (
+              <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white font-bold">
+                {activeSessions}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="versions" className="flex items-center gap-1.5">
             <Layers className="h-4 w-4" /> Versions
           </TabsTrigger>
-          <TabsTrigger value="visual" className="flex items-center gap-1.5">
-            <BarChart4 className="h-4 w-4" /> Results
-          </TabsTrigger>
           <TabsTrigger value="metrics" className="flex items-center gap-1.5">
             <Code className="h-4 w-4" /> Metrics
+          </TabsTrigger>
+          <TabsTrigger value="visual" className="flex items-center gap-1.5">
+            <BarChart4 className="h-4 w-4" /> Results
           </TabsTrigger>
           <TabsTrigger value="deployment" className="flex items-center gap-1.5">
             <Settings className="h-4 w-4" /> Deployment
@@ -194,26 +294,45 @@ const ModelDetail: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
+        {/* Training Sessions tab — first and default */}
+        <TabsContent value="training" className="mt-6">
+          <ModelTrainingSessions
+            modelId={modelId!}
+            projectId={projectId!}
+            modelName={model.name}
+          />
+        </TabsContent>
+
+        {/* Versions */}
         <TabsContent value="versions" className="mt-6">
-          <ModelVersionsList model={model} projectId={projectId || ''} />
+          <ModelVersionsList
+            model={model}
+            projectId={projectId!}
+            sessions={sessions}
+          />
         </TabsContent>
 
-        <TabsContent value="visual" className="mt-6">
-          <ModelVisualResults model={model} />
-        </TabsContent>
-
+        {/* Metrics */}
         <TabsContent value="metrics" className="mt-6">
           <ModelMetricsView model={model} />
         </TabsContent>
 
+        {/* Results */}
+        <TabsContent value="visual" className="mt-6">
+          <ModelVisualResults model={model} />
+        </TabsContent>
+
+        {/* Deployment */}
         <TabsContent value="deployment" className="mt-6">
           <ModelDeploymentView model={model} />
         </TabsContent>
 
+        {/* Evaluations */}
         <TabsContent value="evaluations" className="mt-6">
           <ModelEvaluationsView model={model} />
         </TabsContent>
 
+        {/* Retraining */}
         <TabsContent value="retraining" className="mt-6">
           <RetrainingPolicyView model={model} />
         </TabsContent>
