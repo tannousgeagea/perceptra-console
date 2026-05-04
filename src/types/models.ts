@@ -244,6 +244,7 @@ export interface ModelListItem {
   version_count: number;
   latest_version_number?: number;
   latest_status?: string;
+  latest_version_model_size?: string;
   has_production_version?: boolean;
   production_version_number?: number;
   production_version_id?: string;

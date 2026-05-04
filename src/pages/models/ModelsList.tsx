@@ -330,6 +330,11 @@ const ModelsList: React.FC = () => {
                             Live
                           </Badge>
                         )}
+                        {model.latest_version_model_size && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 capitalize shrink-0">
+                            {model.latest_version_model_size}
+                          </span>
+                        )}
                       </div>
                       <Badge
                         variant="outline"
