@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/ui/card";
 import { toast } from "sonner";
 import ModelBasicInfo from "@/components/models/create/ModelBasicInfo";
 import ModelFrameworkSelection from "@/components/models/create/ModelFrameworkSelection";
+import ModelSizeSelection from "@/components/models/create/ModelSizeSelection";
 import ModelAdvancedConfig from "@/components/models/create/ModelAdvancedConfig";
 import ModelReview from "@/components/models/create/ModelReview";
 import { ModelFormData, useCreateModel } from "@/hooks/useModels";
@@ -23,6 +24,7 @@ const CreateModel: React.FC = () => {
     description: "",
     task: "",
     framework: "",
+    modelSize: "medium",
     tags: [],
     config: {
       batchSize: 32,
@@ -36,8 +38,9 @@ const CreateModel: React.FC = () => {
   const steps = [
     { number: 1, title: "Basic Info", description: "Name and description" },
     { number: 2, title: "Task & Framework", description: "Select model type" },
-    { number: 3, title: "Configuration", description: "Training parameters" },
-    { number: 4, title: "Review", description: "Confirm details" }
+    { number: 3, title: "Model Size", description: "Architecture variant" },
+    { number: 4, title: "Configuration", description: "Training parameters" },
+    { number: 5, title: "Review", description: "Confirm details" }
   ];
 
   const handleNext = () => {
@@ -65,7 +68,10 @@ const CreateModel: React.FC = () => {
         task: formData.task,
         framework: formData.framework,
         tags: formData.tags.length > 0 ? formData.tags : undefined,
-        config: formData.config
+        config: {
+          ...formData.config,
+          modelSize: formData.modelSize || undefined,
+        }
       },
     });
     
@@ -84,8 +90,10 @@ const CreateModel: React.FC = () => {
       case 2:
         return formData.task !== "" && formData.framework !== "";
       case 3:
-        return true; // Config has defaults
+        return formData.modelSize !== "";
       case 4:
+        return true;
+      case 5:
         return true;
       default:
         return false;
@@ -99,8 +107,10 @@ const CreateModel: React.FC = () => {
       case 2:
         return <ModelFrameworkSelection formData={formData} setFormData={setFormData} />;
       case 3:
-        return <ModelAdvancedConfig formData={formData} setFormData={setFormData} />;
+        return <ModelSizeSelection formData={formData} setFormData={setFormData} />;
       case 4:
+        return <ModelAdvancedConfig formData={formData} setFormData={setFormData} />;
+      case 5:
         return <ModelReview formData={formData} />;
       default:
         return null;
