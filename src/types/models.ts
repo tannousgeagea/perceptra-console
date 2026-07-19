@@ -146,6 +146,7 @@ export interface ModelCreateRequest {
     epochs: number;
     optimizer: string;
     scheduler: string;
+    modelSize?: ModelSize;
   };
 }
 
