@@ -1,9 +1,11 @@
 
-export type ModelType = 
-  | 'classification' 
-  | 'object-detection' 
-  | 'segmentation' 
-  | 'llm' 
+export type ModelSize = 'nano' | 'small' | 'medium' | 'large' | 'xlarge';
+
+export type ModelType =
+  | 'classification'
+  | 'object-detection'
+  | 'segmentation'
+  | 'llm'
   | 'vlm';
 
 export type ModelStatus = 
@@ -121,6 +123,7 @@ export interface ModelFormData {
   description: string;
   task: ModelTask | "";
   framework: string;
+  modelSize: ModelSize | "";
   tags: string[];
   config: {
     batchSize: number;
@@ -143,6 +146,7 @@ export interface ModelCreateRequest {
     epochs: number;
     optimizer: string;
     scheduler: string;
+    modelSize?: ModelSize;
   };
 }
 
@@ -203,6 +207,7 @@ export interface ModelVersion {
   version_name?: string;
   status: string;
   deployment_status: string;
+  model_size?: string;
   metrics: Record<string, any>;
   config: Record<string, any>;
   dataset?: DatasetInfo;
@@ -240,6 +245,7 @@ export interface ModelListItem {
   version_count: number;
   latest_version_number?: number;
   latest_status?: string;
+  latest_version_model_size?: string;
   has_production_version?: boolean;
   production_version_number?: number;
   production_version_id?: string;

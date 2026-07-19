@@ -1,20 +1,22 @@
 import React from "react";
-import { 
-  CheckCircle2, 
-  FileText, 
-  Cpu, 
-  Settings2, 
+import {
+  CheckCircle2,
+  FileText,
+  Cpu,
+  Settings2,
   Tag,
   Box,
   Grid3X3,
   Layers,
   MessageSquare,
-  ScanEye
+  ScanEye,
+  Scale,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { Separator } from "@/components/ui/ui/separator";
 import { ModelFormData, ModelTask } from "@/hooks/useModels";
+import { ModelSize } from "@/types/models";
 
 interface ModelReviewProps {
   formData: ModelFormData;
@@ -56,6 +58,17 @@ const getFrameworkLabel = (framework: string) => {
     "huggingface": "Hugging Face"
   };
   return labels[framework] || framework;
+};
+
+const getSizeLabel = (size: ModelSize | ""): string => {
+  const labels: Record<ModelSize, string> = {
+    nano: "Nano — fastest, smallest footprint",
+    small: "Small — fast inference, good accuracy",
+    medium: "Medium — balanced speed & accuracy",
+    large: "Large — high accuracy",
+    xlarge: "X-Large — maximum accuracy",
+  };
+  return size ? labels[size] ?? size : "—";
 };
 
 const ModelReview: React.FC<ModelReviewProps> = ({ formData }) => {
@@ -133,6 +146,25 @@ const ModelReview: React.FC<ModelReviewProps> = ({ formData }) => {
                   <p className="text-sm text-muted-foreground">Framework</p>
                   <p className="font-semibold">{formData.framework ? getFrameworkLabel(formData.framework) : "—"}</p>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Model Size */}
+        <Card className="overflow-hidden border-border/50">
+          <div className="bg-gradient-to-r from-violet-500/10 to-accent/10 px-5 py-3 flex items-center gap-2">
+            <Scale className="h-4 w-4 text-violet-500" />
+            <span className="font-semibold text-sm">Model Size</span>
+          </div>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-500">
+                <Scale className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Selected Size</p>
+                <p className="font-semibold capitalize">{getSizeLabel(formData.modelSize)}</p>
               </div>
             </div>
           </CardContent>

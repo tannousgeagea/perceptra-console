@@ -184,7 +184,14 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
                     />
                   </TableCell>
                   <TableCell className="font-medium">
-                    v{version.version_number}
+                    <div className="flex items-center gap-2">
+                      <span>v{version.version_number}</span>
+                      {version.model_size && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 capitalize">
+                          {version.model_size}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{getStatusBadge(version.status)}</TableCell>
                   <TableCell>
