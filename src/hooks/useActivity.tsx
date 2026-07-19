@@ -1,14 +1,12 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
-import { authStorage } from "@/services/authService";
-import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { apiFetch, withQuery } from "@/services/apiClient";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
-import { 
+import {
   UserSummary,
   ProjectProgress,
   ActivityTrend,
-  LeaderboardEntry, 
+  LeaderboardEntry,
   PredictionQuality,
   ActivityHeatmap,
   TimelineEvent,
@@ -16,28 +14,15 @@ import {
 } from "@/types/activity";
 
 // ============= Fetch Functions ============
+// apiFetch injects Authorization and X-Organization-ID and handles 401 refresh.
+
 const fetchUserActivitySummary = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<UserSummary> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/summary`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/projects/${projectId}/summary`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
@@ -49,27 +34,12 @@ const fetchUserActivitySummary = async (
 
 
 const fetchProjectProgress = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<ProjectProgress> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/progress`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/projects/${projectId}/progress`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
@@ -81,27 +51,12 @@ const fetchProjectProgress = async (
 
 
 const fetchProjectLeaderBoard = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<LeaderboardEntry[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/leaderboard`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/projects/${projectId}/leaderboard`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
@@ -112,27 +67,12 @@ const fetchProjectLeaderBoard = async (
 };
 
 const fetchProjectTimeline = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number | string[]>
 ): Promise<TimelineEvent[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/timeline`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/projects/${projectId}/timeline`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
@@ -143,27 +83,12 @@ const fetchProjectTimeline = async (
 };
 
 const fetchPredictionQuality = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<PredictionQuality> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/prediction-quality`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/projects/${projectId}/prediction-quality`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
@@ -174,27 +99,12 @@ const fetchPredictionQuality = async (
 };
 
 const fetchActivityHeatmap = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<ActivityHeatmap> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/heatmap`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/projects/${projectId}/heatmap`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
@@ -206,27 +116,12 @@ const fetchActivityHeatmap = async (
 
 
 const fetchActivityTrend = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<ActivityTrend[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/projects/${projectId}/activity-trend`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/projects/${projectId}/activity-trend`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to user activity' }));
@@ -251,17 +146,13 @@ export const useUserActivitySummary = (
     queryKey: ['activity', 'user-summary', projectId, options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string> = {};
       if (options?.userId) params.project_id = options.userId;
       if (options?.startDate) params.start_date = options.startDate;
       if (options?.endDate) params.end_date = options.endDate;
 
-      return fetchUserActivitySummary(
-        currentOrganization.id,
-        projectId,
-        params
-      );
+      return fetchUserActivitySummary(projectId, params);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -274,10 +165,7 @@ export const useProjectProgress = (projectId: string) => {
     queryKey: ['activity', 'project-progress', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchProjectProgress(
-        currentOrganization.id,
-        projectId
-      );
+      return fetchProjectProgress(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -297,17 +185,13 @@ export const useProjectLeaderboard = (
     queryKey: ['activity', 'leaderboard', projectId, options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string | number> = {};
       if (options?.metric) params.metric = options.metric;
       if (options?.periodDays) params.period_days = options.periodDays;
       if (options?.limit) params.limit = options.limit;
 
-      return fetchProjectLeaderBoard(
-        currentOrganization.id,
-        projectId,
-        params
-      );
+      return fetchProjectLeaderBoard(projectId, params);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -330,7 +214,7 @@ export const useProjectTimeline = (
     queryKey: ['activity', 'timeline', projectId, options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string | number | string[]> = {};
       if (options?.eventTypes) params.event_types = options.eventTypes;
       if (options?.userId) params.user_id = options.userId;
@@ -339,11 +223,7 @@ export const useProjectTimeline = (
       if (options?.limit) params.limit = options.limit;
       if (options?.offset) params.offset = options.offset;
 
-      return fetchProjectTimeline(
-        currentOrganization.id,
-        projectId,
-        params
-      );
+      return fetchProjectTimeline(projectId, params);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -356,10 +236,7 @@ export const usePredictionQuality = (projectId: string) => {
     queryKey: ['activity', 'prediction-quality', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchPredictionQuality(
-        currentOrganization.id,
-        projectId
-      );
+      return fetchPredictionQuality(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -377,7 +254,6 @@ export const useActivityHeatmap = (
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
       return fetchActivityHeatmap(
-        currentOrganization.id,
         projectId,
         { start_date: startDate, end_date: endDate }
       );
@@ -404,11 +280,7 @@ export const useActivityTrend = (
       if (options?.userId) params.project_id = options.userId;
       if (options?.days) params.days = options.days;
 
-      return fetchActivityTrend(
-        currentOrganization.id,
-        projectId,
-        params
-      );
+      return fetchActivityTrend(projectId, params);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -419,26 +291,11 @@ export const useActivityTrend = (
 ///////////////////////////////////////////////////////////////////
 
 const fetchOrgActivitySummary = async (
-  organizationId: string,
   params?: Record<string, string>
 ): Promise<OrganizationSummary> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/organization/summary`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/organization/summary`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch org activity' }));
@@ -449,26 +306,11 @@ const fetchOrgActivitySummary = async (
 };
 
 const fetchOrgUsersActivity = async (
-  organizationId: string,
   params?: Record<string, string | number>
 ): Promise<UserSummary[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/organization/users`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/organization/users`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch users activity' }));
@@ -479,26 +321,11 @@ const fetchOrgUsersActivity = async (
 };
 
 const fetchOrgProjectsProgress = async (
-  organizationId: string,
   params?: Record<string, string | number>
 ): Promise<ProjectProgress[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/organization/projects`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/organization/projects`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch projects progress' }));
@@ -509,30 +336,11 @@ const fetchOrgProjectsProgress = async (
 };
 
 const fetchOrgTimeline = async (
-  organizationId: string,
   params?: Record<string, string | number | string[]>
 ): Promise<TimelineEvent[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/organization/timeline`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach(v => url.searchParams.append(key, String(v)));
-      } else {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/organization/timeline`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch timeline' }));
@@ -543,26 +351,11 @@ const fetchOrgTimeline = async (
 };
 
 const fetchOrgLeaderboard = async (
-  organizationId: string,
   params?: Record<string, string | number>
 ): Promise<LeaderboardEntry[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/organization/leaderboard`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/organization/leaderboard`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch leaderboard' }));
@@ -573,26 +366,11 @@ const fetchOrgLeaderboard = async (
 };
 
 const fetchOrgActivityTrend = async (
-  organizationId: string,
   params?: Record<string, string | number>
 ): Promise<ActivityTrend[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/organization/activity-trend`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/organization/activity-trend`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch activity trend' }));
@@ -603,24 +381,11 @@ const fetchOrgActivityTrend = async (
 };
 
 const fetchOrgHeatmap = async (
-  organizationId: string,
   params: Record<string, string>
 ): Promise<ActivityHeatmap> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/activity/organization/heatmap`);
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/activity/organization/heatmap`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch heatmap' }));
@@ -645,14 +410,14 @@ export const useOrgActivitySummary = (options?: {
     queryKey: ['activity', 'org-summary', options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string> = {};
       if (options?.userId) params.user_id = options.userId;
       if (options?.projectId) params.project_id = options.projectId;
       if (options?.startDate) params.start_date = options.startDate;
       if (options?.endDate) params.end_date = options.endDate;
 
-      return fetchOrgActivitySummary(currentOrganization.id, params);
+      return fetchOrgActivitySummary(params);
     },
     enabled: !!currentOrganization,
   });
@@ -671,7 +436,7 @@ export const useOrgUsersActivity = (options?: {
     queryKey: ['activity', 'org-users', options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string | number> = {};
       if (options?.projectId) params.project_id = options.projectId;
       if (options?.startDate) params.start_date = options.startDate;
@@ -679,7 +444,7 @@ export const useOrgUsersActivity = (options?: {
       if (options?.sortBy) params.sort_by = options.sortBy;
       if (options?.limit) params.limit = options.limit;
 
-      return fetchOrgUsersActivity(currentOrganization.id, params);
+      return fetchOrgUsersActivity(params);
     },
     enabled: !!currentOrganization,
   });
@@ -696,13 +461,13 @@ export const useOrgProjectsProgress = (options?: {
     queryKey: ['activity', 'org-projects', options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string | number> = {};
       if (options?.userId) params.user_id = options.userId;
       if (options?.status) params.status = options.status;
       if (options?.limit) params.limit = options.limit;
 
-      return fetchOrgProjectsProgress(currentOrganization.id, params);
+      return fetchOrgProjectsProgress(params);
     },
     enabled: !!currentOrganization,
   });
@@ -723,7 +488,7 @@ export const useOrgTimeline = (options?: {
     queryKey: ['activity', 'org-timeline', options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string | number | string[]> = {};
       if (options?.userId) params.user_id = options.userId;
       if (options?.projectId) params.project_id = options.projectId;
@@ -733,7 +498,7 @@ export const useOrgTimeline = (options?: {
       if (options?.limit) params.limit = options.limit;
       if (options?.offset) params.offset = options.offset;
 
-      return fetchOrgTimeline(currentOrganization.id, params);
+      return fetchOrgTimeline(params);
     },
     enabled: !!currentOrganization,
   });
@@ -751,14 +516,14 @@ export const useOrgLeaderboard = (options?: {
     queryKey: ['activity', 'org-leaderboard', options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string | number> = {};
       if (options?.projectId) params.project_id = options.projectId;
       if (options?.metric) params.metric = options.metric;
       if (options?.periodDays) params.period_days = options.periodDays;
       if (options?.limit) params.limit = options.limit;
 
-      return fetchOrgLeaderboard(currentOrganization.id, params);
+      return fetchOrgLeaderboard(params);
     },
     enabled: !!currentOrganization,
   });
@@ -775,13 +540,13 @@ export const useOrgActivityTrend = (options?: {
     queryKey: ['activity', 'org-trend', options],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
+
       const params: Record<string, string | number> = {};
       if (options?.userId) params.user_id = options.userId;
       if (options?.projectId) params.project_id = options.projectId;
       if (options?.days) params.days = options.days;
 
-      return fetchOrgActivityTrend(currentOrganization.id, params);
+      return fetchOrgActivityTrend(params);
     },
     enabled: !!currentOrganization,
   });
@@ -796,9 +561,9 @@ export const useOrgHeatmap = (startDate: string, endDate: string) => {
     queryKey: ['activity', 'org-heatmap', startDate, endDate],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchOrgHeatmap(currentOrganization.id, { 
-        start_date: startDate, 
-        end_date: endDate 
+      return fetchOrgHeatmap({
+        start_date: startDate,
+        end_date: endDate
       });
     },
     enabled: !!currentOrganization && !!startDate && !!endDate,

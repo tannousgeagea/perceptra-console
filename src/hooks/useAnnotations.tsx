@@ -4,6 +4,7 @@ import { useMutation, UseMutationOptions, useQueryClient, useQuery } from "@tans
 import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { apiFetch, withQuery } from "@/services/apiClient";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
 import { ListAnnotationsParams, AnnotationsListResponse } from "@/types/annotation";
@@ -208,29 +209,17 @@ export const useAnnotations = (
 
 
 export const deleteAnnotation = async (
-  organizationId: string,
   projectId: string,
   annotationId: string,
   deleteParams: { hardDelete?: boolean } = {}
 ): Promise<void> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/annotations/${annotationId}`);
-  if (deleteParams.hardDelete) {
-    url.searchParams.set("hard_delete", "true");
-  }
-
-  const response = await fetch(url.toString(), {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "X-Organization-ID": organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(
+      `/api/v1/projects/${projectId}/annotations/${annotationId}`,
+      deleteParams.hardDelete ? { hard_delete: "true" } : undefined
+    ),
+    { method: "DELETE" }
+  );
 
   if (!response.ok) {
     const error = await response
@@ -265,7 +254,6 @@ export const useDeleteAnnotation = (options?: {
         throw new Error("No organization selected");
       }
       return deleteAnnotation(
-        currentOrganization.id,
         projectId,
         annotationId,
         { hardDelete }
