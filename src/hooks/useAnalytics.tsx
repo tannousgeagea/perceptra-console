@@ -1,45 +1,30 @@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
-import { authStorage } from "@/services/authService";
-import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { apiFetch, withQuery } from "@/services/apiClient";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
-import { 
+import {
   ProjectSummary,
   ImageStats,
   AnnotationStats,
   AnnotationGroup,
   JobStats,
   VersionStats,
-  EvaluationStats, 
+  EvaluationStats,
 } from "@/types/analytics";
+
+// apiFetch injects Authorization and X-Organization-ID and handles 401 refresh.
 
 // ############################################################
 // Project Summary
 // ############################################################
 
 const fetchProjectSummary = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<ProjectSummary> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/analytics/summary`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/projects/${projectId}/analytics/summary`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch analytics' }));
@@ -57,10 +42,7 @@ export const useProjectSummary = (projectId: string) => {
     queryKey: ['analytics', 'summary', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchProjectSummary(
-        currentOrganization.id,
-        projectId,
-      );
+      return fetchProjectSummary(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -72,27 +54,12 @@ export const useProjectSummary = (projectId: string) => {
 // ###########################################################
 
 const fetchImageStats = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<ImageStats> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/analytics/images`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/projects/${projectId}/analytics/images`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch analytics' }));
@@ -109,11 +76,7 @@ export const useImageStats = (projectId: string, days: number = 30) => {
     queryKey: ['analytics', 'images', projectId, days],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchImageStats(
-        currentOrganization.id,
-        projectId,
-        { days }
-      );
+      return fetchImageStats(projectId, { days });
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -125,27 +88,12 @@ export const useImageStats = (projectId: string, days: number = 30) => {
 // #######################################################
 
 const fetchAnnotationStats = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<AnnotationStats> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/analytics/annotations`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/projects/${projectId}/analytics/annotations`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch analytics' }));
@@ -162,10 +110,7 @@ export const useAnnotationStats = (projectId: string) => {
     queryKey: ['analytics', 'annotations', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchAnnotationStats(
-        currentOrganization.id,
-        projectId,
-      );
+      return fetchAnnotationStats(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -176,27 +121,12 @@ export const useAnnotationStats = (projectId: string) => {
 // #####################################################
 
 const fetchAnnotationGroups = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<AnnotationGroup> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/analytics/annotation-groups`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/projects/${projectId}/analytics/annotation-groups`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch analytics' }));
@@ -213,10 +143,7 @@ export const useAnnotationGroups = (projectId: string) => {
     queryKey: ['analytics', 'annotation-groups', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchAnnotationGroups(
-        currentOrganization.id,
-        projectId,
-      );
+      return fetchAnnotationGroups(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -227,27 +154,12 @@ export const useAnnotationGroups = (projectId: string) => {
 // #######################################################
 
 const fetchJobStats = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<JobStats> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/analytics/jobs`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/projects/${projectId}/analytics/jobs`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch analytics' }));
@@ -264,10 +176,7 @@ export const useJobStats = (projectId: string) => {
     queryKey: ['analytics', 'jobs', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchJobStats(
-        currentOrganization.id,
-        projectId,
-      );
+      return fetchJobStats(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -279,27 +188,12 @@ export const useJobStats = (projectId: string) => {
 
 
 const fetchVersionStats = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<VersionStats[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/analytics/versions`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/projects/${projectId}/analytics/versions`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch analytics' }));
@@ -316,10 +210,7 @@ export const useVersionStats = (projectId: string) => {
     queryKey: ['analytics', 'versions', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchVersionStats(
-        currentOrganization.id,
-        projectId,
-      );
+      return fetchVersionStats(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -331,27 +222,12 @@ export const useVersionStats = (projectId: string) => {
 
 
 const fetchEvaluationStats = async (
-  organizationId: string,
   projectId: string,
   params?: Record<string, string | number>
 ): Promise<EvaluationStats> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  if (!token) throw new Error("No authentication token found");
-
-  const url = new URL(`${baseURL}/api/v1/projects/${projectId}/analytics/evaluation`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(`/api/v1/projects/${projectId}/analytics/evaluation`, params)
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Failed to fetch analytics' }));
@@ -368,10 +244,7 @@ export const useEvaluationStats = (projectId: string) => {
     queryKey: ['analytics', 'evaluation', projectId],
     queryFn: () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      return fetchEvaluationStats(
-        currentOrganization.id,
-        projectId,
-      );
+      return fetchEvaluationStats(projectId);
     },
     enabled: !!currentOrganization && !!projectId,
   });
@@ -388,19 +261,10 @@ export const useClearAnalyticsCache = (projectId: string) => {
   return useMutation({
     mutationFn: async () => {
       if (!currentOrganization) throw new Error("No organization selected");
-      
-      const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-      if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch(
-        `${baseURL}/api/v1/projects/${projectId}/analytics/clear-cache`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-Organization-ID': currentOrganization.id,
-          },
-        }
+      const response = await apiFetch(
+        `/api/v1/projects/${projectId}/analytics/clear-cache`,
+        { method: 'POST' }
       );
 
       if (!response.ok) {

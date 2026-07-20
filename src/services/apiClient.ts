@@ -57,6 +57,29 @@ export function setApiClientRefreshHandler(handler: RefreshHandler): void {
 
 type FetchInput = string | URL;
 
+export type QueryParams = Record<
+  string,
+  string | number | boolean | string[] | undefined | null
+>;
+
+// Append query parameters to a relative path. Never use `new URL(path)` for
+// this — it throws on relative paths, which is what every path is when the
+// app is served behind the nginx proxy (baseURL === "").
+export function withQuery(path: string, params?: QueryParams): string {
+  if (!params) return path;
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (Array.isArray(value)) {
+      value.forEach((v) => search.append(key, String(v)));
+    } else {
+      search.append(key, String(value));
+    }
+  });
+  const query = search.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 export async function apiFetch(
   path: FetchInput,
   options: RequestInit = {}

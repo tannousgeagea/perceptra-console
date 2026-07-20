@@ -4,6 +4,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { apiFetch, withQuery } from "@/services/apiClient";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
 import {
@@ -202,28 +203,16 @@ export const deleteModel = async (
 
 
 export const duplicateModel = async (
-  organizationId: string,
   modelId: string,
   newName?: string
 ): Promise<ModelDetail> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
-  const url = new URL(`${baseURL}/api/v1/models/${modelId}/duplicate`);
-  if (newName) {
-    url.searchParams.append('new_name', newName);
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId,
-    },
-  });
+  const response = await apiFetch(
+    withQuery(
+      `/api/v1/models/${modelId}/duplicate`,
+      newName ? { new_name: newName } : undefined
+    ),
+    { method: 'POST' }
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to duplicate model' }));
@@ -434,7 +423,7 @@ export const useDuplicateModel = (options?: {
       if (!currentOrganization) {
         throw new Error("No organization selected");
       }
-      return duplicateModel(currentOrganization.id, modelId, newName);
+      return duplicateModel(modelId, newName);
     },
 
     onSuccess: (data) => {
