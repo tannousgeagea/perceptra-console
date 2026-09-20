@@ -187,7 +187,9 @@ const BoundingBox: React.FC<Props> = ({ box, isSelected, isHighlighted, tool, im
 
   const isSmall = pixelWidth <= SMALL_OBJECT_PX && pixelHeight <= SMALL_OBJECT_PX;
   const showBadge = isSelected || isHovered;
-  const showHandles = isSelected && tool === 'move';
+  // Handles on hover too, so a box can be grabbed by a corner/edge in one
+  // gesture (e.g. hover, hold S, drag) without selecting it first.
+  const showHandles = tool === 'move' && (isSelected || isHovered || resizing !== null);
 
   // Place the badge outside the box: below its bottom-left corner by default,
   // above the top-left corner when there is no room underneath.
