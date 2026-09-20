@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAnnotationState } from '@/contexts/AnnotationStateContext';
@@ -112,6 +112,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   // CRITICAL: Stable zoom instance (persists across image changes)
   const {
     isDragging,
+    scale: zoomScale,
     handleWheel,
     handleMouseDown: handleZoomMouseDown,
     handleMouseMove: handleZoomMouseMove,
@@ -126,7 +127,15 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   });
 
 
-  console.log(image)
+  // Native image dimensions, so overlays report sizes in image pixels rather
+  // than screen pixels (which would change with zoom).
+  const imageSize = useMemo(
+    () => (image.image?.width && image.image?.height
+      ? { width: image.image.width, height: image.image.height }
+      : null),
+    [image.image?.width, image.image?.height],
+  );
+
   const { mutate: createAnnotation } = useCreateAnnotation(
     projectId!,
     Number(image.id),
@@ -632,7 +641,12 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
           onClick={(e) => !isDragging && handleCanvasClick(e, tool)}
           onContextMenu={(e) => handleContextMenu(e, tool)}
         >
-          <div className="annotation-canvas relative bg-[beige] justify-center items-center">
+          {/* `--zoom` lets overlays (handles, badges, strokes, guide lines) cancel the
+              zoom transform in CSS and keep a constant size on screen. */}
+          <div
+            className="annotation-canvas relative bg-[beige] justify-center items-center"
+            style={{ '--zoom': zoomScale } as React.CSSProperties}
+          >
             <img
               key={image.id}
               src={image.image.download_url}
@@ -648,6 +662,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
               selectedPolygon={selectedPolygon}
               hoveredBoxId={hoveredBoxId}
               tool={tool}
+              imageSize={imageSize}
               setSelectedBox={setSelectedBox}
               setSelectedPolygon={setSelectedPolygon}
               updateBoxPosition={updateBoxPosition}
@@ -670,7 +685,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
               onReject={(id: string) => samSession.rejectSuggestions([id])}
             />
             
-            <DrawingBox currentBox={currentBox} />
+            <DrawingBox currentBox={currentBox} imageSize={imageSize} />
             <CurrentPolygon currentPolygon={currentPolygon} mousePosition={mousePosition} />
             <GuideLines mousePosition={mousePosition} showGuideLines={showGuideLines} />
           </div>

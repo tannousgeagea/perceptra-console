@@ -72,7 +72,11 @@ export const useDraw = (samSession: ReturnType<typeof useSAMSession>) => {
   const handleMouseMove = useCallback((e: React.MouseEvent | MouseEvent, tool: AnnotationTool) => {
     const { x, y } = getScaledCoordinates(e.clientX, e.clientY);
     setMousePosition({ x: clamp(x), y: clamp(y) });
-    
+    // A pointer moving over the canvas is inside it. Re-enable the guides here
+    // because React skips `mouseenter` when the element the pointer was on
+    // (e.g. the annotation editor panel) is removed from the DOM.
+    setShowGuideLines(true);
+
     // Call draw for when drawing is in progress
     draw(e, tool);
   }, [getScaledCoordinates, draw]);
