@@ -2,6 +2,7 @@ import React from 'react';
 import BoundingBox from '../BoundingBox';
 import PolygonAnnotation from './PolygonAnnotation';
 import { Box } from '@/types/annotation';
+import { ImageSize } from '@/hooks/annotation/useCoordinates';
 
 interface Point {
   x: number;
@@ -21,6 +22,8 @@ interface AnnotationLayerProps {
   selectedPolygon: string | null;
   hoveredBoxId?: string | null;
   tool: 'draw' | 'move' | 'polygon';
+  /** Native image size so boxes can report their dimensions in image pixels. */
+  imageSize?: ImageSize | null;
   setSelectedBox: (id: string | null) => void;
   setSelectedPolygon: (id: string | null) => void;
   updateBoxPosition: (id: string, updates: Partial<Box>) => void;
@@ -33,6 +36,7 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   selectedPolygon,
   hoveredBoxId,
   tool,
+  imageSize,
   setSelectedBox,
   setSelectedPolygon,
   updateBoxPosition
@@ -46,6 +50,7 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           isSelected={selectedBox === box.id}
           isHighlighted={hoveredBoxId === box.id}
           tool={tool}
+          imageSize={imageSize}
           onSelect={() => setSelectedBox(box.id)}
           onUpdate={updateBoxPosition}
         />
@@ -80,7 +85,8 @@ export default React.memo(AnnotationLayer, (prev, next) => {
       prevBox.y !== nextBox.y ||
       prevBox.width !== nextBox.width ||
       prevBox.height !== nextBox.height ||
-      prevBox.color !== nextBox.color
+      prevBox.color !== nextBox.color ||
+      prevBox.label !== nextBox.label
     ) {
       return false;
     }
@@ -92,6 +98,9 @@ export default React.memo(AnnotationLayer, (prev, next) => {
     prev.selectedPolygon === next.selectedPolygon &&
     prev.hoveredBoxId === next.hoveredBoxId &&
     prev.tool === next.tool &&
+    prev.imageSize?.width === next.imageSize?.width &&
+    prev.imageSize?.height === next.imageSize?.height &&
+    prev.updateBoxPosition === next.updateBoxPosition &&
     prev.polygons.length === next.polygons.length
   );
 });
