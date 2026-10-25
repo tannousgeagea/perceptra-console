@@ -4,9 +4,19 @@ import { Card, CardContent } from '@/components/ui/ui/card';
 import { Badge } from '@/components/ui/ui/badge';
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
-import { Cloud, Database, Server, HardDrive, Star, Trash2, Loader2 } from 'lucide-react';
-import { useDeleteStorageProfile, useUpdateStorageProfile } from '@/hooks/useStorage';
+import { Cloud, Database, Server, HardDrive, Star, Trash2, Loader2, Globe, KeyRound, Lock } from 'lucide-react';
+import { useDeleteStorageProfile, useRotateStorageCredentials, useUpdateStorageProfile } from '@/hooks/useStorage';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/ui/dialog';
+import { CredentialFields, CredentialForm, buildCredentials } from './CredentialFields';
 
 import {
   AlertDialog,
@@ -28,17 +38,35 @@ const iconMap = {
   azure: Cloud,
   s3: Database,
   minio: Server,
+  gcs: Globe,
   local: HardDrive,
 };
 
 export function StorageProfileCard({ profile }: StorageProfileCardProps) {
-  const Icon = iconMap[profile.backend];
+  const Icon = iconMap[profile.backend] ?? Database;
+  const isExternal = profile.access_mode === 'external_readonly';
   const [confirmText, setConfirmText] = useState("");
   const isConfirmed = confirmText.trim() === profile.name;
+  const [rotateOpen, setRotateOpen] = useState(false);
+  const [rotateForm, setRotateForm] = useState<CredentialForm>({});
 
   // ✅ Use hooks
   const { mutate: deleteProfile, isPending: isDeleting } = useDeleteStorageProfile();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateStorageProfile();
+  const { mutate: rotateCredentials, isPending: isRotating } = useRotateStorageCredentials({
+    onSuccess: () => {
+      setRotateOpen(false);
+      setRotateForm({});
+    },
+  });
+
+  const handleRotate = () => {
+    if (!profile.storage_profile_id) return toast.error('Missing storage profile ID');
+    rotateCredentials({
+      storageProfileId: profile.storage_profile_id,
+      credentials: buildCredentials(profile.backend, rotateForm),
+    });
+  };
 
   // ✅ Set as default handler
   const handleSetDefault = () => {
@@ -62,7 +90,7 @@ export function StorageProfileCard({ profile }: StorageProfileCardProps) {
     deleteProfile(profile.storage_profile_id);
   };
 
-  const isLoading = isDeleting || isUpdating;
+  const isLoading = isDeleting || isUpdating || isRotating;
 
   return (
     <Card>
@@ -79,6 +107,12 @@ export function StorageProfileCard({ profile }: StorageProfileCardProps) {
                   <Badge variant="default" className="gap-1">
                     <Star className="h-3 w-3 fill-current" />
                     Default
+                  </Badge>
+                )}
+                {isExternal && (
+                  <Badge variant="secondary" className="gap-1" title="Files belong to another system: referenced, never written or deleted">
+                    <Lock className="h-3 w-3" />
+                    External · read-only
                   </Badge>
                 )}
               </div>
@@ -99,9 +133,42 @@ export function StorageProfileCard({ profile }: StorageProfileCardProps) {
             </div>
           </div>
           <div className="flex gap-2">
+            {profile.backend !== 'local' && (
+              <Dialog open={rotateOpen} onOpenChange={setRotateOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={isLoading} title="Rotate credentials">
+                    <KeyRound className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Rotate credentials — {profile.name}</DialogTitle>
+                    <DialogDescription>
+                      The new credential is tested against this storage before it replaces the current one. The profile
+                      keeps its id, so every image registered on it keeps loading.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <CredentialFields
+                      backend={profile.backend}
+                      form={rotateForm}
+                      onChange={(field, value) => setRotateForm({ ...rotateForm, [field]: value })}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setRotateOpen(false)}>Cancel</Button>
+                    <Button onClick={handleRotate} disabled={isRotating}>
+                      {isRotating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Test & rotate
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                {!profile.is_default && (
+                {!profile.is_default && !isExternal && (
                   <Button
                     variant="outline"
                     size="sm"

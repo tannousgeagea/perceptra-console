@@ -8,19 +8,37 @@ import { Textarea } from '@/components/ui/ui/textarea';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/ui/checkbox';
 import { useTestStorageConnection, useCreateStorageProfile, useStorageProfiles } from '@/hooks/useStorage';
-import { StorageBackend, Credentials } from '@/types/storage';
-import { Database, Cloud, Server, HardDrive, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { StorageAccessMode, StorageBackend, Credentials } from '@/types/storage';
+import { Database, Cloud, Server, HardDrive, CheckCircle2, XCircle, Loader2, Globe } from 'lucide-react';
 import { StorageProfileCard } from './StorageProfileCard';
+import { CredentialFields, buildCredentials as buildBackendCredentials } from './CredentialFields';
 
 const storageOptions = [
   { value: 'azure', label: 'Azure Blob Storage', icon: Cloud },
   { value: 's3', label: 'Amazon S3', icon: Database },
   { value: 'minio', label: 'MinIO / S3-Compatible', icon: Server },
+  { value: 'gcs', label: 'Google Cloud Storage', icon: Globe },
   { value: 'local', label: 'Local Storage', icon: HardDrive },
+];
+
+const accessModeOptions: { value: StorageAccessMode; label: string; description: string }[] = [
+  {
+    value: 'managed',
+    label: 'Managed by Perceptra',
+    description: 'Uploads, dataset exports and model artifacts are written here.',
+  },
+  {
+    value: 'external_readonly',
+    label: 'External (read-only)',
+    description:
+      'Storage owned by another system. Its images are registered by reference through the ingest API — never uploaded, copied or deleted. Cannot be the default.',
+  },
 ];
 
 export function StorageSettings() {
   const [selectedBackend, setSelectedBackend] = useState<StorageBackend>('azure');
+  const [accessMode, setAccessMode] = useState<StorageAccessMode>('managed');
+  const isExternal = accessMode === 'external_readonly';
   
   // ✅ Use hooks
   const { mutate: testConnection, isPending: isTesting } = useTestStorageConnection();
@@ -31,35 +49,7 @@ export function StorageSettings() {
   const [formData, setFormData] = useState<any>({});
   
   // ✅ Build credentials based on backend
-  const buildCredentials = (): Credentials => {
-    switch (selectedBackend) {
-      case 'azure':
-        if (formData.connectionString) {
-          return {
-            type: 'connection_string',
-            connection_string: formData.connectionString,
-          };
-        }
-        return {
-          type: 'account_key',
-          account_key: formData.accountKey,
-        };
-
-      case 's3':
-      case 'minio':
-        return {
-          type: 'access_key',
-          access_key_id: formData.accessKey,
-          secret_access_key: formData.secretKey,
-        };
-
-      case 'local':
-        return { type: 'connection_string', connection_string: '' }; // Local doesn't need credentials
-
-      default:
-        throw new Error('Unsupported backend');
-    }
-  };
+  const buildCredentials = (): Credentials => buildBackendCredentials(selectedBackend, formData);
 
   // ✅ Build config based on backend
   const buildConfig = () => {
@@ -73,12 +63,19 @@ export function StorageSettings() {
 
       case 's3':
         config.bucket_name = formData.bucketName;
+        if (formData.region) config.region = formData.region;
+        if (formData.s3EndpointUrl) config.endpoint_url = formData.s3EndpointUrl;
         if (formData.kmsKeyId) config.kms_key_id = formData.kmsKeyId;
         break;
 
       case 'minio':
         config.bucket_name = formData.bucketName;
         config.endpoint_url = formData.endpointUrl;
+        break;
+
+      case 'gcs':
+        config.bucket_name = formData.bucketName;
+        if (formData.projectId) config.project_id = formData.projectId;
         break;
 
       case 'local':
@@ -101,6 +98,7 @@ export function StorageSettings() {
         name: formData.name || `${selectedBackend} Storage`,
         backend: selectedBackend,
         region: formData.region,
+        access_mode: accessMode,
         config: buildConfig(),
       },
       credentials: buildCredentials(),
@@ -125,7 +123,8 @@ export function StorageSettings() {
         name: formData.name || `${selectedBackend} Storage`,
         backend: selectedBackend,
         region: formData.region,
-        is_default: formData.is_default || false,
+        is_default: isExternal ? false : formData.is_default || false,
+        access_mode: accessMode,
         config: buildConfig(),
       },
       credentials: buildCredentials(),
@@ -133,6 +132,7 @@ export function StorageSettings() {
     }, {
       onSuccess: () => {
         setFormData({}); // Clear form
+        setAccessMode('managed');
       },
     });
   };
@@ -152,7 +152,7 @@ export function StorageSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="accountName">Account Name *</Label> 
+              <Label htmlFor="accountName">Account Name *</Label>
               <Input
                 id="accountName"
                 placeholder="mystorageaccount"
@@ -160,26 +160,7 @@ export function StorageSettings() {
                 onChange={(e) => handleInputChange('accountName', e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="connectionString">Connection String</Label>
-              <Textarea
-                id="connectionString"
-                placeholder="DefaultEndpointsProtocol=https;AccountName=..."
-                value={formData.connectionString || ''}
-                onChange={(e) => handleInputChange('connectionString', e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="accountKey">Account Key (alternative)</Label>
-              <Input
-                id="accountKey"
-                type="password"
-                placeholder="Enter account key"
-                value={formData.accountKey || ''}
-                onChange={(e) => handleInputChange('accountKey', e.target.value)}
-              />
-            </div>
+            <CredentialFields backend="azure" form={formData} onChange={handleInputChange} />
           </>
         );
       
@@ -195,26 +176,15 @@ export function StorageSettings() {
                 onChange={(e) => handleInputChange('bucketName', e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="accessKey">Access Key ID *</Label>
-                <Input
-                  id="accessKey"
-                  placeholder="AKIA..."
-                  value={formData.accessKey || ''}
-                  onChange={(e) => handleInputChange('accessKey', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="secretKey">Secret Access Key *</Label>
-                <Input
-                  id="secretKey"
-                  type="password"
-                  placeholder="Enter secret key"
-                  value={formData.secretKey || ''}
-                  onChange={(e) => handleInputChange('secretKey', e.target.value)}
-                />
-              </div>
+            <CredentialFields backend="s3" form={formData} onChange={handleInputChange} />
+            <div className="space-y-2">
+              <Label htmlFor="s3EndpointUrl">Endpoint URL (optional, S3-compatible stores)</Label>
+              <Input
+                id="s3EndpointUrl"
+                placeholder="https://s3.eu-central-1.wasabisys.com"
+                value={formData.s3EndpointUrl || ''}
+                onChange={(e) => handleInputChange('s3EndpointUrl', e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="region">Region *</Label>
@@ -258,30 +228,37 @@ export function StorageSettings() {
                 onChange={(e) => handleInputChange('bucketName', e.target.value)}
               />
             </div>
+            <CredentialFields backend="minio" form={formData} onChange={handleInputChange} />
+          </>
+        );
+
+      case 'gcs':
+        return (
+          <>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="accessKey">Access Key *</Label>
+                <Label htmlFor="bucketName">Bucket Name *</Label>
                 <Input
-                  id="accessKey"
-                  placeholder="minioadmin"
-                  value={formData.accessKey || ''}
-                  onChange={(e) => handleInputChange('accessKey', e.target.value)}
+                  id="bucketName"
+                  placeholder="my-bucket"
+                  value={formData.bucketName || ''}
+                  onChange={(e) => handleInputChange('bucketName', e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="secretKey">Secret Key *</Label>
+                <Label htmlFor="projectId">Project ID (optional)</Label>
                 <Input
-                  id="secretKey"
-                  type="password"
-                  placeholder="Enter secret key"
-                  value={formData.secretKey || ''}
-                  onChange={(e) => handleInputChange('secretKey', e.target.value)}
+                  id="projectId"
+                  placeholder="my-gcp-project"
+                  value={formData.projectId || ''}
+                  onChange={(e) => handleInputChange('projectId', e.target.value)}
                 />
               </div>
             </div>
+            <CredentialFields backend="gcs" form={formData} onChange={handleInputChange} />
           </>
         );
-      
+
       case 'local':
         return (
           <div className="space-y-2">
@@ -340,6 +317,23 @@ export function StorageSettings() {
           </div>
 
           <div className="space-y-2">
+            <Label>Access Mode *</Label>
+            <Select value={accessMode} onValueChange={(v) => setAccessMode(v as StorageAccessMode)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {accessModeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              {accessModeOptions.find((o) => o.value === accessMode)?.description}
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="name">Profile Name *</Label>
             <Input
               id="name"
@@ -372,16 +366,18 @@ export function StorageSettings() {
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is_default"
-              checked={formData.is_default || false}
-              onCheckedChange={(checked) => handleInputChange('is_default', checked)}
-            />
-            <Label htmlFor="is_default" className="cursor-pointer">
-              Set as default storage
-            </Label>
-          </div>
+          {!isExternal && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_default"
+                checked={formData.is_default || false}
+                onCheckedChange={(checked) => handleInputChange('is_default', checked)}
+              />
+              <Label htmlFor="is_default" className="cursor-pointer">
+                Set as default storage
+              </Label>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button
