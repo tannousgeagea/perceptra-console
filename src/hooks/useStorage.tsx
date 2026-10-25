@@ -6,7 +6,7 @@ import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
-import { Credentials, StorageProfile, StorageSecret } from "@/types/storage";
+import { Credentials, StorageAccessMode, StorageProfile, StorageSecret } from "@/types/storage";
 
 // ============================================
 // TYPES
@@ -37,6 +37,7 @@ export interface CreateProfileResponse {
   credential_ref_id?: string;
   encrypted_secret_identifier?: string;
   is_default: boolean;
+  access_mode: StorageAccessMode;
   message: string;
 }
 
@@ -111,7 +112,7 @@ export const createStorageProfile = async (
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to create storage profile' }));
-    throw new Error(error.message || 'Failed to create storage profile');
+    throw new Error(error.detail || error.message || 'Failed to create storage profile');
   }
 
   return response.json();
@@ -297,7 +298,7 @@ export const deleteStorageProfile = async (
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to delete storage profile' }));
-    throw new Error(error.message || 'Failed to delete storage profile');
+    throw new Error(error.detail || error.message || 'Failed to delete storage profile');
   }
 };
 
@@ -377,10 +378,84 @@ export const updateStorageProfile = async (
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to update storage profile' }));
-    throw new Error(error.message || 'Failed to update storage profile');
+    throw new Error(error.detail || error.message || 'Failed to update storage profile');
   }
 
   return response.json();
+};
+
+// ============================================
+// ROTATE STORAGE CREDENTIALS
+// ============================================
+
+export interface RotateCredentialsResponse {
+  storage_profile_id: string;
+  name: string;
+  credential_type: string;
+  access_mode: string;
+  can_presign?: boolean | null;
+  rotated_at: string;
+  message: string;
+}
+
+/** Replace a profile's credential in place: the profile (and every image registered on it) keeps its id. */
+export const rotateStorageCredentials = async (
+  organizationId: string,
+  storageProfileId: string,
+  credentials: Credentials,
+  testBeforeSave = true,
+): Promise<RotateCredentialsResponse> => {
+  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `${baseURL}/api/v1/storage/profiles/${storageProfileId}/credentials`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Organization-ID': organizationId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ credentials, test_before_save: testBeforeSave }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || error.message || 'Failed to rotate credentials');
+  }
+
+  return response.json();
+};
+
+export const useRotateStorageCredentials = (options?: {
+  onSuccess?: (data: RotateCredentialsResponse) => void;
+}) => {
+  const queryClient = useQueryClient();
+  const { currentOrganization } = useCurrentOrganization();
+
+  return useMutation({
+    mutationFn: ({ storageProfileId, credentials }: { storageProfileId: string; credentials: Credentials }) => {
+      if (!currentOrganization) {
+        throw new Error("No organization selected");
+      }
+      return rotateStorageCredentials(currentOrganization.id, storageProfileId, credentials);
+    },
+
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['storageProfiles'] });
+      toast.success(data.message || 'Credentials rotated');
+      options?.onSuccess?.(data);
+    },
+
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to rotate credentials');
+    },
+  });
 };
 
 export const useUpdateStorageProfile = (options?: {
