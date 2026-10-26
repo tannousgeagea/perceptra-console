@@ -14,6 +14,7 @@ import { useClasses } from '@/hooks/useClasses';
 import { AnnotationInfo } from './AnnotationInfo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
 import { useSAMSession } from '@/hooks/useSAMSession';
+import { safeReturnTo } from '@/hooks/useOpenInAnnotator';
 import { useImagePreload } from '@/hooks/useImagePreload';
 
 const AnnotationTool = () => {
@@ -40,10 +41,19 @@ const AnnotationTool = () => {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const itemsPerPage = parseInt(searchParams.get("limit") || "20");
   const indexParam = parseInt(searchParams.get("index") || "0", 10);
+  // Where this image was opened from (e.g. the Dataset page, with its filters
+  // and page) — the back arrow returns there; the job grid stays one click away.
+  const returnTo = safeReturnTo(searchParams.get("returnTo"), projectId!);
   const params = new URLSearchParams(location.search);
   params.delete("index");
+  params.delete("returnTo");
 
-  const backUrl = `/projects/${projectId}/annotate/job/${jobId}?${params.toString()}`;
+  const jobUrl = jobId ? `/projects/${projectId}/annotate/job/${jobId}?${params.toString()}` : null;
+  const datasetUrl = returnTo ?? `/projects/${projectId}/dataset`;
+  const backUrl = returnTo ?? jobUrl ?? datasetUrl;
+  const backLabel = returnTo
+    ? (returnTo.includes("/dataset") ? "Back to dataset" : "Back")
+    : jobUrl ? "Back to job" : "Back to dataset";
 
   // fetch job images for context
   const { data: jobImages } = useJobImages(projectId!, jobId, {
@@ -139,8 +149,15 @@ const AnnotationTool = () => {
           total={imageIds.length}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          subtitle={`Filter: ${status || "all"} (Page ${page})`}
+          subtitle={jobId
+            ? `${jobImages?.job?.name ? `Job: ${jobImages.job.name} · ` : ""}${status || "all"} · page ${page}`
+            : "Not in an annotation job"}
           backTo={backUrl}
+          backLabel={backLabel}
+          links={[
+            ...(jobUrl && backUrl !== jobUrl ? [{ label: "Open job", to: jobUrl }] : []),
+            ...(backUrl !== datasetUrl ? [{ label: "Dataset", to: datasetUrl }] : []),
+          ]}
         />
         <div className="flex h-full bg-card">
           <div className="w-56 border-r border-border flex flex-col h-full min-h-0">

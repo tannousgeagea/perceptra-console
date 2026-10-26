@@ -10,6 +10,7 @@ import { ProtectedRoute, PublicRoute} from './pages/ProtectedRoute';
 import AnalysisPage from './pages/analysis/Index';
 import JobAnnotation from './pages/annotate/JobAnnotation';
 import UploadIndex from './pages/upload/Index';
+import RegisterFromStorage from './pages/register/RegisterFromStorage';
 import NotFound from './pages/NotFound';
 import ClassesManagement from './pages/class_management/ClassManagement';
 import ActivityPage from './pages/activity/ProjectActivity';
@@ -85,6 +86,8 @@ const App = () => {
                       <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
                       <Route path='/datalake' element={<DataLake />} />
                       <Route path='/upload' element={<UploadIndex />} />
+                      <Route path='/link' element={<RegisterFromStorage />} />
+                      <Route path='/register' element={<Navigate to="/link" replace />} />
                       <Route path='/projects' element={<Projects />} />
                       <Route path='/projects/add' element={<CreateProject />} />
                       <Route path='/inference' element={<Inference />} />
@@ -105,6 +108,8 @@ const App = () => {
                         </ProjectProvider>
                       }>
                         <Route path='upload' element={<UploadIndex />} />
+                        <Route path='link' element={<RegisterFromStorage />} />
+                        <Route path='register' element={<Navigate to="../link" replace />} />
                         <Route path='dataset' element={<ProjectDataset />} />
                         {/* <Route path='annotate' element={<Annotate />} /> */}
                         <Route path='versions' element={<DatasetVersions />} />
