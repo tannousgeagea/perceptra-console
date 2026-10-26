@@ -42,7 +42,18 @@ export default function ProjectDataset() {
       return next;
     }, { replace: true });
   }, [setSearchParams]);
-  const setSearchText = (text: string) => updateParams({ q: text, page: null });
+  // The filter box re-sends its (debounced) text after renders; only a real
+  // change of the query goes back to page 1.
+  const setSearchText = useCallback((text: string) => {
+    setSearchParams((prev) => {
+      if ((prev.get('q') ?? '') === text) return prev;
+      const next = new URLSearchParams(prev);
+      if (text) next.set('q', text);
+      else next.delete('q');
+      next.delete('page');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
   const setViewMode = (mode: 'grid' | 'table') => updateParams({ view: mode === 'grid' ? null : mode });
   const setCurrentPage = (page: number) => updateParams({ page: page > 1 ? page : null });
   const setItemsPerPage = (limit: number) => updateParams({ limit: limit === 20 ? null : limit, page: null });
