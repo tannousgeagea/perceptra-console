@@ -38,6 +38,8 @@ export function ProjectImageCard({ projectId, image, selected, onSelect, showAnn
           <img
             src={image.download_url}
             alt={image.name}
+            loading="lazy"
+            decoding="async"
             onContextMenu={(e) => e.preventDefault()}
             draggable={false}
             className="w-full h-full object-fit brightness-50"

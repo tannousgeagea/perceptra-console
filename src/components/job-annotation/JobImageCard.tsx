@@ -57,6 +57,7 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
           alt={image.name}
           className="w-full h-full object-fit brightness-75"
           loading="lazy"
+          decoding="async"
           onContextMenu={(e) => e.preventDefault()}
           draggable={false}
           onLoad={() => setIsLoaded(true)}
