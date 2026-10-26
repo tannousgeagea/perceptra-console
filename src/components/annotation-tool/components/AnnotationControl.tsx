@@ -15,6 +15,10 @@ interface AnnotationControlsProps {
   onPrevious: () => void;
   onNext: () => void;
   backTo?: string;
+  /** Where the back arrow goes, e.g. "Back to dataset" (tooltip / aria label). */
+  backLabel?: string;
+  /** Quick jumps between related views (dataset ⇄ job), shown under the title. */
+  links?: { label: string; to: string }[];
 }
 
 const formatFileName = (name: string) => {
@@ -32,6 +36,8 @@ const AnnotationControls = memo(
     onPrevious,
     onNext,
     backTo = "/projects",
+    backLabel = "Back",
+    links = [],
   }: AnnotationControlsProps) => {
     const navigate = useNavigate();
     const { setSelectedBox } = useAnnotationState();
@@ -69,14 +75,19 @@ const AnnotationControls = memo(
       <div className="relative flex items-center justify-between w-full bg-background/80 backdrop-blur-md border-b border-b-[1px] border-white/20 dark:border-white/30 px-4 py-2 shadow-[0_1px_0_0_rgba(255,255,255,0.1)]">
         {/* LEFT SECTION */}
         <div className="flex items-center gap-3 min-w-[250px]">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => navigate(backTo)}
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => navigate(backTo)}
+                aria-label={backLabel}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{backLabel}</TooltipContent>
+          </Tooltip>
 
           <div className="flex flex-col truncate max-w-[45vw]">
             <AnimatePresence mode="wait">
@@ -97,8 +108,22 @@ const AnnotationControls = memo(
               </Tooltip>
             </AnimatePresence>
 
-            {subtitle && (
-              <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+            {(subtitle || links.length > 0) && (
+              <p className="text-xs text-muted-foreground truncate">
+                {subtitle}
+                {links.map((link, i) => (
+                  <span key={link.to}>
+                    {subtitle || i > 0 ? " · " : ""}
+                    <button
+                      type="button"
+                      className="underline-offset-2 hover:underline hover:text-foreground"
+                      onClick={() => navigate(link.to)}
+                    >
+                      {link.label}
+                    </button>
+                  </span>
+                ))}
+              </p>
             )}
           </div>
         </div>

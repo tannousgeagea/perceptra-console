@@ -1,7 +1,7 @@
 import { ViewMode } from '@/types/image';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/ui/button';
-import { Grid3x3, Table2, Database, Upload, Copy } from 'lucide-react';
+import { Grid3x3, Table2, Database, Upload, Copy, Link2 } from 'lucide-react';
 
 interface DataLakeHeaderProps {
   viewMode: ViewMode;
@@ -43,6 +43,16 @@ export function DataLakeHeader({ viewMode, onViewModeChange, totalImages, onFind
         >
           <Upload className="w-4 h-4" />
           Upload
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/link")}
+          className="gap-2"
+          title="Link images from connected storage — no upload, no copy"
+        >
+          <Link2 className="w-4 h-4" />
+          Link
         </Button>
         <Button
           variant={viewMode === 'grid' ? 'default' : 'outline'}

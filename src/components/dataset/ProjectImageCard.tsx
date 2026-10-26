@@ -8,15 +8,17 @@ import { FileImage, Tag, CheckCircle2, AlertCircle, Clock, Database } from 'luci
 import BoundingBox from '../image/BoundingBox';
 import { getModeBadge } from '@/utils/split';
 import { cn } from '@/lib/utils';
+import { OpenInAnnotator } from './OpenInAnnotator';
 
 interface ProjectImageCardProps {
+  projectId: string;
   image: ProjectImage;
   selected: boolean;
   onSelect: (id: string) => void;
   showAnnotations: boolean;
 }
 
-export function ProjectImageCard({ image, selected, onSelect, showAnnotations }: ProjectImageCardProps) {
+export function ProjectImageCard({ projectId, image, selected, onSelect, showAnnotations }: ProjectImageCardProps) {
   const statusConfig = {
     annotated: { icon: CheckCircle2, color: 'bg-green-500/10 text-green-500 border-green-500/20' },
     reviewed: { icon: CheckCircle2, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
@@ -50,12 +52,14 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
             ))
           )}
         </div>
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center justify-center gap-3">
           <Checkbox
             checked={selected}
             onCheckedChange={() => onSelect(image.project_image_id)}
             className="w-6 h-6"
+            aria-label={`Select ${image.original_filename}`}
           />
+          <OpenInAnnotator projectId={projectId} imageId={image.image_id} jobs={image.jobs} />
         </div>
         <div className="absolute top-2 right-2">
           <Badge className={statusConfig[image.status].color}>
@@ -128,7 +132,14 @@ export function ProjectImageCard({ image, selected, onSelect, showAnnotations }:
             <span className="font-medium text-foreground">{image.file_size_mb.toFixed(2)} MB</span>
           </div>
 
-          {image.job_assignment_status && (
+          {image.jobs && image.jobs.length > 0 ? (
+            <div className="flex items-center justify-between gap-2">
+              <span>{image.jobs.length > 1 ? 'Jobs:' : 'Job:'}</span>
+              <span className="font-medium text-foreground truncate" title={image.jobs.map((j) => j.name).join(', ')}>
+                {image.jobs.map((j) => j.name).join(', ')}
+              </span>
+            </div>
+          ) : image.job_assignment_status && (
             <div className="flex items-center justify-between">
               <span>Job Status:</span>
               <Badge variant="secondary" className="text-xs">

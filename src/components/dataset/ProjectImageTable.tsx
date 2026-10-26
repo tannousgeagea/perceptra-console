@@ -11,8 +11,11 @@ import {
 } from '@/components/ui/ui/table';
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle2, AlertCircle, Database } from 'lucide-react';
+import { OpenInAnnotator } from './OpenInAnnotator';
 
 interface ProjectImageTableProps {
+  /** Set to show the per-row "Annotate" action (Dataset page). */
+  projectId?: string;
   images: ProjectImage[];
   selectedIds: Set<string>;
   onSelect: (id: string) => void;
@@ -20,6 +23,7 @@ interface ProjectImageTableProps {
 }
 
 export function ProjectImageTable({
+  projectId,
   images,
   selectedIds,
   onSelect,
@@ -57,7 +61,9 @@ export function ProjectImageTable({
             <TableHead className="text-right">Dimensions</TableHead>
             <TableHead className="text-right">Size</TableHead>
             <TableHead>Tags</TableHead>
+            <TableHead>Job</TableHead>
             <TableHead className="text-right">Added</TableHead>
+            {projectId && <TableHead className="w-12"><span className="sr-only">Annotate</span></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -130,9 +136,17 @@ export function ProjectImageTable({
                     )}
                   </div>
                 </TableCell>
+                <TableCell className="text-sm max-w-[160px] truncate" title={image.jobs?.map((j) => j.name).join(', ')}>
+                  {image.jobs?.length ? image.jobs.map((j) => j.name).join(', ') : <span className="text-muted-foreground">—</span>}
+                </TableCell>
                 <TableCell className="text-right text-sm text-muted-foreground">
                   {formatDistanceToNow(new Date(image.added_at))} ago
                 </TableCell>
+                {projectId && (
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <OpenInAnnotator projectId={projectId} imageId={image.image_id} jobs={image.jobs} size="icon" variant="ghost" />
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

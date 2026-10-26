@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useProjectImages } from '@/hooks/useProjectImages';
 import { ProjectDatasetHeader } from '@/components/dataset/ProjectDatasetHeader';
 import { ProjectDatasetFilters } from '@/components/dataset/ProjectDatasetFilters';
@@ -25,11 +25,28 @@ import { useSimilarityStore } from '@/stores/similarityStore';
 export default function ProjectDataset() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const [searchText, setSearchText] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  // Search, page, page size and view live in the URL, so coming back from the
+  // annotator (returnTo) or sharing a link restores exactly this view.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchText = searchParams.get('q') ?? '';
+  const viewMode: 'grid' | 'table' = searchParams.get('view') === 'table' ? 'table' : 'grid';
+  const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+  const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20);
+  const updateParams = useCallback((changes: Record<string, string | number | null>) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      Object.entries(changes).forEach(([key, value]) => {
+        if (value === null || value === '') next.delete(key);
+        else next.set(key, String(value));
+      });
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+  const setSearchText = (text: string) => updateParams({ q: text, page: null });
+  const setViewMode = (mode: 'grid' | 'table') => updateParams({ view: mode === 'grid' ? null : mode });
+  const setCurrentPage = (page: number) => updateParams({ page: page > 1 ? page : null });
+  const setItemsPerPage = (limit: number) => updateParams({ limit: limit === 20 ? null : limit, page: null });
   const [showAnnotations, setShowAnnotations] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
   const { toast } = useToast();
 
   const { operation, runBulkReview, runBulkDeleteProject, runBulkTag, cancelOperation, clearOperation } = useBulkOperations(projectId);
@@ -206,6 +223,7 @@ export default function ProjectDataset() {
           <>
             {viewMode === 'grid' ? (
               <ProjectImageGrid
+                projectId={projectId!}
                 images={data?.images || []}
                 selectedIds={selection.selectedIds}
                 onSelect={selection.toggle}
@@ -213,6 +231,7 @@ export default function ProjectDataset() {
               />
             ) : (
               <ProjectImageTable
+                projectId={projectId!}
                 images={data?.images || []}
                 selectedIds={selection.selectedIds}
                 onSelect={selection.toggle}
@@ -233,7 +252,6 @@ export default function ProjectDataset() {
                 }}
                 onItemsPerPageChange={(perPage) => {
                   setItemsPerPage(perPage);
-                  setCurrentPage(1);
                 }}
                 className='pr-[32rem]'
               />
