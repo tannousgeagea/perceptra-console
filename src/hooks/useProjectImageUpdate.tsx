@@ -6,6 +6,7 @@ import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
+import { invalidateJobImages } from "@/hooks/useJobImages";
 
 // ============================================
 // TYPES
@@ -242,6 +243,7 @@ export const useReviewProjectImage = (projectId: string, options?: {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      invalidateJobImages(queryClient);
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },
@@ -269,7 +271,10 @@ export const useMarkImageAsNull = (projectId: string, options?: {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      invalidateJobImages(queryClient);
       queryClient.invalidateQueries({ queryKey: ['annotations', projectId] });
+      // Restoring brings annotations back; the annotator must reload them.
+      queryClient.invalidateQueries({ queryKey: ['projectImageDetails'] });
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },
@@ -294,6 +299,7 @@ export const useFinalizeImage = (projectId: string, options?: {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      invalidateJobImages(queryClient);
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },
@@ -321,6 +327,7 @@ export const useDeleteProjectImage = (projectId: string, options?: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      invalidateJobImages(queryClient);
       if (showToast) toast.success('Image deleted successfully');
       onSuccess?.();
     },
@@ -345,6 +352,7 @@ export const useBatchFinalizeImages = (projectId: string, options?: {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      invalidateJobImages(queryClient);
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },
@@ -402,6 +410,7 @@ export const useSplitDataset = (projectId: string, options?: {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      invalidateJobImages(queryClient);
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },

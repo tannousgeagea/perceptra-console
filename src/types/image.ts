@@ -131,11 +131,25 @@ export interface JobInfo {
   created_at: string;
 }
 
+export type JobImageTab = 'unannotated' | 'annotated' | 'reviewed' | 'dataset';
+
+export interface JobImageCounts {
+  unannotated: number;
+  annotated: number;
+  reviewed: number;
+  /** Completed: moved to a dataset. */
+  dataset: number;
+  marked_null: number;
+  total: number;
+}
+
 export interface JobImagesResponse {
   total: number;
   unannotated: number;
   reviewed: number;
   annotated: number;
+  dataset?: number;
+  marked_null?: number;
   job: JobInfo;
   project_image_ids: string[];
   image_ids: string[];

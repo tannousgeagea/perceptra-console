@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/ui/card';
 import { Badge } from '@/components/ui/ui/badge';
 import { Checkbox } from '@/components/ui/ui/checkbox';
-import { Button } from '@/components/ui/ui/button';
 
 import { ProjectImage } from '@/types/dataset';
 import { cn } from '@/lib/utils';
 import BoundingBox from "@/components/image/BoundingBox";
+import { CopyableId } from '@/components/ui/ui/copyable-id';
+import { Ban } from 'lucide-react';
 
 interface JobImageCardProps {
   image: ProjectImage;
@@ -18,7 +19,7 @@ interface JobImageCardProps {
 }
 
 export function JobImageCard({ image, size, selected, selectionMode, onToggleSelect, handleClick }: JobImageCardProps) {
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [isUpdating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const handleCardClick = () => {
@@ -34,6 +35,7 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
       unannotated: { label: 'Pending', variant: 'secondary' as const },
       annotated: { label: 'Annotated', variant: 'default' as const },
       reviewed: { label: 'Reviewed', variant: 'default' as const },
+      dataset: { label: 'Completed', variant: 'outline' as const },
     };
     
     const config = statusConfig[image.status] || statusConfig.unannotated;
@@ -90,6 +92,15 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
         </div>
 
         <div className="absolute top-2 right-2 flex gap-2">
+          {image.marked_as_null && (
+            <Badge
+              className="gap-1 border-amber-400/60 bg-amber-500/90 text-white hover:bg-amber-500/90"
+              title="Flagged as empty (no objects). Open the image to restore it."
+            >
+              <Ban className="h-3 w-3" />
+              Empty
+            </Badge>
+          )}
           {getStatusBadge()}
         </div>
 
@@ -106,10 +117,11 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
       </div>
 
       <div className="p-3">
-        <p className="text-sm font-medium truncate">{image.name}</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {image.width} × {image.height}
-        </p>
+        <p className="text-sm font-medium truncate" title={image.name}>{image.name}</p>
+        <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span className="shrink-0">{image.width} × {image.height}</span>
+          <CopyableId value={image.image_id} label="Image ID" truncate={8} />
+        </div>
       </div>
     </Card>
   );

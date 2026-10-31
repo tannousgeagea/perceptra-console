@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { JobAnnotationHeader } from '@/components/job-annotation/JobAnnotationHeader';
 import { JobAnnotationTabs } from '@/components/job-annotation/JobAnnotationTabs';
@@ -8,23 +9,28 @@ import { useBulkOperations } from '@/hooks/useBulkOperation';
 import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
 import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
 import { DatasetBuilder } from '@/components/dataset-builder/DatasetBuilder';
-import { useJobImages } from '@/hooks/useJobImages';
+import { useJobImages, useJobImageCounts, invalidateJobImages } from '@/hooks/useJobImages';
+import { useBulkMarkImagesAsNull } from '@/hooks/useProjectImageBulkOperation';
+import { JOB_TABS } from '@/components/job-annotation/jobTabs';
+import type { JobImageTab } from '@/types/image';
 import { Skeleton } from '@/components/ui/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/ui/alert';
-import { AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
+import { AlertCircle, Ban, CheckCircle2, RotateCcw, Trash2 } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/ui/pagination-control';
 import { useToast } from '@/hooks/use-toast';
 
 export default function JobAnnotation() {
-  const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
+  const { projectId = '', jobId = '' } = useParams<{ projectId: string, jobId: string }>();
   const location = useLocation();
   const query = new URLSearchParams(location.search);
-  const initialStatus = query.get("status") as 'unannotated' | 'annotated' | 'reviewed' || 'unannotated';
+  const statusParam = query.get("status");
+  const initialStatus: JobImageTab =
+    JOB_TABS.find((t) => t.id === statusParam)?.id ?? 'unannotated';
 
   const initialPage = parseInt(query.get("page") || "1");
   const initialLimit = parseInt(query.get("limit") || "20");
 
-  const [activeStatus, setActiveStatus] = useState<'unannotated' | 'annotated' | 'reviewed'>(initialStatus);
+  const [activeStatus, setActiveStatus] = useState<JobImageTab>(initialStatus);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [itemsPerPage, setItemsPerPage] = useState(initialLimit);
@@ -33,7 +39,14 @@ export default function JobAnnotation() {
   const [imageSize, setImageSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [datasetBuilderOpen, setDatasetBuilderOpen] = useState(false);
   const navigate = useNavigate();
-    
+  const queryClient = useQueryClient();
+
+  // A new tab starts on its first page — page 3 of one tab is meaningless in another.
+  const handleStatusChange = useCallback((status: JobImageTab) => {
+    setActiveStatus(status);
+    setCurrentPage(1);
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
@@ -50,21 +63,24 @@ export default function JobAnnotation() {
     );
   }, [currentPage, itemsPerPage, activeStatus]);
 
-  if (!projectId || !jobId) {
-    return <p className="text-red-600 p-6">Invalid route: Missing project or job ID.</p>;
-  }
-
-  const { data, isLoading, isError: error, refetch } = useJobImages(projectId, jobId, {
+  const { data, isLoading, isFetching, isPlaceholderData, isError: error, refetch: refetchImages } = useJobImages(projectId, jobId, {
     skip: (currentPage - 1) * itemsPerPage,
     limit: itemsPerPage,
     status: activeStatus,
+    includeCounts: false, // tab counts come from useJobImageCounts
   });
-  
+  // Keyed by job only: tab switches and paging never refetch the counts.
+  const { data: counts } = useJobImageCounts(projectId, jobId);
+
+  // After a mutation: refresh this grid and the counts together.
+  const refetch = useCallback(() => {
+    invalidateJobImages(queryClient);
+    refetchImages();
+  }, [queryClient, refetchImages]);
 
   const { operation, runBulkReview, runBulkDeleteProject, runBulkTag, cancelOperation, clearOperation } = useBulkOperations(projectId)
-  const handleRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  const { mutateAsync: bulkMarkNull } = useBulkMarkImagesAsNull(projectId);
+  const handleRefresh = refetch;
 
   const handleBuildDataset = useCallback(() => {
     setDatasetBuilderOpen(true);
@@ -128,6 +144,17 @@ export default function JobAnnotation() {
     }
   }, [selection, runBulkDeleteProject, toast, refetch]);
 
+  const handleBulkNull = useCallback(async (isNull: boolean) => {
+    const ids = Array.from(selection.selectedIds).map(Number);
+    try {
+      await bulkMarkNull({ image_ids: ids, is_null: isNull });
+      selection.clear();
+      refetch();
+    } catch {
+      // the mutation hook already toasts the error
+    }
+  }, [selection, bulkMarkNull, refetch]);
+
   const handleBulkTag = useCallback(async (tags: string[]) => {
     const selectedImageUUIDs = filteredImages
       .filter((img) => selection.selectedIds.has(String(img.project_image_id)))
@@ -142,13 +169,11 @@ export default function JobAnnotation() {
     }
   }, [selection, runBulkTag, toast, refetch]);
 
-  // Get the count for the current active status
-  const getCurrentStatusCount = () => {
-    if (activeStatus === 'unannotated') return data?.unannotated || 0;
-    if (activeStatus === 'annotated') return data?.annotated || 0;
-    if (activeStatus === 'reviewed') return data?.reviewed || 0;
-    return 0;
-  };
+
+  // After all hooks, so hook order never depends on the route.
+  if (!projectId || !jobId) {
+    return <p className="text-red-600 p-6">Invalid route: Missing project or job ID.</p>;
+  }
 
   const totat_records = data?.total ?? 0;
   return (
@@ -176,6 +201,23 @@ export default function JobAnnotation() {
               icon: <CheckCircle2 className="w-4 h-4" />,
               variant: 'secondary',
               onClick: handleBulkReview,
+            },
+            {
+              id: 'mark-null',
+              label: 'Mark empty',
+              icon: <Ban className="w-4 h-4" />,
+              variant: 'secondary',
+              requiresConfirm: true,
+              confirmTitle: `Mark ${selection.selectedCount} images as empty?`,
+              confirmDescription: 'Their annotations are removed and they become negative samples. You can restore them later, which brings the annotations back.',
+              onClick: () => handleBulkNull(true),
+            },
+            {
+              id: 'restore-null',
+              label: 'Restore',
+              icon: <RotateCcw className="w-4 h-4" />,
+              variant: 'secondary',
+              onClick: () => handleBulkNull(false),
             },
             {
               id: 'delete',
@@ -206,10 +248,8 @@ export default function JobAnnotation() {
 
         <JobAnnotationTabs
           activeStatus={activeStatus}
-          onStatusChange={setActiveStatus}
-          unannotatedCount={data?.unannotated || 0}
-          annotatedCount={data?.annotated || 0}
-          reviewedCount={data?.reviewed || 0}
+          onStatusChange={handleStatusChange}
+          counts={counts}
           imageSize={imageSize}
           onImageSizeChange={setImageSize}
         />
@@ -235,11 +275,12 @@ export default function JobAnnotation() {
         ) : filteredImages.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              No {activeStatus} images found
+              No {JOB_TABS.find((t) => t.id === activeStatus)?.label.toLowerCase()} images found
             </p>
           </div>
         ) : (
           <>
+            <div className={isPlaceholderData && isFetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
             <JobImageGrid
               images={filteredImages}
               imageSize={imageSize}
@@ -248,11 +289,12 @@ export default function JobAnnotation() {
               onToggleSelect={selection.toggle}
               onImageClick={(index: number, image_id: string) => handleImageClick(index, image_id)}
             />
+            </div>
 
             <div className="fixed w-full bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
               <PaginationControls
                 currentPage={currentPage}
-                totalItems={getCurrentStatusCount()}
+                totalItems={data?.total ?? 0}
                 itemsPerPage={itemsPerPage}
                 onPageChange={(page) => {
                   setCurrentPage(page);

@@ -9,6 +9,7 @@ import {
 import { Agent, AgentJob } from '@/types/agent';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { CopyableId } from '@/components/ui/ui/copyable-id';
 
 interface AgentCardProps {
   agent: Agent;
@@ -225,7 +226,7 @@ export function AgentCard({ agent, jobs, onDelete, onRegenerateKey, onRefresh }:
                   <div key={job.job_id} className="flex items-center justify-between rounded-lg border bg-background p-3">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">{job.task || 'Training'}</p>
-                      <p className="text-xs text-muted-foreground font-mono">{job.job_id}</p>
+                      <CopyableId value={job.job_id} label="Job ID" />
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-24">

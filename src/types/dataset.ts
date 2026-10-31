@@ -42,7 +42,7 @@ export interface ProjectImage {
     backend: string;
   };
   download_url: string;
-  status: 'annotated' | 'unannotated' | 'reviewed';
+  status: 'annotated' | 'unannotated' | 'reviewed' | 'dataset';
   annotated: boolean;
   reviewed: boolean;
   marked_as_null: boolean;

@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateJobImages } from "@/hooks/useJobImages";
 import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
@@ -69,6 +70,7 @@ export const useBulkReviewProjectImages = (
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["projectImages", projectId], exact:false });
+      invalidateJobImages(queryClient);
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },
@@ -135,6 +137,7 @@ export const useBulkMarkImagesAsNull = (
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["projectImages", projectId], exact:false });
+      invalidateJobImages(queryClient);
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },

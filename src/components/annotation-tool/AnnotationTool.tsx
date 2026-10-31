@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { AnnotationProvider } from '@/contexts/AnnotationProvider';
 import ToolBar from './components/ToolBar';
@@ -16,6 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tab
 import { useSAMSession } from '@/hooks/useSAMSession';
 import { safeReturnTo } from '@/hooks/useOpenInAnnotator';
 import { useImagePreload } from '@/hooks/useImagePreload';
+import { useMarkImageAsNull } from '@/hooks/useProjectImageUpdate';
+import { CopyableId } from '@/components/ui/ui/copyable-id';
+import { Badge } from '@/components/ui/ui/badge';
+import { Button } from '@/components/ui/ui/button';
+import { Ban, Loader, RotateCcw } from 'lucide-react';
 
 const AnnotationTool = () => {
   const { projectId, imageId } = useParams<{ projectId: string; imageId: string }>();
@@ -24,10 +29,11 @@ const AnnotationTool = () => {
     projectId!,
     imageId!
   );
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
   const samSession = useSAMSession(projectId!, image?.id || "");
+  const { mutate: markNull, isPending: isRestoring } = useMarkImageAsNull(projectId!);
 
   // CRITICAL: Stable ref to Canvas (never recreated)
   const canvasRef = useRef<CanvasHandle>(null);
@@ -60,6 +66,7 @@ const AnnotationTool = () => {
     status: status || undefined,
     skip: (page - 1) * itemsPerPage,
     limit: itemsPerPage,
+    includeCounts: false, // only the image order is needed here
   });
 
   const imageIds = useMemo(
@@ -77,6 +84,23 @@ const AnnotationTool = () => {
     const idx = imageIds.indexOf(imageId!);
     return idx !== -1 ? idx : indexParam;
   }, [imageIds, imageId, indexParam]);
+
+  // Restoring an empty image brings its annotations back under the same image
+  // id, which the canvas' load-on-id-change effect would not pick up.
+  const nullFlagRef = useRef<{ id?: string; isNull?: boolean }>({});
+  useEffect(() => {
+    if (!image) return;
+    const prev = nullFlagRef.current;
+    if (prev.id === image.id && prev.isNull && !image.marked_as_null) {
+      canvasRef.current?.loadImage(image);
+    }
+    nullFlagRef.current = { id: image.id, isNull: image.marked_as_null };
+  }, [image]);
+
+  const handleRestoreNull = () => {
+    if (!image) return;
+    markNull({ projectImageId: Number(image.id), payload: { is_null: false } });
+  };
 
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | undefined>();
   const [hoveredSuggestionId, setHoveredSuggestionId] = useState<string | null>(null);
@@ -154,6 +178,17 @@ const AnnotationTool = () => {
             : "Not in an annotation job"}
           backTo={backUrl}
           backLabel={backLabel}
+          titleAddon={
+            <>
+              {image.marked_as_null && (
+                <Badge className="gap-1 bg-amber-500/90 text-white hover:bg-amber-500/90">
+                  <Ban className="h-3 w-3" />
+                  Empty
+                </Badge>
+              )}
+              <CopyableId value={image.image.image_id} label="Image ID" iconOnly />
+            </>
+          }
           links={[
             ...(jobUrl && backUrl !== jobUrl ? [{ label: "Open job", to: jobUrl }] : []),
             ...(backUrl !== datasetUrl ? [{ label: "Dataset", to: datasetUrl }] : []),
@@ -169,7 +204,28 @@ const AnnotationTool = () => {
             </div>
           </div>
 
-          <div className='flex flex-1'>
+          <div className='relative flex flex-1'>
+            {image.marked_as_null && (
+              <div className="absolute left-1/2 top-3 z-20 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-amber-500/40 bg-slate-950/90 px-4 py-2 text-sm text-amber-200 shadow-lg backdrop-blur">
+                <Ban className="h-4 w-4 shrink-0 text-amber-400" />
+                <span>
+                  Flagged as <strong>empty</strong> — no objects of interest
+                  {image.metadata?.null_status?.marked_by && (
+                    <span className="text-amber-200/70"> · by {image.metadata.null_status.marked_by}</span>
+                  )}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1.5 border-amber-500/40 bg-transparent text-amber-100 hover:bg-amber-500/20"
+                  disabled={isRestoring}
+                  onClick={handleRestoreNull}
+                >
+                  {isRestoring ? <Loader className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                  Restore
+                </Button>
+              </div>
+            )}
             <Canvas 
               ref={canvasRef}
               image={image}

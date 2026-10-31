@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
 import { renderProgressBar } from "./ui/JobProgress";
+import { CopyableId } from "@/components/ui/ui/copyable-id";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import {
   Select,
@@ -71,7 +72,7 @@ const getStatusBadge = (status: JobStatus) => {
         <div className="flex justify-between items-start gap-3">
           <div className="max-w-[25%]">
             <h3 className="font-medium text-sm text-slate-00 truncate">{job.name}</h3>
-            <p className="text-xs text-slate-500">ID: {job.id}</p>
+            <CopyableId value={job.id} label="Job ID" prefix="ID:" className="text-slate-500" />
           </div>
           <div className="flex items-center gap-2">
             {availableTransitions.length > 0 && onStatusChange && (

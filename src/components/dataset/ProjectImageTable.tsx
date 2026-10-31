@@ -12,6 +12,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle2, AlertCircle, Database } from 'lucide-react';
 import { OpenInAnnotator } from './OpenInAnnotator';
+import { CopyableId } from '@/components/ui/ui/copyable-id';
 
 interface ProjectImageTableProps {
   /** Set to show the per-row "Annotate" action (Dataset page). */
@@ -99,8 +100,8 @@ export function ProjectImageTable({
                     <Badge variant="destructive" className="ml-2">Null</Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground font-mono">
-                  {image.image_id.slice(0, 8)}...
+                <TableCell>
+                  <CopyableId value={image.image_id} label="Image ID" truncate={8} />
                 </TableCell>
                 <TableCell>
                   <Badge className={statusConfig[image.status].color}>
