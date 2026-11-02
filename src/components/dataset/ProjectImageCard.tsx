@@ -8,6 +8,7 @@ import { FileImage, Tag, CheckCircle2, AlertCircle, Clock, Database } from 'luci
 import BoundingBox from '../image/BoundingBox';
 import { getModeBadge } from '@/utils/split';
 import { cn } from '@/lib/utils';
+import { CopyableId } from '@/components/ui/ui/copyable-id';
 import { OpenInAnnotator } from './OpenInAnnotator';
 
 interface ProjectImageCardProps {
@@ -84,7 +85,8 @@ export function ProjectImageCard({ projectId, image, selected, onSelect, showAnn
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-sm truncate">{image.original_filename}</h3>
-              <p className="text-xs text-muted-foreground truncate">{image.image_id}</p>
+              <CopyableId value={image.image_id} label="Image ID" />
+
             </div>
             <FileImage className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </div>

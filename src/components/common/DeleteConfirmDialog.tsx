@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
 import { Loader2, Trash2 } from 'lucide-react';
-import { AlertCircle, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmDialogProps {
   // Required props
@@ -32,6 +32,8 @@ interface DeleteConfirmDialogProps {
   triggerClassName?: string;
   requireTextConfirmation?: boolean;
   children?: React.ReactNode; // Custom trigger
+  /** Line under the title. */
+  subtitle?: React.ReactNode;
 }
 
 export function DeleteConfirmDialog({
@@ -49,6 +51,7 @@ export function DeleteConfirmDialog({
   triggerClassName = 'text-red-500 hover:text-red-600 hover:bg-red-50/50',
   requireTextConfirmation = true,
   children,
+  subtitle = 'This action cannot be undone.',
 }: DeleteConfirmDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -121,7 +124,7 @@ export function DeleteConfirmDialog({
               <div>
                 <CustomDialogTitle className='text-xl'>{title}</CustomDialogTitle>
                 <CustomDialogDescription className="mt-1">
-                  This action cannot be undone.
+                  {subtitle}
                 </CustomDialogDescription>
               </div>
             </div>

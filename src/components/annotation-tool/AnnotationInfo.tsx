@@ -1,7 +1,6 @@
 
 import React from "react";
-import { 
-    ClipboardCopy,
+import {
     ImageIcon,
     Tag,
     Eye,
@@ -12,7 +11,7 @@ import {
 } from "lucide-react"
 import { ProjectImageOut } from "@/types/image";
 import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
-import { toast } from "sonner";
+import { CopyableId } from "@/components/ui/ui/copyable-id";
 
 
 export interface AnnotationInfpProps {
@@ -37,31 +36,23 @@ const InfoRow: React.FC<{ icon: React.ReactNode; label: string; value?: React.Re
 export const AnnotationInfo: React.FC<AnnotationInfpProps>  = ({ image }) => {
     const { getBoxesArray } = useAnnotationGeometry();
     const boxes = getBoxesArray();
-    const handleCopy = async () => {
-        await navigator.clipboard.writeText(image.image.image_id);
-        toast.info("Copied image ID!");
-    };
 
     return (
       <div className="flex-1 overflow-y-auto p-5 space-y-3 text-sm scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
-        {/* Image ID */}
-        <div>
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <ImageIcon size={16} />
-              <span className="font-medium">Image ID</span>
-            </div>
-            <button
-              onClick={handleCopy}
-              className="text-blue-400 text-xs hover:text-blue-300"
-              title="Copy ID"
-            >
-              <ClipboardCopy size={14} />
-            </button>
+        {/* Identifiers — each one click-to-copy */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <ImageIcon size={16} />
+            <span className="font-medium">Identifiers</span>
           </div>
-          <p className="text-[11px] text-slate-300 truncate">
-            {image.image.image_id}
-          </p>
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-[11px]">
+            <dt className="text-slate-500">Image ID</dt>
+            <dd className="min-w-0"><CopyableId value={image.image.image_id} label="Image ID" className="text-slate-300" /></dd>
+            <dt className="text-slate-500">Project image</dt>
+            <dd className="min-w-0"><CopyableId value={image.id} label="Project image ID" className="text-slate-300" /></dd>
+            <dt className="text-slate-500">File name</dt>
+            <dd className="min-w-0"><CopyableId value={image.image.name} label="File name" className="text-slate-300" /></dd>
+          </dl>
         </div>
 
         {/* Annotation Count */}

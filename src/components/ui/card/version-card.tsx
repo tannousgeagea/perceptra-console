@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { useLocation } from "react-router-dom";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { CopyableId } from "@/components/ui/ui/copyable-id";
 import "./version-card.css";
 
 interface Version {
@@ -39,7 +40,7 @@ const VersionCard: FC<VersionCardProps> = ({ version, onView }) => {
         >
           {/* ID Badge */}
           <div className="absolute top-2 right-2 text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-full px-2 py-0.5">
-            ID: {version.id}
+            <CopyableId value={version.id} label="Version ID" prefix="ID:" className="text-inherit" />
           </div>
     
           {/* Main Content */}

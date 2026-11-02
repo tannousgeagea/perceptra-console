@@ -1,6 +1,8 @@
 import { FC, ReactNode } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { useProject } from "@/contexts/ProjectContext";
+import { CopyableId } from "@/components/ui/ui/copyable-id";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import {
   Upload,
   Link2,
@@ -79,13 +81,31 @@ const ProjectSideBar: FC = () => {
           alt="Project Thumbnail"
           className="w-36 aspect-[16/9] rounded-sm object-cover border border-slate-700 shadow-md brightness-50"
         />
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold truncate text-slate-800 dark:text-slate-100">
-            {project?.name || "Project"}
-          </h2>
+        {/* w-full keeps long names inside the sidebar; without it the block
+            sizes to its content and centring clips both ends. */}
+        <div className="w-full min-w-0 space-y-0.5 text-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <h2 className="text-sm font-semibold leading-snug line-clamp-2 break-words text-slate-800 dark:text-slate-100">
+                {project?.name || "Project"}
+              </h2>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs break-words">
+              {project?.name || "Project"}
+            </TooltipContent>
+          </Tooltip>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
             {project?.project_type_name || "—"} · {project?.visibility_name || "Private"}
           </p>
+          {projectId && (
+            <CopyableId
+              value={projectId}
+              label="Project ID"
+              prefix="ID"
+              truncate={8}
+              className="mx-auto text-[11px] text-slate-400 dark:text-slate-500"
+            />
+          )}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/ui/tooltip";
@@ -19,6 +19,8 @@ interface AnnotationControlsProps {
   backLabel?: string;
   /** Quick jumps between related views (dataset ⇄ job), shown under the title. */
   links?: { label: string; to: string }[];
+  /** Inline extras after the title (status badges, copy-ID button). */
+  titleAddon?: ReactNode;
 }
 
 const formatFileName = (name: string) => {
@@ -38,6 +40,7 @@ const AnnotationControls = memo(
     backTo = "/projects",
     backLabel = "Back",
     links = [],
+    titleAddon,
   }: AnnotationControlsProps) => {
     const navigate = useNavigate();
     const { setSelectedBox } = useAnnotationState();
@@ -90,6 +93,7 @@ const AnnotationControls = memo(
           </Tooltip>
 
           <div className="flex flex-col truncate max-w-[45vw]">
+            <div className="flex items-center gap-2 min-w-0">
             <AnimatePresence mode="wait">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -107,6 +111,8 @@ const AnnotationControls = memo(
                 <TooltipContent>{title}</TooltipContent>
               </Tooltip>
             </AnimatePresence>
+            {titleAddon && <div className="flex shrink-0 items-center gap-1.5">{titleAddon}</div>}
+            </div>
 
             {(subtitle || links.length > 0) && (
               <p className="text-xs text-muted-foreground truncate">
