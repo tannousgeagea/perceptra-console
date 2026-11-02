@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import { 
   CustomDialog, 
   CustomDialogContent, 
@@ -19,7 +20,9 @@ interface EditProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   project: Project | null;
+  /** Receives only the fields that changed. */
   onSubmit: (id: string, data: ProjectUpdate) => void;
+  isSaving?: boolean;
 }
 
 export const EditProjectDialog = ({
@@ -27,6 +30,7 @@ export const EditProjectDialog = ({
   onOpenChange,
   project,
   onSubmit,
+  isSaving = false,
 }: EditProjectDialogProps) => {
   const [formData, setFormData] = useState<ProjectUpdate>({
     name: "",
@@ -43,7 +47,19 @@ export const EditProjectDialog = ({
         thumbnail_url: project.thumbnail_url || "",
       });
     }
-  }, [project]);
+  }, [project, open]);
+
+  const changes = useMemo<ProjectUpdate>(() => {
+    if (!project) return {};
+    const diff: ProjectUpdate = {};
+    const name = formData.name?.trim() ?? "";
+    if (name !== project.name) diff.name = name;
+    if ((formData.description ?? "") !== (project.description ?? "")) diff.description = formData.description;
+    if ((formData.thumbnail_url ?? "") !== (project.thumbnail_url ?? "")) diff.thumbnail_url = formData.thumbnail_url;
+    if (formData.is_active !== project.is_active) diff.is_active = formData.is_active;
+    return diff;
+  }, [formData, project]);
+  const hasChanges = Object.keys(changes).length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +69,8 @@ export const EditProjectDialog = ({
       return;
     }
 
-    if (project) {
-      onSubmit(project.project_id, formData);
+    if (project && hasChanges) {
+      onSubmit(project.project_id, changes);
     }
   };
 
@@ -79,6 +95,7 @@ export const EditProjectDialog = ({
                 setFormData({ ...formData, name: e.target.value })
               }
               placeholder="Enter project name"
+              autoFocus
               required
             />
           </div>
@@ -130,10 +147,14 @@ export const EditProjectDialog = ({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isSaving}
             >
               Cancel
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={!hasChanges || isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSaving ? "Saving…" : "Save Changes"}
+            </Button>
           </CustomDialogFooter>
         </form>
       </CustomDialogContent>

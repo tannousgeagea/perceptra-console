@@ -22,7 +22,7 @@ export const DeleteProjectDialog = ({
   return (
     <>
       <DeleteConfirmDialog
-        title="Delete Version"
+        title="Delete Project"
         description={
           <>
             This will permanently delete the project "{project.name}" and all its
