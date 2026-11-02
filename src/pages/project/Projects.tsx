@@ -41,10 +41,17 @@ const sortValue = (p: Project, field: SortField): string | number => {
 const projectHref = (projectId: string) => `/projects/${projectId}/dataset`;
 
 const Projects: FC = () => {
-    const { data: projects, isLoading, error, refetch } = useUserProjects();
+    // The page has an Active / Inactive filter, so it needs both.
+    const { data: projects, isLoading, error, refetch } = useUserProjects({ includeInactive: true });
     // Notifications are secondary: never block or blank the page on them.
     const { data: jobs } = useUserJobs();
-    const { currentOrganization } = useCurrentOrganization();
+    const { currentOrganization, isAdmin: isOrgAdmin, isOwner: isOrgOwner } = useCurrentOrganization();
+    // Mirrors the API: org admins/owners can do anything; project owners/admins can edit.
+    const canDelete = isOrgAdmin || isOrgOwner;
+    const canEdit = useCallback(
+        (p: Project) => canDelete || ["owner", "admin"].includes(p.user_role),
+        [canDelete]
+    );
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
@@ -125,9 +132,14 @@ const Projects: FC = () => {
         updateProject.mutate({ projectId: id, data }, { onSuccess: () => setEditTarget(null) });
     };
 
-    const handleDeleteProject = (id: string) => {
-        // The card disappears optimistically; close right away.
-        deleteProject.mutate(id);
+    const handleReactivate = useCallback((project: Project) => {
+        updateProject.mutate({ projectId: project.project_id, data: { is_active: true } });
+    }, [updateProject]);
+
+    const handleDeleteProject = () => {
+        if (!deleteTarget) return;
+        // The card disappears optimistically and the toast offers Undo.
+        deleteProject.mutate(deleteTarget);
         setDeleteTarget(null);
     };
 
@@ -199,8 +211,9 @@ const Projects: FC = () => {
                         key={project.project_id}
                         project={project}
                         href={projectHref(project.project_id)}
-                        onEdit={setEditTarget}
-                        onDelete={setDeleteTarget}
+                        onEdit={canEdit(project) ? setEditTarget : undefined}
+                        onDelete={canDelete ? setDeleteTarget : undefined}
+                        onReactivate={canEdit(project) ? handleReactivate : undefined}
                         onPrefetch={prefetchProject}
                     />
                 ))}

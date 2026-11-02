@@ -25,12 +25,13 @@ export const DeleteProjectDialog = ({
         title="Delete Project"
         description={
           <>
-            This will permanently delete the project "{project.name}" and all its
-            associated data including {project.statistics.total_images} images and{" "}
-            {project.statistics.total_annotations} annotations. This action cannot be
-            undone.
+            The project "{project.name}" will be removed for everyone, including its{" "}
+            {project.statistics.total_images.toLocaleString()} images and{" "}
+            {project.statistics.total_annotations.toLocaleString()} annotations.
+            You can undo this right after deleting.
           </>
         }
+        subtitle="Only organization admins and owners can delete projects."
         confirmText={project.name}
         onConfirm={() => onConfirm(project.project_id)}
         isLoading={isDeleting}

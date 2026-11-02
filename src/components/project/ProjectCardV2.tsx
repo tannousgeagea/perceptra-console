@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/ui/dropdown-menu";
-import { Copy, ExternalLink, MoreVertical, Pencil, Trash2, Users, ImageIcon, Tag } from "lucide-react";
+import { Archive, Copy, ExternalLink, MoreVertical, Pencil, Power, Trash2, Users, ImageIcon, Tag } from "lucide-react";
 import type { Project } from "@/types/project";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -20,8 +20,11 @@ interface ProjectCardProps {
   project: Project;
   /** Where the card navigates to. */
   href: string;
-  onEdit: (project: Project) => void;
-  onDelete: (project: Project) => void;
+  /** Omit to hide the action (user lacks permission). */
+  onEdit?: (project: Project) => void;
+  onDelete?: (project: Project) => void;
+  /** Turn an inactive project back on. Omit to hide (user lacks permission). */
+  onReactivate?: (project: Project) => void;
   /** Warm the project's data on hover/focus so opening it feels instant. */
   onPrefetch?: (project: Project) => void;
 }
@@ -40,27 +43,31 @@ const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: number; la
  * The action menu is a *sibling* layered above it, never a descendant, so no
  * click inside the menu (or its portaled content) can trigger navigation.
  */
-export const ProjectCard = memo(({ project, href, onEdit, onDelete, onPrefetch }: ProjectCardProps) => {
+export const ProjectCard = memo(({ project, href, onEdit, onDelete, onReactivate, onPrefetch }: ProjectCardProps) => {
   const { copy } = useCopyToClipboard();
   const prefetch = () => onPrefetch?.(project);
   const updated = new Date(project.last_edited);
+  // Inactive = archived: the API refuses to open it, so the card isn't a link.
+  const openable = project.is_active;
 
   return (
     <Card
       className={cn(
         "group relative flex h-full flex-col overflow-hidden transition-all duration-200",
-        "hover:-translate-y-0.5 hover:shadow-lg focus-within:shadow-lg",
+        openable ? "hover:-translate-y-0.5 hover:shadow-lg focus-within:shadow-lg" : "bg-muted/30",
         "has-[a[data-card-link]:focus-visible]:ring-2 has-[a[data-card-link]:focus-visible]:ring-ring"
       )}
-      onMouseEnter={prefetch}
+      onMouseEnter={openable ? prefetch : undefined}
     >
-      <Link
-        to={href}
-        data-card-link
-        aria-label={`Open project ${project.name}`}
-        onFocus={prefetch}
-        className="absolute inset-0 z-10 rounded-[inherit] focus:outline-none"
-      />
+      {openable && (
+        <Link
+          to={href}
+          data-card-link
+          aria-label={`Open project ${project.name}`}
+          onFocus={prefetch}
+          className="absolute inset-0 z-10 rounded-[inherit] focus:outline-none"
+        />
+      )}
 
       <div className="relative h-44 overflow-hidden bg-muted">
         {project.thumbnail_url ? (
@@ -81,6 +88,20 @@ export const ProjectCard = memo(({ project, href, onEdit, onDelete, onPrefetch }
           </div>
         )}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent" />
+        {!openable && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/60 text-center backdrop-blur-[1px]">
+            <Archive className="h-6 w-6 text-muted-foreground" />
+            <p className="px-6 text-sm text-muted-foreground">
+              Inactive — {onReactivate ? "reactivate it to open" : "ask an admin to reactivate it"}
+            </p>
+            {onReactivate && (
+              <Button size="sm" variant="secondary" className="relative z-20" onClick={() => onReactivate(project)}>
+                <Power className="mr-2 h-3.5 w-3.5" />
+                Reactivate
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="absolute left-2 top-2">
           <Badge variant={project.is_active ? "default" : "secondary"}>
@@ -108,28 +129,34 @@ export const ProjectCard = memo(({ project, href, onEdit, onDelete, onPrefetch }
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link to={href} target="_blank" rel="noopener">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Open in new tab
-                </Link>
-              </DropdownMenuItem>
+              {openable && (
+                <DropdownMenuItem asChild>
+                  <Link to={href} target="_blank" rel="noopener">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open in new tab
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => void copy(project.project_id, "Project ID")}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy project ID
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => onEdit(project)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => onDelete(project)}
-                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {(onEdit || onDelete) && <DropdownMenuSeparator />}
+              {onEdit && (
+                <DropdownMenuItem onSelect={() => onEdit(project)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  onSelect={() => onDelete(project)}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
