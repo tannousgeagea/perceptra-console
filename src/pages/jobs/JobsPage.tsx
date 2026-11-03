@@ -17,6 +17,7 @@ import DeleteJobModal from "@/components/jobs/DeleteJobModal";
 // import { useDeleteJob } from "@/hooks/useDeleteJob";
 import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { toast } from 'sonner';
+import { ContinueCard } from "@/components/resume/ContinueCard";
 
 const JobPage = () => {
   const { projectId } = useParams<{ projectId: string }>()
@@ -173,6 +174,8 @@ const JobPage = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
+
+      <ContinueCard projectId={projectId} className="mx-4" />
 
       {/* Main content */}
       <main className="mx-auto px-4 py-6">

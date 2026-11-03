@@ -1,64 +1,20 @@
-import { FC, ReactNode } from "react";
+import { FC } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { useProject } from "@/contexts/ProjectContext";
 import { CopyableId } from "@/components/ui/ui/copyable-id";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/ui/tooltip";
-import {
-  Upload,
-  Link2,
-  Pencil,
-  BarChart,
-  Layers,
-  LineChart,
-  Images,
-  Tags,
-  Brain,
-  ActivitySquare,
-  ChevronRight,
-  Activity,
-  Sparkle,
-  ChartCandlestick,
-  Users,
-} from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { projectNavItems, type ProjectNavItem } from "./projectNav";
 
-interface Item {
-  label: string;
-  path: string;
-  icon: ReactNode;
-  section?: string;
-  count?:boolean;
-}
 
 const ProjectSideBar: FC = () => {
   const { projectId } = useParams<string>();
   const location = useLocation();
   const { project } = useProject();
 
-  const items: Item[] = [
-    // Data Section
-    { section: "Data", label: "Upload Data", path: `/projects/${projectId}/upload`, icon: <Upload size={18} /> },
-    { section: "Data", label: "Link Data", path: `/projects/${projectId}/link`, icon: <Link2 size={18} /> },
-    { section: "Data", label: "Dataset", path: `/projects/${projectId}/dataset`, icon: <Images size={18}/>, count:true  },
-    { section: "Data", label: "Annotate", path: `/projects/${projectId}/annotate`, icon: <Pencil size={18} /> },
-    { section: "Data", label: "Auto Annotate", path: `/projects/${projectId}/auto-annotate`, icon: <Sparkle size={18} /> },
+  const items = projectNavItems(projectId ?? "");
 
-    // Insights Section
-    { section: "Insights", label: "Analysis", path: `/projects/${projectId}/analysis`, icon: <BarChart size={18} /> },
-    { section: "Insights", label: "Analytics", path: `/projects/${projectId}/analytics`, icon: <LineChart size={18} /> },
-    { section: "Insights", label: "Activity", path: `/projects/${projectId}/activity`, icon: <Activity size={18} /> },
-
-    // Models Section
-    { section: "Models", label: "Version", path: `/projects/${projectId}/versions`, icon: <Layers size={18} /> },
-    { section: "Models", label: "Models", path: `/projects/${projectId}/models`, icon: <Brain size={18} /> },
-    { section: "Models", label: "Training", path: `/projects/${projectId}/sessions`, icon: <ActivitySquare size={18} /> },
-    { section: "Models", label: "Evaluation", path: `/projects/${projectId}/evaluation`, icon: <ChartCandlestick size={18} /> },
-
-    // Settings Section
-    { section: "Settings", label: "Classes", path: `/projects/${projectId}/classes`, icon: <Tags size={18} /> },
-    { section: "Settings", label: "Members", path: `/projects/${projectId}/members`, icon: <Users size={18} /> },
-  ];
-
-  const grouped = items.reduce((acc: Record<string, Item[]>, item) => {
+  const grouped = items.reduce((acc: Record<string, ProjectNavItem[]>, item) => {
     if (!item.section) return acc;
     acc[item.section] = acc[item.section] ? [...acc[item.section], item] : [item];
     return acc;
@@ -120,7 +76,7 @@ const ProjectSideBar: FC = () => {
               {section}
             </h3>
             <div className="flex flex-col gap-1">
-              {links.map(({ label, path, icon, count }) => {
+              {links.map(({ label, path, icon: Icon, count }) => {
                 const isActive = location.pathname.startsWith(path);
                 return (
                   <Link
@@ -139,7 +95,7 @@ const ProjectSideBar: FC = () => {
                           ? "scale-110 text-indigo-500 dark:text-indigo-400"
                           : "text-slate-400 dark:text-slate-500 group-hover:text-indigo-400 dark:group-hover:text-indigo-400"
                         }`}>
-                        {icon}
+                        <Icon size={18} />
                       </span>
                       <span className="truncate">{label}</span>
                     </div>

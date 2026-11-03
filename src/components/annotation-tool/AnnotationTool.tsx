@@ -16,6 +16,8 @@ import { annotationsToBoxes } from './boxes';
 import SessionBar from './components/SessionBar';
 import QueryState from '../common/QueryState';
 import { useClasses } from '@/hooks/useClasses';
+import { useAuth } from '@/contexts/AuthContext';
+import { useResumeStore } from '@/stores/resumeStore';
 
 import { AnnotationInfo } from './AnnotationInfo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
@@ -126,6 +128,27 @@ const AnnotationTool = () => {
     }
     nullFlagRef.current = { id: image.id, isNull: image.marked_as_null };
   }, [image]);
+
+  // Remember where this session is, for "Continue where you left off".
+  const { user } = useAuth();
+  const recordSession = useResumeStore((s) => s.record);
+  const jobName = jobImages?.job?.name;
+  useEffect(() => {
+    if (!image || isSwitchingImage || !user?.id || !orgId || !projectId || !imageId) return;
+    recordSession({
+      userId: String(user.id),
+      orgId,
+      projectId,
+      jobId: jobId || undefined,
+      jobName,
+      imageId,
+      imageName: image.image.name,
+      status,
+      page,
+      limit: itemsPerPage,
+      index: currentIndex,
+    });
+  }, [image, isSwitchingImage, user?.id, orgId, projectId, imageId, jobId, jobName, status, page, itemsPerPage, currentIndex, recordSession]);
 
   const handleRestoreNull = () => {
     if (!image) return;

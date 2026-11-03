@@ -1,4 +1,5 @@
 import { FC, useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { ContinueCard } from '@/components/resume/ContinueCard';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserProjects } from '@/hooks/useUserProjects';
@@ -261,6 +262,8 @@ const Projects: FC = () => {
                         </Button>
                     </div>
                 </div>
+
+                <ContinueCard />
 
                 {/* Filters and Search */}
                 <div className="flex flex-col sm:flex-row gap-4">

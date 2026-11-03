@@ -56,6 +56,7 @@ import AutoAnnotate from "./pages/AutoAnnotate";
 import { AppBoot } from './components/layout/AppBoot';
 import ScanHistory from './pages/ScanHistory';
 import ScanResults from './pages/ScanResults';
+import CommandPalette from './components/command-palette/CommandPalette';
 
 const queryClient = new QueryClient();
 
@@ -140,6 +141,7 @@ const App = () => {
               </TooltipProvider>
               <Toaster />
               <Sonner />
+              <CommandPalette />
             </AuthProviderMock>
           </AuthProvider>
         </AppBoot>

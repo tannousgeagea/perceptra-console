@@ -43,6 +43,7 @@ const SECTIONS: { title: string; shortcuts: { keys: string[]; action: string }[]
       { keys: ['S', 'hold'], action: 'Temporarily select — release to return to draw' },
       { keys: ['Ctrl', 'Scroll'], action: 'Zoom in / out' },
       { keys: ['Alt', 'Drag'], action: 'Pan canvas' },
+      { keys: [MOD, 'K'], action: 'Jump anywhere (command palette)' },
       { keys: ['?'], action: 'Show this list' },
     ],
   },
