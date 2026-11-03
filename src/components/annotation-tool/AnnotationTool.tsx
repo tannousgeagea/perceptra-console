@@ -347,8 +347,11 @@ const AnnotationTool = () => {
                 </div>
               </div>
             )}
+            {/* Top-centre banner stack: the canvas area runs below the fold, so nothing goes at the bottom. */}
+            <div className="pointer-events-none absolute left-1/2 top-3 z-20 flex -translate-x-1/2 flex-col items-center gap-2 [&>*]:pointer-events-auto">
+            <RemoteChangeNotice projectImageId={Number(image.id)} onReload={reloadFromServer} />
             {image.marked_as_null && (
-              <div className="absolute left-1/2 top-3 z-20 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-amber-500/40 bg-slate-950/90 px-4 py-2 text-sm text-amber-200 shadow-lg backdrop-blur">
+              <div className="flex items-center gap-3 rounded-lg border border-amber-500/40 bg-slate-950/90 px-4 py-2 text-sm text-amber-200 shadow-lg backdrop-blur">
                 <Ban className="h-4 w-4 shrink-0 text-amber-400" />
                 <span>
                   Flagged as <strong>empty</strong> — no objects of interest
@@ -368,8 +371,8 @@ const AnnotationTool = () => {
                 </Button>
               </div>
             )}
-            <RemoteChangeNotice projectImageId={Number(image.id)} onReload={reloadFromServer} />
-            <Canvas 
+            </div>
+            <Canvas
               ref={canvasRef}
               image={image}
               samSession={samSession}

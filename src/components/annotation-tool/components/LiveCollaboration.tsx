@@ -87,17 +87,20 @@ export const RemoteChangeNotice = ({
   return (
     <div
       role="status"
-      className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-sky-500/40 bg-slate-950/90 px-4 py-2 text-sm text-sky-100 shadow-lg backdrop-blur"
+      aria-live="polite"
+      className="flex items-center gap-3 rounded-lg border border-sky-400/60 bg-sky-950/95 px-4 py-2.5 text-sm text-sky-50 shadow-xl shadow-sky-500/20 ring-1 ring-sky-400/30 backdrop-blur animate-in fade-in slide-in-from-top-2 duration-300"
     >
-      <RefreshCw className="h-4 w-4 shrink-0 text-sky-400" />
+      <span className="relative flex h-2.5 w-2.5 shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-400" />
+      </span>
       <span>
         <strong>{changedBy.name}</strong> changed this image
-        {hasUnsavedWork && <span className="text-sky-200/70"> · reloading replaces your unsaved edits</span>}
+        {hasUnsavedWork && <span className="text-amber-300"> · reloading replaces your unsaved edits</span>}
       </span>
       <Button
         size="sm"
-        variant="outline"
-        className="h-7 gap-1.5 border-sky-500/40 bg-transparent text-sky-100 hover:bg-sky-500/20"
+        className="h-7 gap-1.5 bg-sky-500 text-white hover:bg-sky-400"
         disabled={reloading}
         onClick={() => void reload()}
       >
