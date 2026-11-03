@@ -27,6 +27,8 @@ interface AnnotationLayerProps {
   setSelectedBox: (id: string | null) => void;
   setSelectedPolygon: (id: string | null) => void;
   updateBoxPosition: (id: string, updates: Partial<Box>) => void;
+  /** A drag/resize finished, with the box's final geometry. */
+  onBoxChangeEnd?: (id: string, finalGeometry: Partial<Box>) => void;
 }
 
 const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
@@ -39,7 +41,8 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   imageSize,
   setSelectedBox,
   setSelectedPolygon,
-  updateBoxPosition
+  updateBoxPosition,
+  onBoxChangeEnd,
 }) => {
   return (
     <>
@@ -53,6 +56,7 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           imageSize={imageSize}
           onSelect={() => setSelectedBox(box.id)}
           onUpdate={updateBoxPosition}
+          onUpdateEnd={onBoxChangeEnd}
         />
       ))}
       
@@ -101,6 +105,7 @@ export default React.memo(AnnotationLayer, (prev, next) => {
     prev.imageSize?.width === next.imageSize?.width &&
     prev.imageSize?.height === next.imageSize?.height &&
     prev.updateBoxPosition === next.updateBoxPosition &&
+    prev.onBoxChangeEnd === next.onBoxChangeEnd &&
     prev.polygons.length === next.polygons.length
   );
 });

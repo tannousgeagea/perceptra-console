@@ -1,11 +1,11 @@
-import { useEffect, useState, memo, type ReactNode } from "react";
+import { useEffect, useRef, useState, memo, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAnnotationState } from "@/contexts/AnnotationStateContext";
-import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { useNavigate } from "react-router-dom";
+import { isTypingTarget } from "../hotkeys";
 
 interface AnnotationControlsProps {
   title: string;
@@ -21,6 +21,11 @@ interface AnnotationControlsProps {
   links?: { label: string; to: string }[];
   /** Inline extras after the title (status badges, copy-ID button). */
   titleAddon?: ReactNode;
+  /** Right side of the header (save status, undo/redo, progress). */
+  actions?: ReactNode;
+  /** Override when navigation can continue past the loaded list (next page). */
+  hasPrevious?: boolean;
+  hasNext?: boolean;
 }
 
 const formatFileName = (name: string) => {
@@ -41,24 +46,18 @@ const AnnotationControls = memo(
     backLabel = "Back",
     links = [],
     titleAddon,
+    actions,
+    hasPrevious = current > 1,
+    hasNext = current < total,
   }: AnnotationControlsProps) => {
     const navigate = useNavigate();
     const { setSelectedBox } = useAnnotationState();
-    const { setAllBoxes } = useAnnotationGeometry();
     const [transitionKey, setTransitionKey] = useState<number>(0);
 
-    useEffect(() => {
-      const handleKey = (e: KeyboardEvent) => {
-        if (e.key === "ArrowLeft") handlePrev();
-        if (e.key === "ArrowRight") handleNext();
-      };
-      window.addEventListener("keydown", handleKey);
-      return () => window.removeEventListener("keydown", handleKey);
-    }, [current, total]);
-
+    // The canvas swaps in the next image's boxes itself once it has loaded, so
+    // nothing is cleared here (clearing early flashed an empty canvas).
     const handlePrev = () => {
-      if (current > 1) {
-        setAllBoxes([]);
+      if (hasPrevious) {
         setSelectedBox(null);
         setTransitionKey((k) => k + 1);
         onPrevious();
@@ -66,13 +65,25 @@ const AnnotationControls = memo(
     };
 
     const handleNext = () => {
-      if (current < total) {
-        setAllBoxes([]);
+      if (hasNext) {
         setSelectedBox(null);
         setTransitionKey((k) => k + 1);
         onNext();
       }
     };
+
+    const handlersRef = useRef({ handlePrev, handleNext });
+    handlersRef.current = { handlePrev, handleNext };
+
+    useEffect(() => {
+      const handleKey = (e: KeyboardEvent) => {
+        if (isTypingTarget(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key === "ArrowLeft") handlersRef.current.handlePrev();
+        if (e.key === "ArrowRight") handlersRef.current.handleNext();
+      };
+      window.addEventListener("keydown", handleKey);
+      return () => window.removeEventListener("keydown", handleKey);
+    }, []);
 
     return (
       <div className="relative flex items-center justify-between w-full bg-background/80 backdrop-blur-md border-b border-b-[1px] border-white/20 dark:border-white/30 px-4 py-2 shadow-[0_1px_0_0_rgba(255,255,255,0.1)]">
@@ -92,7 +103,7 @@ const AnnotationControls = memo(
             <TooltipContent>{backLabel}</TooltipContent>
           </Tooltip>
 
-          <div className="flex flex-col truncate max-w-[45vw]">
+          <div className="flex flex-col truncate max-w-[30vw]">
             <div className="flex items-center gap-2 min-w-0">
             <AnimatePresence mode="wait">
               <Tooltip>
@@ -139,7 +150,7 @@ const AnnotationControls = memo(
           <Button
             size="icon"
             variant="ghost"
-            disabled={current <= 1}
+            disabled={!hasPrevious}
             onClick={handlePrev}
             aria-label="Previous"
           >
@@ -151,7 +162,7 @@ const AnnotationControls = memo(
           <Button
             size="icon"
             variant="ghost"
-            disabled={current >= total}
+            disabled={!hasNext}
             onClick={handleNext}
             aria-label="Next"
           >
@@ -160,7 +171,7 @@ const AnnotationControls = memo(
         </div>
 
         {/* RIGHT SECTION (optional actions or placeholder for alignment) */}
-        <div className="min-w-[150px] flex justify-end"></div>
+        <div className="min-w-[150px] flex justify-end">{actions}</div>
       </div>
     );
   }

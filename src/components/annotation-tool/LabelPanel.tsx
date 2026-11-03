@@ -14,13 +14,25 @@ import {
 } from '@/components/ui/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { FindObjectsDialog } from './FindObjectsDialog';
+import { useAnnotationCommands } from '@/contexts/AnnotationCommandsContext';
 
 interface LabelPanelProps {
   classes: AnnotationClass[];
 }
 
+const HotkeyHint = ({ hotkey }: { hotkey?: number }) =>
+  hotkey ? (
+    <kbd
+      title={`Press ${hotkey} with a box selected to give it this class`}
+      className="text-[10px] px-1.5 leading-4 rounded border border-border bg-muted text-muted-foreground"
+    >
+      {hotkey}
+    </kbd>
+  ) : null;
+
 const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
-  const { getBoxesArray, setAllBoxes } = useAnnotationGeometry();
+  const { getBoxesArray } = useAnnotationGeometry();
+  const { remove } = useAnnotationCommands();
   const { setSelectedBox, hoveredBoxId, setHoveredBoxId, setTool, selectedBox } = useAnnotationState();
   const boxes = getBoxesArray();
   const [findDialogOpen, setFindDialogOpen] = useState(false);
@@ -31,9 +43,11 @@ const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
       const key = box.label || 'unlabeled';
       counts[key] = (counts[key] || 0) + 1;
     });
-    return classes.map(cls => ({
+    return classes.map((cls, index) => ({
       ...cls,
       count: counts[cls.name] || 0,
+      // Number key that assigns this class to the selected box.
+      hotkey: index < 9 ? index + 1 : undefined,
     }));
   }, [classes, boxes]);
 
@@ -45,10 +59,8 @@ const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
     setTool('move');
   };
 
-  const handleDeleteBox = (boxId: string) => {
-    setAllBoxes(boxes.filter(b => b.id !== boxId));
-    if (selectedBox === boxId) setSelectedBox(null);
-  };
+  // Through the command engine: saved on the server and undoable (was local-only).
+  const handleDeleteBox = (boxId: string) => remove(boxId);
 
 
   return (
@@ -105,6 +117,7 @@ const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
                 />
                 <span className="text-sm text-foreground flex-1 truncate">{cls.name}</span>
                 <span className="text-xs text-muted-foreground tabular-nums">{cls.count}</span>
+                <HotkeyHint hotkey={cls.hotkey} />
               </div>
             ))}
             {usedClasses.length === 0 && (
@@ -123,7 +136,7 @@ const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
                     className="flex items-center gap-2 py-1 px-2 text-muted-foreground"
                   >
                     <span className="text-sm italic flex-1 truncate">{cls.name}</span>
-                    <Sparkles className="h-3.5 w-3.5 text-primary/60" />
+                    <HotkeyHint hotkey={cls.hotkey} />
                   </div>
                 ))}
               </div>

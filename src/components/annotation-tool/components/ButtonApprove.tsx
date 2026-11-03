@@ -5,6 +5,9 @@ import { useReviewProjectImage } from '@/hooks/useProjectImageUpdate';
 import { toast } from '@/hooks/use-toast';
 import { ProjectImageOut } from '@/types/image';
 import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
+import { useAnnotationState } from '@/contexts/AnnotationStateContext';
+import { useAnnotationPaceStore } from '@/stores/annotationPaceStore';
+import { isTypingTarget } from '../hotkeys';
 
 interface ApproveButtonProps {
   currentImage: ProjectImageOut;
@@ -16,6 +19,8 @@ interface ApproveButtonProps {
 const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, goToNextImage, className} ) => {
   const { mutate: reviewImage, isPending } = useReviewProjectImage(projectId!);
   const { getBoxesArray } = useAnnotationGeometry();
+  const { selectedBox } = useAnnotationState();
+  const recordFinished = useAnnotationPaceStore((s) => s.recordFinished);
   const boxes = getBoxesArray();
 
   const handleApprove = async () => {
@@ -35,6 +40,7 @@ const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, g
           approved: true, 
         } 
       });
+      recordFinished();
 
       // Reset the current annotations
       // setBoxes([]);
@@ -48,15 +54,16 @@ const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, g
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for the Enter key and ensure we're not already in an approving state
-      if (event.key === "Enter" && !isPending) {
-        handleApprove();
-      }
+      // Enter approves — unless typing, or a box is selected (Enter saves the box then).
+      if (event.key !== "Enter" || isPending || event.repeat) return;
+      if (isTypingTarget(event) || selectedBox || event.defaultPrevented) return;
+      handleApprove();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPending, boxes, currentImage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleApprove reads these
+  }, [isPending, boxes, currentImage, selectedBox]);
 
   return (
     <Button

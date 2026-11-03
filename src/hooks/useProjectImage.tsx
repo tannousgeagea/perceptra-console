@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
@@ -38,7 +38,9 @@ export const fetchProjectImageDetails = async (
  */
 export const useProjectImageDetails = (
   projectId: string,
-  imageId: string
+  imageId: string,
+  /** Keep showing the current image while the next one loads (annotator navigation). */
+  { keepPrevious = false }: { keepPrevious?: boolean } = {}
 ) => {
     const { currentOrganization } = useCurrentOrganization();
     
@@ -50,5 +52,6 @@ export const useProjectImageDetails = (
         },
         enabled: !!currentOrganization && !!projectId && !!imageId,
         staleTime: 60_000, // 1 minute caching
+        placeholderData: keepPrevious ? keepPreviousData : undefined,
     });
 };
