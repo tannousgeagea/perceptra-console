@@ -44,6 +44,25 @@ import { AUTH_STORAGE_KEYS } from '@/types/auth';
 //
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Tab identity
+//
+// Every request carries X-Client-ID, a random id per browser tab. Live events
+// the server publishes for a change carry it back as "origin", so the tab
+// that made a change can skip its own events (see services/realtimeStream).
+// ---------------------------------------------------------------------------
+
+const newClientId = (): string => {
+  try {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  } catch {
+    // insecure context: fall through
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+};
+
+export const CLIENT_ID = newClientId();
+
 type RefreshHandler = () => Promise<boolean>;
 let _refreshHandler: RefreshHandler | null = null;
 
@@ -97,6 +116,7 @@ export async function apiFetch(
       ...options.headers,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(orgId ? { 'X-Organization-ID': orgId } : {}),
+      'X-Client-ID': CLIENT_ID,
     };
   };
 

@@ -57,6 +57,7 @@ import { AppBoot } from './components/layout/AppBoot';
 import ScanHistory from './pages/ScanHistory';
 import ScanResults from './pages/ScanResults';
 import CommandPalette from './components/command-palette/CommandPalette';
+import { RealtimeProvider } from './contexts/RealtimeContext';
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => {
           <AuthProvider>
             <AuthProviderMock>
               <TooltipProvider delayDuration={100}>
+                <RealtimeProvider>
                 <Routes>
                   <Route element={<PublicRoute />}>
                     <Route element={<AuthLayout />}>
@@ -138,6 +140,7 @@ const App = () => {
                     <Route path='/projects/:projectId/images/:imageId' element={<Index />} />
                   </Route>
                 </Routes>
+                </RealtimeProvider>
               </TooltipProvider>
               <Toaster />
               <Sonner />

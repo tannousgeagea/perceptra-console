@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { matchPath, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useCurrentProjectId } from '@/hooks/useCurrentProjectId';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import {
@@ -52,13 +53,6 @@ import { PALETTE_SHORTCUT, useCommandPaletteStore } from '@/stores/commandPalett
 /** IDs are pasted as one token: no spaces, at least a few characters. */
 const looksLikeId = (text: string) => /^[\w.-]{6,}$/.test(text);
 
-/** The project the current page belongs to (project pages and the annotator). */
-const useCurrentProjectId = () => {
-  const { pathname } = useLocation();
-  const match = matchPath({ path: '/projects/:projectId', end: false }, pathname);
-  const projectId = match?.params.projectId;
-  return projectId && projectId !== 'add' ? projectId : undefined;
-};
 
 const PaletteItem = ({
   value,

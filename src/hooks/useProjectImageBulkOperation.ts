@@ -1,7 +1,7 @@
+import { apiFetch } from "@/services/apiClient";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateJobImages } from "@/hooks/useJobImages";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -24,8 +24,8 @@ export const bulkReviewProjectImages = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/bulk-review`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/bulk-review`,
     {
       method: "PATCH",
       headers: {
@@ -91,8 +91,8 @@ export const bulkMarkImagesAsNull = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/bulk-mark-null`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/bulk-mark-null`,
     {
       method: "PATCH",
       headers: {
@@ -159,8 +159,8 @@ export const bulkDeleteProjectImages = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images`,
     {
       method: "DELETE",
       headers: {
@@ -224,8 +224,8 @@ export const bulkAddTagsToImages = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/images/bulk-tags`,
+  const response = await apiFetch(
+    `/api/v1/images/bulk-tags`,
     {
       method: "POST",
       headers: {
@@ -283,8 +283,8 @@ export const bulkDeleteImages = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/images`,
+  const response = await apiFetch(
+    `/api/v1/images`,
     {
       method: "DELETE",
       headers: {
@@ -314,8 +314,6 @@ export const useBulkDeleteImages = (options?: {
   const { currentOrganization } = useCurrentOrganization();
   const { onSuccess, showToast = true } = options || {};
 
-  if (!currentOrganization) return
-
   return useMutation({
     mutationFn: (payload: BulkDeleteImagesPayload) => {
       if (!currentOrganization)
@@ -323,7 +321,7 @@ export const useBulkDeleteImages = (options?: {
       return bulkDeleteImages(currentOrganization.id, payload);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["images", currentOrganization.id], exact:false });
+      queryClient.invalidateQueries({ queryKey: ["images", currentOrganization?.id], exact:false });
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },

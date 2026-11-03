@@ -5,12 +5,15 @@ import { CopyableId } from "@/components/ui/ui/copyable-id";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import { ChevronRight } from "lucide-react";
 import { projectNavItems, type ProjectNavItem } from "./projectNav";
+import { PresenceStack } from "@/components/realtime/PresenceStack";
+import { useOthersPresence } from "@/contexts/RealtimeContext";
 
 
 const ProjectSideBar: FC = () => {
   const { projectId } = useParams<string>();
   const location = useLocation();
   const { project } = useProject();
+  const others = useOthersPresence();
 
   const items = projectNavItems(projectId ?? "");
 
@@ -62,6 +65,12 @@ const ProjectSideBar: FC = () => {
               className="mx-auto text-[11px] text-slate-400 dark:text-slate-500"
             />
           )}
+          <PresenceStack
+            people={others}
+            max={3}
+            emptyLabel="Only you here"
+            className="mx-auto justify-center pt-1"
+          />
         </div>
       </div>
 

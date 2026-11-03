@@ -14,6 +14,7 @@ import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { AnnotationCommandsProvider } from '@/contexts/AnnotationCommandsContext';
 import { annotationsToBoxes } from './boxes';
 import SessionBar from './components/SessionBar';
+import { AnnotatorPresence, RemoteChangeNotice } from './components/LiveCollaboration';
 import QueryState from '../common/QueryState';
 import { useClasses } from '@/hooks/useClasses';
 import { useAuth } from '@/contexts/AuthContext';
@@ -260,6 +261,12 @@ const AnnotationTool = () => {
     return details.marked_as_null ? [] : annotationsToBoxes(details);
   };
 
+  /** Someone else changed this image: load the server's version onto the canvas. */
+  const reloadFromServer = async () => {
+    const result = await refetch();
+    if (result.data) canvasRef.current?.loadImage(result.data);
+  };
+
   const hasPreviousImage = currentIndex > 0;
   const previousImageId = hasPreviousImage ? imageIdInteger[currentIndex - 1] : undefined;
 
@@ -288,11 +295,14 @@ const AnnotationTool = () => {
           hasNext={hasNext && !isTurningPage}
           hasPrevious={hasPrevious && !isTurningPage}
           actions={
-            <SessionBar
-              counts={jobId ? jobCounts : undefined}
-              scope={jobId || projectId || null}
-              loadPreviousBoxes={loadPreviousBoxes}
-            />
+            <div className="flex items-center gap-3">
+              <AnnotatorPresence imageUid={imageId} jobId={jobId || undefined} />
+              <SessionBar
+                counts={jobId ? jobCounts : undefined}
+                scope={jobId || projectId || null}
+                loadPreviousBoxes={loadPreviousBoxes}
+              />
+            </div>
           }
           onNext={handleNext}
           onPrevious={handlePrevious}
@@ -358,6 +368,7 @@ const AnnotationTool = () => {
                 </Button>
               </div>
             )}
+            <RemoteChangeNotice projectImageId={Number(image.id)} onReload={reloadFromServer} />
             <Canvas 
               ref={canvasRef}
               image={image}

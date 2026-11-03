@@ -1,7 +1,6 @@
 // hooks/useAnnotations.ts
 
 import { useMutation, UseMutationOptions, useQueryClient, useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { apiFetch, withQuery } from "@/services/apiClient";
@@ -61,8 +60,8 @@ export const createAnnotation = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/${projectImageId}/annotations`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/${projectImageId}/annotations`,
     {
       method: 'POST',
       headers: {
@@ -161,11 +160,11 @@ export const fetchAnnotations = async (
     queryParams.append('include_inactive', 'true');
   }
 
-  const url = `${baseURL}/api/v1/projects/${projectId}/images/${projectImageId}/annotations${
+  const url = `/api/v1/projects/${projectId}/images/${projectImageId}/annotations${
     queryParams.toString() ? `?${queryParams.toString()}` : ''
   }`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-Organization-ID': organizationId,
