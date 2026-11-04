@@ -113,6 +113,10 @@ const ModelDeploymentView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              POST an image as <code>file</code> (multipart) with an API key of this organization in the{" "}
+              <code>X-API-Key</code> header. Create keys under Settings → API Keys.
+            </p>
           </div>
         </CardContent>
       </Card>
