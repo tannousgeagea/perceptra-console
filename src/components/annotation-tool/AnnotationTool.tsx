@@ -287,7 +287,7 @@ const AnnotationTool = () => {
   return (
     <AnnotationProvider>
       <AnnotationCommandsProvider projectId={projectId!} image={image}>
-      <div className='dark bg-background text-foreground w-full h-screen overflow-hidden'>
+      <div className='dark flex h-screen w-full flex-col overflow-hidden bg-background text-foreground'>
         <AnnotationControls
           title={image.image.name}
           current={jobId ? pageOffset + currentIndex + 1 : currentIndex + 1}
@@ -327,7 +327,8 @@ const AnnotationTool = () => {
             ...(backUrl !== datasetUrl ? [{ label: "Dataset", to: datasetUrl }] : []),
           ]}
         />
-        <div className="flex h-full bg-card">
+        {/* Body fills only the space under the header, so nothing sits below the fold. */}
+        <div className="flex min-h-0 flex-1 bg-card">
           <div className="w-56 border-r border-border flex flex-col h-full min-h-0">
             <ToolBar />
             <div className="flex-1 min-h-0">
@@ -347,7 +348,7 @@ const AnnotationTool = () => {
                 </div>
               </div>
             )}
-            {/* Top-centre banner stack: the canvas area runs below the fold, so nothing goes at the bottom. */}
+            {/* Top-centre banner stack. */}
             <div className="pointer-events-none absolute left-1/2 top-3 z-20 flex -translate-x-1/2 flex-col items-center gap-2 [&>*]:pointer-events-auto">
             <RemoteChangeNotice projectImageId={Number(image.id)} onReload={reloadFromServer} />
             {image.marked_as_null && (

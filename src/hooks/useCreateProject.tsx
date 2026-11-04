@@ -1,14 +1,13 @@
 // hooks/useCreateProject.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner'; 
 
 import { ProjectCreateData, ProjectResponse } from '@/types/project';
-import { baseURL } from '@/components/api/base';
+import { apiFetch } from '@/services/apiClient';
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
-import { organizations } from '@/components/users/mockData';
 
 export interface ApiError {
   detail: string;
@@ -17,12 +16,6 @@ export interface ApiError {
 
 // API Service
 class ProjectApiService {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = '/api') {
-    this.baseUrl = baseUrl;
-  }
-
   async createProject(data: ProjectCreateData, organizationId: string): Promise<ProjectResponse> {
     // ✅ Get token using new auth storage
     const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
@@ -31,7 +24,7 @@ class ProjectApiService {
       throw new ApiError('No authentication token found. Please log in.', 401);
     }
 
-    const response = await fetch(`${this.baseUrl}/api/v1/projects/add`, {
+    const response = await apiFetch(`/api/v1/projects/add`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -68,7 +61,7 @@ export class ApiError extends Error {
 }
 
 // Initialize service
-const projectApi = new ProjectApiService(baseURL);
+const projectApi = new ProjectApiService();
 
 // Query Keys Factory
 export const projectKeys = {

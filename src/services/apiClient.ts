@@ -154,3 +154,53 @@ export async function apiFetch(
     headers: buildHeaders(newToken),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Upload with progress
+//
+// fetch() cannot report upload progress, so file uploads use XHR. This keeps
+// them on the same footing as apiFetch: token, organization, tab id, and one
+// silent refresh-then-retry on 401.
+// ---------------------------------------------------------------------------
+
+export interface UploadResult {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  body: string;
+}
+
+export async function apiUpload(
+  path: string,
+  body: FormData,
+  onProgress?: (percent: number) => void
+): Promise<UploadResult> {
+  const send = (token: string | null) =>
+    new Promise<UploadResult>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${baseURL}${path}`, true);
+      xhr.setRequestHeader('Accept', 'application/json');
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      const orgId = authStorage.get(AUTH_STORAGE_KEYS.ACTIVE_ORG_ID);
+      if (orgId) xhr.setRequestHeader('X-Organization-ID', orgId);
+      xhr.setRequestHeader('X-Client-ID', CLIENT_ID);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () =>
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          statusText: xhr.statusText,
+          body: xhr.responseText,
+        });
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(body);
+    });
+
+  const first = await send(authStorage.getAuthData().accessToken);
+  if (first.status !== 401 || !_refreshHandler) return first;
+  if (!(await _refreshHandler())) return first;
+  onProgress?.(0);
+  return send(authStorage.getAuthData().accessToken);
+}

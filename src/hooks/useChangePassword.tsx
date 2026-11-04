@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useChangePassword.ts
 
 import { useMutation } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -36,7 +36,7 @@ export const changePassword = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(`${baseURL}/api/v1/auth/change-password`, {
+  const response = await apiFetch(`/api/v1/auth/change-password`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,

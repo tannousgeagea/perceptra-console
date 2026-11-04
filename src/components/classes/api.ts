@@ -1,5 +1,5 @@
+import { apiFetch } from '@/services/apiClient';
 import { AnnotationClass } from "@/contexts/ClassesContext";
-import { baseURL } from "../api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 
@@ -26,7 +26,7 @@ const fetchApi = async <T>(
     if (!token) {
       throw new Error("No authentication token found");
     }
-    const response = await fetch(`${baseURL}${endpoint}`, {
+    const response = await apiFetch(`${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',

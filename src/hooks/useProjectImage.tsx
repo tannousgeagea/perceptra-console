@@ -1,5 +1,5 @@
+import { apiFetch } from '@/services/apiClient';
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { ProjectImageOut } from "@/types/image";
@@ -19,8 +19,8 @@ export const fetchProjectImageDetails = async (
     throw new Error("No authentication token found");
     }
 
-    const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/${imageId}`, 
+    const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/${imageId}`, 
     {
         headers: {
         'Authorization': `Bearer ${token}`,

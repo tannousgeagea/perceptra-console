@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useOrganizationSettings.ts
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -46,7 +46,7 @@ export const fetchOrganizationSettings = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(`${baseURL}/api/v1/organizations/settings`, {
+  const response = await apiFetch(`/api/v1/organizations/settings`, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-Organization-ID': organizationId,
@@ -73,7 +73,7 @@ export const updateOrganizationSettings = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(`${baseURL}/api/v1/organizations/settings`, {
+  const response = await apiFetch(`/api/v1/organizations/settings`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,

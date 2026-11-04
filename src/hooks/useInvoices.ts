@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useInvoices.ts
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -19,8 +19,8 @@ export const generateInvoice = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/invoices/generate`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/invoices/generate`,
     {
       method: 'POST',
       headers: {
@@ -58,8 +58,8 @@ export const listInvoices = async (
   if (pagination?.limit) params.append('limit', String(pagination.limit));
   if (pagination?.offset) params.append('offset', String(pagination.offset));
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/invoices?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/invoices?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -83,8 +83,8 @@ export const getInvoice = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/invoices/${invoiceId}`,
+  const response = await apiFetch(
+    `/api/v1/billing/invoices/${invoiceId}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -108,8 +108,8 @@ export const issueInvoice = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/invoices/${invoiceId}/issue`,
+  const response = await apiFetch(
+    `/api/v1/billing/invoices/${invoiceId}/issue`,
     {
       method: 'POST',
       headers: {
@@ -138,8 +138,8 @@ export const markInvoicePaid = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/invoices/${invoiceId}/mark-paid`,
+  const response = await apiFetch(
+    `/api/v1/billing/invoices/${invoiceId}/mark-paid`,
     {
       method: 'POST',
       headers: {
@@ -167,8 +167,8 @@ export const cancelInvoice = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/invoices/${invoiceId}`,
+  const response = await apiFetch(
+    `/api/v1/billing/invoices/${invoiceId}`,
     {
       method: 'DELETE',
       headers: {

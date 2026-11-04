@@ -1,10 +1,10 @@
+import { apiFetch } from '@/services/apiClient';
 import { useMutation } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 
 export const useTriggerValidation = (taskId: string) => {
   const mutation = useMutation({
     mutationFn: async (modelVersionId: number) => {
-      const res = await fetch(`${baseURL}/api/v1/validate-model/${modelVersionId}`, {
+      const res = await apiFetch(`/api/v1/validate-model/${modelVersionId}`, {
         method: "POST",
         headers: {
           "X-Request-ID": taskId,

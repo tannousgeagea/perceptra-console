@@ -1,6 +1,6 @@
+import { apiFetch } from '@/services/apiClient';
 
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -34,8 +34,8 @@ export const fetchProjectImages = async (
     if (status) queryParams.append("status", status);
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images?${queryParams}`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images?${queryParams}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

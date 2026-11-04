@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useSimilarity.ts
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -56,7 +56,7 @@ export const createScan = async (
   organizationId: string,
   payload: CreateScanPayload
 ): Promise<CreateScanResponse> => {
-  const response = await fetch(`${baseURL}/api/v1/similarity/scans`, {
+  const response = await apiFetch(`/api/v1/similarity/scans`, {
     method: "POST",
     headers: getAuthHeaders(organizationId),
     body: JSON.stringify(payload),
@@ -77,8 +77,8 @@ export const listScans = async (
   if (pagination?.skip  != null) params.append("skip",  String(pagination.skip));
   if (pagination?.limit != null) params.append("limit", String(pagination.limit));
 
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/scans?${params}`,
+  const response = await apiFetch(
+    `/api/v1/similarity/scans?${params}`,
     { headers: getAuthHeaders(organizationId) }
   );
   return handleResponse<ScanListResponse>(response, "Failed to fetch scans");
@@ -88,8 +88,8 @@ export const getScan = async (
   organizationId: string,
   scanId: string
 ): Promise<ScanSummary> => {
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/scans/${scanId}`,
+  const response = await apiFetch(
+    `/api/v1/similarity/scans/${scanId}`,
     { headers: getAuthHeaders(organizationId) }
   );
   return handleResponse<ScanSummary>(response, "Failed to fetch scan");
@@ -99,8 +99,8 @@ export const cancelScan = async (
   organizationId: string,
   scanId: string
 ): Promise<ScanSummary> => {
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/scans/${scanId}`,
+  const response = await apiFetch(
+    `/api/v1/similarity/scans/${scanId}`,
     {
       method: "DELETE",
       headers: getAuthHeaders(organizationId),
@@ -124,8 +124,8 @@ export const getScanResults = async (
   if (pagination?.limit != null) params.append("limit", String(pagination.limit));
   if (includeMembers)            params.append("include_members", "true");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/scans/${scanId}/results?${params}`,
+  const response = await apiFetch(
+    `/api/v1/similarity/scans/${scanId}/results?${params}`,
     { headers: getAuthHeaders(organizationId) }
   );
   return handleResponse<ClusterResultsResponse>(response, "Failed to fetch scan results");
@@ -136,8 +136,8 @@ export const getClusterDetail = async (
   scanId: string,
   clusterId: string
 ): Promise<ClusterDetail> => {
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/scans/${scanId}/results/${clusterId}`,
+  const response = await apiFetch(
+    `/api/v1/similarity/scans/${scanId}/results/${clusterId}`,
     { headers: getAuthHeaders(organizationId) }
   );
   return handleResponse<ClusterDetail>(response, "Failed to fetch cluster detail");
@@ -148,8 +148,8 @@ export const performClusterAction = async (
   clusterId: string,
   payload: ClusterActionPayload
 ): Promise<ClusterActionResponse> => {
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/clusters/${clusterId}/action`,
+  const response = await apiFetch(
+    `/api/v1/similarity/clusters/${clusterId}/action`,
     {
       method: "POST",
       headers: getAuthHeaders(organizationId),
@@ -163,8 +163,8 @@ export const performBulkClusterAction = async (
   organizationId: string,
   payload: BulkClusterActionPayload
 ): Promise<BulkClusterActionResponse> => {
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/clusters/bulk-action`,
+  const response = await apiFetch(
+    `/api/v1/similarity/clusters/bulk-action`,
     {
       method: "POST",
       headers: getAuthHeaders(organizationId),
@@ -184,8 +184,8 @@ export const getSimilarImages = async (
   if (params?.algorithm)         query.append("algorithm", params.algorithm);
   if (params?.limit != null)     query.append("limit",     String(params.limit));
 
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/images/${imageId}/similar?${query}`,
+  const response = await apiFetch(
+    `/api/v1/similarity/images/${imageId}/similar?${query}`,
     { headers: getAuthHeaders(organizationId) }
   );
   return handleResponse<SimilarImagesResponse>(response, "Failed to fetch similar images");
@@ -198,8 +198,8 @@ export const getSimilarityStats = async (
   const params = new URLSearchParams();
   if (projectId) params.append("project_id", projectId);
 
-  const response = await fetch(
-    `${baseURL}/api/v1/similarity/stats?${params}`,
+  const response = await apiFetch(
+    `/api/v1/similarity/stats?${params}`,
     { headers: getAuthHeaders(organizationId) }
   );
   return handleResponse<SimilarityStats>(response, "Failed to fetch similarity stats");

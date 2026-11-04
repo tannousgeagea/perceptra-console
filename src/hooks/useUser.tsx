@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useOrganizationUsers.ts
 
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS, User } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -23,8 +23,8 @@ export const fetchUser = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/auth/me`,
+  const response = await apiFetch(
+    `/api/v1/auth/me`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useStorage.ts
 
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -72,7 +72,7 @@ export const testStorageConnection = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(`${baseURL}/api/v1/storage/test-connection`, {
+  const response = await apiFetch(`/api/v1/storage/test-connection`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -100,7 +100,7 @@ export const createStorageProfile = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(`${baseURL}/api/v1/storage/profiles-with-credentials`, {
+  const response = await apiFetch(`/api/v1/storage/profiles-with-credentials`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -134,8 +134,8 @@ export const fetchStorageSecrets = async (
     limit: limit.toString(),
   });
 
-  const response = await fetch(
-    `${baseURL}/api/v1/storage/secrets?${queryParams}`,
+  const response = await apiFetch(
+    `/api/v1/storage/secrets?${queryParams}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -167,8 +167,8 @@ export const fetchStorageProfiles = async (
     limit: limit.toString(),
   });
 
-  const response = await fetch(
-    `${baseURL}/api/v1/storage/profiles?${queryParams}`,
+  const response = await apiFetch(
+    `/api/v1/storage/profiles?${queryParams}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -285,8 +285,8 @@ export const deleteStorageProfile = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/storage/profiles/${storageProfileId}`,
+  const response = await apiFetch(
+    `/api/v1/storage/profiles/${storageProfileId}`,
     {
       method: 'DELETE',
       headers: {
@@ -363,8 +363,8 @@ export const updateStorageProfile = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/storage/profiles/${storageProfileId}`,
+  const response = await apiFetch(
+    `/api/v1/storage/profiles/${storageProfileId}`,
     {
       method: 'PUT',
       headers: {
@@ -411,8 +411,8 @@ export const rotateStorageCredentials = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/storage/profiles/${storageProfileId}/credentials`,
+  const response = await apiFetch(
+    `/api/v1/storage/profiles/${storageProfileId}/credentials`,
     {
       method: 'PUT',
       headers: {

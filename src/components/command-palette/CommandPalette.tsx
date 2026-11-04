@@ -98,7 +98,7 @@ const PaletteBody = ({ close }: { close: () => void }) => {
   const navigate = useNavigate();
   const { pathname, search: pageSearch } = useLocation();
   const { setTheme } = useTheme();
-  const { currentOrganization } = useCurrentOrganization();
+  const { currentOrganization, hasAdminPermission } = useCurrentOrganization();
   const currentProjectId = useCurrentProjectId();
   const [search, setSearch] = useState('');
 
@@ -139,8 +139,10 @@ const PaletteBody = ({ close }: { close: () => void }) => {
       ? [
           { label: 'Organization', to: `/organizations/${orgId}`, icon: Building2 },
           { label: 'Organization members', to: `/organizations/${orgId}/members`, icon: Users, keywords: ['team', 'invite'] },
-          { label: 'Team progress', to: `/organizations/${orgId}/progress`, icon: BarChart3, keywords: ['productivity', 'annotators'] },
         ]
+      : []),
+    ...(hasAdminPermission
+      ? [{ label: 'Team progress & analytics', to: '/team', icon: BarChart3, keywords: ['productivity', 'annotators', 'analytics', 'progress'] }]
       : []),
     { label: 'Billing', to: '/billing', icon: CreditCard },
     { label: 'Invoices', to: '/billing/invoices', icon: FileText },

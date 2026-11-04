@@ -1,6 +1,6 @@
+import { apiFetch } from '@/services/apiClient';
 // File: hooks/useTrainingProgress.ts
 import { useQuery } from "@tanstack/react-query";
-import { trainURL } from "@/components/api/base";
 
 export interface TrainingProgress {
   progress: number;
@@ -14,7 +14,7 @@ export const useTrainingProgress = (sessionId: string | null) => {
     queryFn: async () => {
       if (!sessionId) throw new Error("No session ID provided");
 
-      const res = await fetch(`${trainURL}/api/v1/training-sessions/${sessionId}`, {
+      const res = await apiFetch(`/api/v1/training-sessions/${sessionId}`, {
         headers: { Accept: "application/json" },
       });
 

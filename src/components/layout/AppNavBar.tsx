@@ -13,13 +13,14 @@ import {
   ScanEye,
   Scan,
   Search,
+  Users,
 } from 'lucide-react';
 import { MTXLogo } from '@/components/logo/MTXLogo';
 import { cn } from '@/lib/utils';
 import { UserProfileMenu } from '../users/UserProfileMenu';
 import { getCurrentUser } from '@/utils/user';
 import { OrganizationSection } from '@/components/organization/OrganizationSection';
-import { useAuthHelpers } from '@/hooks/useAuthHelpers';
+import { useAuthHelpers, useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { PALETTE_SHORTCUT, useCommandPaletteStore } from '@/stores/commandPaletteStore';
 
@@ -35,6 +36,7 @@ const Navbar: FC = () => {
   const location = useLocation();
   const helpers = useAuthHelpers();
   const openPalette = useCommandPaletteStore((s) => s.setOpen);
+  const { hasAdminPermission } = useCurrentOrganization();
 
   useEffect(() => {
     if (location.pathname.includes('/projects/')) {
@@ -53,6 +55,8 @@ const Navbar: FC = () => {
     { item: "Inference", ref: "/inference", icon: <Scan size={20} /> },
     { item: "Models", ref: "/models", icon: <Brain size={20} /> },
     { item: "Deploy", ref: "/deploy", icon: <Rocket size={20} /> },
+    // Team progress and analytics are org-admin only (the API enforces it too).
+    ...(hasAdminPermission ? [{ item: "Team", ref: "/team", icon: <Users size={20} /> }] : []),
   ];
 
   const toggleNavbar = (): void => {

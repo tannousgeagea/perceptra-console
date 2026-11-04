@@ -1,6 +1,6 @@
+import { apiFetch } from '@/services/apiClient';
 
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -39,7 +39,7 @@ export const fetchImages = async (
     if (search) queryParams.append("search", search);
   }
 
-  const response = await fetch(`${baseURL}/api/v1/images?${queryParams}`, {
+  const response = await apiFetch(`/api/v1/images?${queryParams}`, {
     headers: {
       Authorization: `Bearer ${token}`,
       "X-Organization-ID": organizationId,

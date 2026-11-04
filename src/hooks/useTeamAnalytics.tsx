@@ -1,25 +1,26 @@
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { UserAnalytics, AnalyticsKPIs, AnalyticsFilters } from "@/types/analytics";
 import { ImageAnalyticsFilters, ImageAnalyticsResponse, ImageStatusBreakdown, UserImagePerformance, UserImageAnalytics, ImageAnalyticsKPIs } from "@/types/analytics";
-import axios from "axios";
-import { baseURL } from "@/components/api/base";
+import { apiFetch } from "@/services/apiClient";
+import { authStorage } from "@/services/authService";
+import { AUTH_STORAGE_KEYS } from "@/types/auth";
 
-// API client
-const apiClient = axios.create({
-  baseURL: baseURL,
-  headers: {
-    "Content-Type": "application/json",
+// Analytics are per organization: key every query by the active one so an
+// organization switch never shows the previous organization's numbers.
+const activeOrgKey = () => authStorage.get(AUTH_STORAGE_KEYS.ACTIVE_ORG_ID) ?? "none";
+
+// Thin GET client over apiFetch (token, organization, 401 refresh), keeping
+// axios's `{ data }` shape for the functions below.
+const apiClient = {
+  async get<T>(path: string): Promise<{ data: T }> {
+    const response = await apiFetch(path);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `Analytics request failed (${response.status})`);
+    }
+    return { data: (await response.json()) as T };
   },
-});
-
-// Add auth token if available (adjust based on your auth implementation)
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken"); // or get from your auth context
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+};
 
 // API response types
 interface AnalyticsResponse {
@@ -125,7 +126,7 @@ const fetchProjects = async (): Promise<ProjectInfo[]> => {
 // Main hook for team analytics
 export const useTeamAnalytics = (filters: AnalyticsFilters) => {
   return useQuery({
-    queryKey: ["analytics", filters],
+    queryKey: ["analytics", activeOrgKey(), filters],
     queryFn: () => fetchAnalytics(filters),
     staleTime: 60000, // Consider data stale after 1 minute
     refetchInterval: 300000, // Refetch every 5 minutes
@@ -141,7 +142,7 @@ export const useTeamAnalytics = (filters: AnalyticsFilters) => {
 // Hook for image-level analytics
 export const useImageAnalytics = (filters: ImageAnalyticsFilters) => {
   return useQuery({
-    queryKey: ["analytics", "images", filters],
+    queryKey: ["analytics", activeOrgKey(), "images", filters],
     queryFn: () => fetchImageAnalytics(filters),
     staleTime: 60000,
     refetchInterval: 300000,
@@ -157,7 +158,7 @@ export const useImageAnalytics = (filters: ImageAnalyticsFilters) => {
 // Hook for image status breakdown
 export const useImageStatusBreakdown = (projectId?: string) => {
   return useQuery({
-    queryKey: ["analytics", "images", "status", projectId],
+    queryKey: ["analytics", activeOrgKey(), "images", "status", projectId],
     queryFn: () => fetchImageStatusBreakdown(projectId),
     staleTime: 120000, // 2 minutes
     refetchOnWindowFocus: true,
@@ -168,7 +169,7 @@ export const useImageStatusBreakdown = (projectId?: string) => {
 // Hook for individual user image performance
 export const useUserImagePerformance = (userId: string, timeFrame: string = "week") => {
   return useQuery({
-    queryKey: ["analytics", "images", "user", userId, timeFrame],
+    queryKey: ["analytics", activeOrgKey(), "images", "user", userId, timeFrame],
     queryFn: () => fetchUserImagePerformance(userId, timeFrame),
     staleTime: 60000,
     refetchOnWindowFocus: true,
@@ -180,7 +181,7 @@ export const useUserImagePerformance = (userId: string, timeFrame: string = "wee
 // Hook for fetching available users
 export const useAnalyticsUsers = () => {
   return useQuery({
-    queryKey: ["analytics", "users"],
+    queryKey: ["analytics", activeOrgKey(), "users"],
     queryFn: fetchUsers,
     staleTime: 300000, // 5 minutes - users don't change often
     retry: 2,
@@ -190,7 +191,7 @@ export const useAnalyticsUsers = () => {
 // Hook for fetching available roles
 export const useAnalyticsRoles = () => {
   return useQuery({
-    queryKey: ["analytics", "roles"],
+    queryKey: ["analytics", activeOrgKey(), "roles"],
     queryFn: fetchRoles,
     staleTime: 300000, // 5 minutes - roles don't change often
     retry: 2,
@@ -200,7 +201,7 @@ export const useAnalyticsRoles = () => {
 // Hook for fetching available projects
 export const useAnalyticsProjects = () => {
   return useQuery({
-    queryKey: ["analytics", "projects"],
+    queryKey: ["analytics", activeOrgKey(), "projects"],
     queryFn: fetchProjects,
     staleTime: 300000, // 5 minutes - projects don't change often
     retry: 2,
@@ -240,17 +241,17 @@ export const useAnalyticsFilterOptions = () => {
   const queries = useQueries({
     queries: [
       {
-        queryKey: ["analytics", "users"],
+        queryKey: ["analytics", activeOrgKey(), "users"],
         queryFn: fetchUsers,
         staleTime: 300000,
       },
       {
-        queryKey: ["analytics", "roles"],
+        queryKey: ["analytics", activeOrgKey(), "roles"],
         queryFn: fetchRoles,
         staleTime: 300000,
       },
       {
-        queryKey: ["analytics", "projects"],
+        queryKey: ["analytics", activeOrgKey(), "projects"],
         queryFn: fetchProjects,
         staleTime: 300000,
       },
@@ -271,7 +272,7 @@ export const useAnalyticsFilterOptions = () => {
 export const useMultipleAnalytics = (filtersList: AnalyticsFilters[]) => {
   const queries = useQueries({
     queries: filtersList.map((filters) => ({
-      queryKey: ["analytics", filters],
+      queryKey: ["analytics", activeOrgKey(), filters],
       queryFn: () => fetchAnalytics(filters),
       staleTime: 60000,
       refetchInterval: 300000,
@@ -290,7 +291,7 @@ export const useMultipleAnalytics = (filtersList: AnalyticsFilters[]) => {
 export const useMultipleImageAnalytics = (filtersList: ImageAnalyticsFilters[]) => {
   const queries = useQueries({
     queries: filtersList.map((filters) => ({
-      queryKey: ["analytics", "images", filters],
+      queryKey: ["analytics", activeOrgKey(), "images", filters],
       queryFn: () => fetchImageAnalytics(filters),
       staleTime: 60000,
       refetchInterval: 300000,
@@ -311,13 +312,13 @@ export const useAnalyticsComparison = (
   previousFilters: AnalyticsFilters
 ) => {
   const currentQuery = useQuery({
-    queryKey: ["analytics", "current", currentFilters],
+    queryKey: ["analytics", activeOrgKey(), "current", currentFilters],
     queryFn: () => fetchAnalytics(currentFilters),
     staleTime: 60000,
   });
 
   const previousQuery = useQuery({
-    queryKey: ["analytics", "previous", previousFilters],
+    queryKey: ["analytics", activeOrgKey(), "previous", previousFilters],
     queryFn: () => fetchAnalytics(previousFilters),
     staleTime: 60000,
   });
@@ -371,13 +372,13 @@ export const useImageAnalyticsComparison = (
   previousFilters: ImageAnalyticsFilters
 ) => {
   const currentQuery = useQuery({
-    queryKey: ["analytics", "images", "current", currentFilters],
+    queryKey: ["analytics", activeOrgKey(), "images", "current", currentFilters],
     queryFn: () => fetchImageAnalytics(currentFilters),
     staleTime: 60000,
   });
 
   const previousQuery = useQuery({
-    queryKey: ["analytics", "images", "previous", previousFilters],
+    queryKey: ["analytics", activeOrgKey(), "images", "previous", previousFilters],
     queryFn: () => fetchImageAnalytics(previousFilters),
     staleTime: 60000,
   });
@@ -440,7 +441,7 @@ export const prefetchAnalytics = async (
   filters: AnalyticsFilters
 ) => {
   await queryClient.prefetchQuery({
-    queryKey: ["analytics", filters],
+    queryKey: ["analytics", activeOrgKey(), filters],
     queryFn: () => fetchAnalytics(filters),
     staleTime: 60000,
   });
@@ -449,7 +450,7 @@ export const prefetchAnalytics = async (
 // Hook for real-time analytics updates (polls more frequently)
 export const useRealtimeAnalytics = (filters: AnalyticsFilters, enabled = true) => {
   return useQuery({
-    queryKey: ["analytics", "realtime", filters],
+    queryKey: ["analytics", activeOrgKey(), "realtime", filters],
     queryFn: () => fetchAnalytics(filters),
     staleTime: 10000, // 10 seconds
     refetchInterval: enabled ? 30000 : false, // Poll every 30 seconds when enabled
@@ -461,7 +462,7 @@ export const useRealtimeAnalytics = (filters: AnalyticsFilters, enabled = true) 
 // Hook for real-time image analytics updates
 export const useRealtimeImageAnalytics = (filters: ImageAnalyticsFilters, enabled = true) => {
   return useQuery({
-    queryKey: ["analytics", "images", "realtime", filters],
+    queryKey: ["analytics", activeOrgKey(), "images", "realtime", filters],
     queryFn: () => fetchImageAnalytics(filters),
     staleTime: 10000,
     refetchInterval: enabled ? 30000 : false,

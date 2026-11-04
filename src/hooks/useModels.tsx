@@ -1,7 +1,6 @@
 // hooks/useModels.ts
 
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { apiFetch, withQuery } from "@/services/apiClient";
@@ -35,8 +34,8 @@ export const createModel = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/models/projects/${projectId}/models`,
+  const response = await apiFetch(
+    `/api/v1/models/projects/${projectId}/models`,
     {
       method: 'POST',
       headers: {
@@ -66,8 +65,8 @@ export const fetchProjectModels = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/models/projects/${projectId}/models`,
+  const response = await apiFetch(
+    `/api/v1/models/projects/${projectId}/models`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -93,8 +92,8 @@ export const fetchModelDetail = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/models/${modelId}`,
+  const response = await apiFetch(
+    `/api/v1/models/${modelId}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -121,8 +120,8 @@ export const triggerTraining = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/models/${modelId}/train`,
+  const response = await apiFetch(
+    `/api/v1/models/${modelId}/train`,
     {
       method: 'POST',
       headers: {
@@ -153,8 +152,8 @@ export const updateModel = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/models/${modelId}`,
+  const response = await apiFetch(
+    `/api/v1/models/${modelId}`,
     {
       method: 'PATCH',
       headers: {
@@ -184,8 +183,8 @@ export const deleteModel = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/models/${modelId}`,
+  const response = await apiFetch(
+    `/api/v1/models/${modelId}`,
     {
       method: 'DELETE',
       headers: {

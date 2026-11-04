@@ -86,7 +86,8 @@ const App = () => {
                       <Route path="/no-permission" element={<NoPermissionPage />} />
                       <Route path='/organizations/:orgId' element={<OrganizationPage />} />
                       <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
-                      <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
+                      <Route path='/team' element={<TeamProgress />} />
+                      <Route path='/organizations/:orgId/progress' element={<Navigate to="/team" replace />} />
                       <Route path='/datalake' element={<DataLake />} />
                       <Route path='/upload' element={<UploadIndex />} />
                       <Route path='/link' element={<RegisterFromStorage />} />

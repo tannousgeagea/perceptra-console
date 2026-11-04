@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useJobs.ts
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -73,8 +73,8 @@ export const assignJobToUser = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/jobs/${jobId}/assign`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/jobs/${jobId}/assign`,
     {
       method: 'PATCH',
       headers: {
@@ -107,8 +107,8 @@ export const unassignJob = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/jobs/${jobId}/unassign`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/jobs/${jobId}/unassign`,
     {
       method: 'PATCH',
       headers: {
@@ -232,8 +232,8 @@ export const updateJob = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/jobs/${jobId}`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/jobs/${jobId}`,
     {
       method: 'PUT',
       headers: {
@@ -313,8 +313,8 @@ export const splitJob = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/jobs/${jobId}/split`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/jobs/${jobId}/split`,
     {
       method: 'POST',
       headers: {
@@ -395,11 +395,11 @@ export const deleteJob = async (
     throw new Error("No authentication token found");
   }
 
-  const url = `${baseURL}/api/v1/projects/${projectId}/jobs/${jobId}${
+  const url = `/api/v1/projects/${projectId}/jobs/${jobId}${
     hardDelete ? '?hard_delete=true' : ''
   }`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
