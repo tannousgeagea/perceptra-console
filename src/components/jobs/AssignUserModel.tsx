@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { User, Users, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Sparkles, User, Users, X } from "lucide-react";
+import { formatHours, useTeamPace } from "@/hooks/useTeamPace";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/ui/dialog";
 import { Button } from "@/components/ui/ui/button";
 import { ScrollArea } from "@/components/ui/ui/scroll-area";
@@ -13,22 +14,47 @@ interface AssignUserModalProps {
   onClose: () => void;
   job: Job;
   users: UserType[];
+  projectId?: string;
   onAssign: (job: Job, userId: string | null) => void;
 }
 
-const AssignUserModal = ({ 
-  isOpen, 
-  onClose, 
-  job, 
-  users, 
-  onAssign 
+const AssignUserModal = ({
+  isOpen,
+  onClose,
+  job,
+  users,
+  projectId,
+  onAssign
 }: AssignUserModalProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: teamPace } = useTeamPace(projectId, isOpen);
 
-  // Filter users based on search query
-  const filteredUsers = users.filter((user) =>
-    user.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Hours until each person would finish this job: their queue, then this job, at their pace.
+  const finishHours = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of teamPace?.members ?? []) {
+      if (m.effective_images_per_hour) {
+        map.set(m.user_id, (m.open_images + job.image_count) / m.effective_images_per_hour);
+      }
+    }
+    return map;
+  }, [teamPace, job.image_count]);
+  const paceOf = (userId: string) => teamPace?.members.find((m) => m.user_id === userId);
+
+  // Suggest whoever would finish soonest (only when there is pace to compare).
+  const suggestedId = useMemo(() => {
+    let best: string | null = null;
+    for (const user of users) {
+      const hours = finishHours.get(user.id);
+      if (hours != null && (best == null || hours < finishHours.get(best)!)) best = user.id;
+    }
+    return best;
+  }, [users, finishHours]);
+
+  // Filter users based on search query; the suggestion first.
+  const filteredUsers = users
+    .filter((user) => user.username.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => Number(b.id === suggestedId) - Number(a.id === suggestedId));
 
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -73,9 +99,33 @@ const AssignUserModal = ({
                         {getInitials(user.username)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="font-medium text-sm">{user.username}</div>
-                      <div className="text-xs text-slate-500">{user.role}</div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 font-medium text-sm">
+                        {user.username}
+                        {user.id === suggestedId && (
+                          <span
+                            className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600"
+                            title="Would finish this job soonest, given their queue and recent pace"
+                          >
+                            <Sparkles className="h-3 w-3" /> Suggested
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {user.role}
+                        {(() => {
+                          const m = paceOf(user.id);
+                          if (!m) return null;
+                          const hours = finishHours.get(user.id);
+                          return (
+                            <>
+                              {" · "}{m.open_images} queued
+                              {m.measured && m.images_per_hour ? <> · {m.images_per_hour}/h</> : null}
+                              {hours != null && <> · done in {formatHours(hours)}</>}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                     {job.assignedUser?.id === user.id && (
                       <div className="ml-auto">

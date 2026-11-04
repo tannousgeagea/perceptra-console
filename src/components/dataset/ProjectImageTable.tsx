@@ -33,13 +33,15 @@ export function ProjectImageTable({
   const allSelected = images.length > 0 && images.every((img) => selectedIds.has(img.id));
   const someSelected = images.some((img) => selectedIds.has(img.id));
 
-  const statusConfig = {
+  const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; label?: string }> = {
     annotated: { icon: CheckCircle2, color: 'bg-green-500/10 text-green-500 border-green-500/20' },
     reviewed: { icon: CheckCircle2, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
     unannotated: { icon: AlertCircle, color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
     dataset: { icon: Database, color: 'bg-green-500/10 text-green-500 border-blue-500/20' },
-
+    rejected: { icon: AlertCircle, color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', label: 'needs fixes' },
   };
+  // Unknown statuses fall back instead of crashing the page.
+  const statusOf = (value: string) => statusConfig[value] ?? statusConfig.unannotated;
 
   return (
     <div className="border rounded-lg">
@@ -69,7 +71,8 @@ export function ProjectImageTable({
         </TableHeader>
         <TableBody>
           {images.map((image) => {
-            const StatusIcon = statusConfig[image.status].icon;
+            const status = statusOf(image.status);
+            const StatusIcon = status.icon;
             return (
               <TableRow
                 key={image.id}
@@ -104,9 +107,9 @@ export function ProjectImageTable({
                   <CopyableId value={image.image_id} label="Image ID" truncate={8} />
                 </TableCell>
                 <TableCell>
-                  <Badge className={statusConfig[image.status].color}>
+                  <Badge className={status.color}>
                     <StatusIcon className="w-3 h-3 mr-1" />
-                    {image.status}
+                    {status.label ?? image.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">

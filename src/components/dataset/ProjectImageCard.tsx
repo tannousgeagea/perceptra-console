@@ -20,14 +20,16 @@ interface ProjectImageCardProps {
 }
 
 export function ProjectImageCard({ projectId, image, selected, onSelect, showAnnotations }: ProjectImageCardProps) {
-  const statusConfig = {
+  const statusConfig: Record<string, { icon: typeof CheckCircle2; color: string; label?: string }> = {
     annotated: { icon: CheckCircle2, color: 'bg-green-500/10 text-green-500 border-green-500/20' },
     reviewed: { icon: CheckCircle2, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
     dataset: { icon: Database, color: 'bg-green-500/10 text-green-500 border-blue-500/20' },
     unannotated: { icon: AlertCircle, color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+    rejected: { icon: AlertCircle, color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', label: 'needs fixes' },
   };
-
-  const StatusIcon = statusConfig[image.status].icon;
+  // Unknown statuses fall back instead of crashing the page.
+  const status = statusConfig[image.status] ?? statusConfig.unannotated;
+  const StatusIcon = status.icon;
 
   return (
     <Card className={cn(
@@ -65,9 +67,9 @@ export function ProjectImageCard({ projectId, image, selected, onSelect, showAnn
           <OpenInAnnotator projectId={projectId} imageId={image.image_id} jobs={image.jobs} />
         </div>
         <div className="absolute top-2 right-2">
-          <Badge className={statusConfig[image.status].color}>
+          <Badge className={status.color}>
             <StatusIcon className="w-3 h-3 mr-1" />
-            {image.status}
+            {status.label ?? image.status}
           </Badge>
         </div>
         <div className="absolute bottom-2 left-2">

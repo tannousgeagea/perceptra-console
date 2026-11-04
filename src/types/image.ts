@@ -131,10 +131,12 @@ export interface JobInfo {
   created_at: string;
 }
 
-export type JobImageTab = 'unannotated' | 'annotated' | 'reviewed' | 'dataset';
+export type JobImageTab = 'unannotated' | 'rejected' | 'annotated' | 'reviewed' | 'dataset';
 
 export interface JobImageCounts {
   unannotated: number;
+  /** Sent back by a reviewer, waiting for the annotator's fixes. */
+  rejected: number;
   annotated: number;
   reviewed: number;
   /** Completed: moved to a dataset. */
@@ -148,6 +150,7 @@ export interface JobImagesResponse {
   unannotated: number;
   reviewed: number;
   annotated: number;
+  rejected?: number;
   dataset?: number;
   marked_null?: number;
   job: JobInfo;

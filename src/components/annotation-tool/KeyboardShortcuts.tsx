@@ -30,6 +30,7 @@ const SECTIONS: { title: string; shortcuts: { keys: string[]; action: string }[]
     title: 'Image',
     shortcuts: [
       { keys: ['Enter'], action: 'Approve image and go to the next (nothing selected)' },
+      { keys: ['Shift', 'Enter'], action: 'Send back to the annotator with a reason (reviewers)' },
       { keys: ['E'], action: 'Mark image empty and go to the next / restore it' },
       { keys: ['←', '→'], action: 'Previous / next image' },
     ],

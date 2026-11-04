@@ -15,6 +15,7 @@ import { AnnotationCommandsProvider } from '@/contexts/AnnotationCommandsContext
 import { annotationsToBoxes } from './boxes';
 import SessionBar from './components/SessionBar';
 import { AnnotatorPresence, RemoteChangeNotice } from './components/LiveCollaboration';
+import { RejectionNotice } from './components/ReviewFeedback';
 import QueryState from '../common/QueryState';
 import { useClasses } from '@/hooks/useClasses';
 import { useAuth } from '@/contexts/AuthContext';
@@ -85,10 +86,11 @@ const AnnotationTool = () => {
   const { data: jobCounts } = useJobImageCounts(projectId!, jobId);
 
   // Images leave these lists as they are worked on (annotate → leaves
-  // "unannotated", approve → leaves "annotated"), so "page 2" on the server
-  // is not what follows page 1 here. Past the end of the loaded list, these
-  // work like a queue: refetch from the top and skip what was already seen.
-  const isQueue = status === 'unannotated' || status === 'annotated';
+  // "unannotated", approve → leaves "annotated", resubmit → leaves "rejected"),
+  // so "page 2" on the server is not what follows page 1 here. Past the end of
+  // the loaded list, these work like a queue: refetch from the top and skip
+  // what was already seen.
+  const isQueue = status === 'unannotated' || status === 'annotated' || status === 'rejected';
   const seenRef = useRef(new Set<string>());
 
   const imageIds = useMemo(
@@ -351,6 +353,11 @@ const AnnotationTool = () => {
             {/* Top-centre banner stack. */}
             <div className="pointer-events-none absolute left-1/2 top-3 z-20 flex -translate-x-1/2 flex-col items-center gap-2 [&>*]:pointer-events-auto">
             <RemoteChangeNotice projectImageId={Number(image.id)} onReload={reloadFromServer} />
+            <RejectionNotice
+              image={image}
+              projectId={projectId!}
+              onResubmitted={() => (hasNext ? handleNext() : void refetch())}
+            />
             {image.marked_as_null && (
               <div className="flex items-center gap-3 rounded-lg border border-amber-500/40 bg-slate-950/90 px-4 py-2 text-sm text-amber-200 shadow-lg backdrop-blur">
                 <Ban className="h-4 w-4 shrink-0 text-amber-400" />

@@ -55,7 +55,8 @@ const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, g
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Enter approves — unless typing, or a box is selected (Enter saves the box then).
-      if (event.key !== "Enter" || isPending || event.repeat) return;
+      // Shift+Enter is "send back" (ReviewFeedback).
+      if (event.key !== "Enter" || event.shiftKey || isPending || event.repeat) return;
       if (isTypingTarget(event) || selectedBox || event.defaultPrevented) return;
       handleApprove();
     };
