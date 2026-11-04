@@ -9,20 +9,21 @@ interface AnnotationEditorProps {
   classes: AnnotationClass[];
   onDeleteClass: (id: string) => void;
   onSaveClass: () => void;
+  /** Discard unsaved edits to the box (or drop it if it was never saved). */
+  onCancel: (id: string) => void;
 }
 
 const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
   classes,
   onDeleteClass,
   onSaveClass,
+  onCancel,
 }) => {
-  const [originalBox, setOriginalBox] = useState<any | null>(null);
-  const [isNewBox, setIsNewBox] = useState(false);
   const [className, setClassName] = useState<string>('');
   const [selectedClass, setSelectedClass] = useState<AnnotationClass | null>(null);
   const [visible, setVisible] = useState<boolean>(true);
   const { selectedBox, setSelectedBox } = useAnnotationState();
-  const { getBoxesArray, updateBox, deleteBox: removeBoxLocal } = useAnnotationGeometry();
+  const { getBoxesArray, updateBox } = useAnnotationGeometry();
 
   useEffect(() => {
     if (selectedBox) {
@@ -31,16 +32,6 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
       
 
       if (box) {
-        if (!originalBox) {
-          setOriginalBox({ ...box });
-
-          if (!box.label || box.label.trim() === "") {
-            setIsNewBox(true);
-          } else {
-            setIsNewBox(false);
-          }
-        }
-
         setClassName(box.label);
         setSelectedClass({
           id: box.id,
@@ -57,15 +48,7 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
     }
   }, [selectedBox]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' && selectedBox) {
-        deleteBox(selectedBox);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBox]);
+  // Delete/Backspace are handled by the canvas (which ignores keys typed into inputs).
 
   const handleSaveClass = () => {
     if (selectedClass) {
@@ -74,7 +57,6 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
       setClassName("");
       setSelectedBox(null);
       setVisible(false);
-      setOriginalBox(null)
     }
   };
 
@@ -96,15 +78,8 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
 
 
   const handleClose = () => {
-
-    if (isNewBox && selectedBox) {
-      removeBoxLocal(selectedBox)
-    } else if (originalBox) {
-      updateBox(originalBox.id, originalBox);
-    }
-    setOriginalBox(null);
+    if (selectedBox) onCancel(selectedBox);
     setVisible(false);
-    setIsNewBox(false);
     setSelectedBox(null);
   };
 
@@ -130,6 +105,15 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
         type="text"
         value={className}
         onChange={(e) => updateLabel(selectedBox, e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && className.trim()) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSaveClass();
+          } else if (e.key === 'Escape') {
+            handleClose();
+          }
+        }}
         placeholder="Enter annotation name"
         required
         className="w-full px-3 py-2 mb-4 border border-[#333] rounded bg-[#0d1f34] text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -156,8 +140,11 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
         </button>
       </div>
 
+      <p className="mb-2 text-[11px] text-gray-400">
+        Press <kbd className="px-1 rounded border border-[#333]">1</kbd>–<kbd className="px-1 rounded border border-[#333]">9</kbd> to pick a class and save, <kbd className="px-1 rounded border border-[#333]">Esc</kbd> to cancel.
+      </p>
       <div className="max-h-[180px] overflow-y-auto space-y-2">
-        {classes.map((cls) => (
+        {classes.map((cls, index) => (
           <div
             key={cls.id}
             className={`flex items-center px-2 py-1 rounded cursor-pointer transition-colors duration-150 ${
@@ -169,7 +156,12 @@ const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
               className="w-3 h-3 rounded-full mr-2"
               style={{ backgroundColor: cls.color || "#ccc" }}
             />
-            <span className="text-sm">{cls.name}</span>
+            <span className="text-sm flex-1 truncate">{cls.name}</span>
+            {index < 9 && (
+              <kbd className="ml-2 text-[10px] px-1.5 leading-4 rounded border border-[#333] bg-[#0d1f34] text-gray-400">
+                {index + 1}
+              </kbd>
+            )}
           </div>
         ))}
       </div>

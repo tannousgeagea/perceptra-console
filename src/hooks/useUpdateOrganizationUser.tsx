@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useUpdateOrganizationUser.ts
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -43,8 +43,8 @@ export const updateOrganizationUser = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/organizations/users/${userId}`,
+  const response = await apiFetch(
+    `/api/v1/organizations/users/${userId}`,
     {
       method: 'PATCH',
       headers: {

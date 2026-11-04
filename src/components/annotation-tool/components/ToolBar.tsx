@@ -44,9 +44,11 @@ const ToolBar = () => {
       
       <div className="text-xs text-muted-foreground space-y-1">
         <p>• <kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">1</kbd> draw &nbsp;<kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">2</kbd> move &nbsp;<kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">3</kbd> polygon</p>
+        <p>• Box selected: <kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">1</kbd>–<kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">9</kbd> sets its class</p>
         <p>• Hold <kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">S</kbd> to temporarily select</p>
         <p>• <kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">Ctrl</kbd> + scroll to zoom</p>
         <p>• <kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">Alt</kbd> + drag to pan</p>
+        <p>• <kbd className="text-[10px] px-1 py-0.5 bg-muted rounded">?</kbd> all shortcuts</p>
       </div>
     </div>
   );

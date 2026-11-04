@@ -1,4 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useOthersPresence, useRealtimeEvent } from '@/contexts/RealtimeContext';
+import { PresenceStack } from '@/components/realtime/PresenceStack';
+import { CLIENT_ID } from '@/services/apiClient';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { JobAnnotationHeader } from '@/components/job-annotation/JobAnnotationHeader';
@@ -77,6 +80,25 @@ export default function JobAnnotation() {
     invalidateJobImages(queryClient);
     refetchImages();
   }, [queryClient, refetchImages]);
+
+  // Live: other people's changes refresh this page (batched; own changes already do).
+  const liveRefetchRef = useRef<ReturnType<typeof setTimeout>>();
+  useRealtimeEvent((event) => {
+    if (event.origin === CLIENT_ID || liveRefetchRef.current) return;
+    const resource = (event.data as { resource?: string } | null)?.resource;
+    const relevant =
+      event.type === 'annotation.changed' ||
+      event.type === 'image.changed' ||
+      (event.type === 'project.changed' && resource !== 'classes');
+    if (!relevant) return;
+    liveRefetchRef.current = setTimeout(() => {
+      liveRefetchRef.current = undefined;
+      refetchImages();
+    }, 1500);
+  });
+  useEffect(() => () => clearTimeout(liveRefetchRef.current), []);
+
+  const workingHere = useOthersPresence().filter((p) => p.job_id === jobId);
 
   const { operation, runBulkReview, runBulkDeleteProject, runBulkTag, cancelOperation, clearOperation } = useBulkOperations(projectId)
   const { mutateAsync: bulkMarkNull } = useBulkMarkImagesAsNull(projectId);
@@ -188,6 +210,15 @@ export default function JobAnnotation() {
           onBack={handleBack}
           onBuildDataset={handleBuildDataset}
         />
+
+        {workingHere.length > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <PresenceStack people={workingHere} context={{ jobId }} max={6} />
+            <span>
+              {workingHere.length === 1 ? `${workingHere[0].name} is` : `${workingHere.length} people are`} working on this job now
+            </span>
+          </div>
+        )}
 
         <BulkOperationBar
           selectedCount={selection.selectedCount}

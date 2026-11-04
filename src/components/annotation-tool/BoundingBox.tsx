@@ -30,6 +30,8 @@ interface Props {
   imageSize?: ImageSize | null;
   onSelect: () => void;
   onUpdate: (id: string, updates: Partial<Box>) => void;
+  /** Called once when a drag/resize ends, with the final geometry (it may not have rendered yet). */
+  onUpdateEnd?: (id: string, finalGeometry: Partial<Box>) => void;
 }
 
 type ResizeDir = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
@@ -110,13 +112,15 @@ const edgePosition = (dir: ResizeDir): React.CSSProperties => {
   }
 };
 
-const BoundingBox: React.FC<Props> = ({ box, isSelected, isHighlighted, tool, imageSize, onSelect, onUpdate }) => {
+const BoundingBox: React.FC<Props> = ({ box, isSelected, isHighlighted, tool, imageSize, onSelect, onUpdate, onUpdateEnd }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizing, setResizing] = useState<ResizeDir | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   // Geometry at the moment a resize began; anchors are derived from it.
   const resizeStartRef = useRef<Box | null>(null);
+  // Last geometry sent during the gesture, reported on mouse-up.
+  const lastUpdateRef = useRef<Partial<Box> | null>(null);
   const { getScaledCoordinates, getPixelSize } = useCoordinates();
 
   const handleMouseDown = useCallback((e: React.MouseEvent, dir: ResizeDir | null = null) => {
@@ -155,13 +159,14 @@ const BoundingBox: React.FC<Props> = ({ box, isSelected, isHighlighted, tool, im
       // Clamp position to keep box in bounds
       const clamped = clampBox(newX, newY, box.width, box.height);
 
-      onUpdate(box.id, {
-        x: clamped.x,
-        y: clamped.y
-      });
+      const updates = { x: clamped.x, y: clamped.y };
+      lastUpdateRef.current = { ...lastUpdateRef.current, ...updates };
+      onUpdate(box.id, updates);
     } else if (resizing) {
       const start = resizeStartRef.current ?? box;
-      onUpdate(box.id, resizeFromAnchor(start, resizing, x, y));
+      const updates = resizeFromAnchor(start, resizing, x, y);
+      lastUpdateRef.current = { ...lastUpdateRef.current, ...updates };
+      onUpdate(box.id, updates);
     }
   }, [isDragging, resizing, getScaledCoordinates, box, dragStart.x, dragStart.y, onUpdate]);
 
@@ -169,7 +174,11 @@ const BoundingBox: React.FC<Props> = ({ box, isSelected, isHighlighted, tool, im
     setIsDragging(false);
     setResizing(null);
     resizeStartRef.current = null;
-  }, []);
+    if (lastUpdateRef.current) {
+      onUpdateEnd?.(box.id, lastUpdateRef.current);
+      lastUpdateRef.current = null;
+    }
+  }, [box.id, onUpdateEnd]);
 
   useEffect(() => {
     if (isDragging || resizing) {

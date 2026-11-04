@@ -12,20 +12,15 @@ import GuideLines from './GuideLines';
 import CurrentPolygon from './CurrentPolygon';
 import DrawingBox from './DrawingBox';
 import AnnotationLayer from './AnnotationLayer';
-import SAMOverlay from './SAMOverlay';
 import SAMSuggestionLayer from '../SAMSuggestionLayer';
 import { useZoom } from '@/hooks/useZoom';
 import { ProjectImageOut } from '@/types/image';
 import { useClasses } from '@/hooks/useClasses';
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import QueryState from '@/components/common/QueryState';
-import { 
-  useCreateAnnotation, 
-  useDeleteAnnotation, 
-  CreateAnnotationPayload, 
-} from '@/hooks/useAnnotations';
 import { useSAMSession } from '@/hooks/useSAMSession';
 import { useDirtyStateGuard } from '@/hooks/useDirtyStateGuard';
+import { useAnnotationCommands } from '@/contexts/AnnotationCommandsContext';
 
 interface CanvasProps {
   image: ProjectImageOut;
@@ -72,8 +67,6 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   const {
     addBox,
     updateBox,
-    deleteBox,
-    setAllBoxes,
     getBoxesArray,
     getPolygonsArray,
   } = useAnnotationGeometry();
@@ -96,15 +89,12 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   
   const { projectId } = useParams<{projectId: string}>()
   const { data: classes, isLoading, isError, refetch } = useClasses(projectId);
-  const { mutate: deleteAnnotation } = useDeleteAnnotation();
   const { getScaledCoordinates } = useCoordinates();
   
   const [annotationStartTime, setAnnotationStartTime] = useState<number | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isAltPressed, setIsAltPressed] = useState(false);
   const prevToolRef = useRef<'draw' | 'move' | 'polygon' | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
-  const [isLoadingAnnotations, setIsLoadingAnnotation] = useState(false);
   const [hasSyncedInitial, setHasSyncedInitial] = useState(false);
   const [currentImageId, setCurrentImageId] = useState(image.id);
   const { currentOrganization } = useCurrentOrganization();
@@ -136,260 +126,74 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     [image.image?.width, image.image?.height],
   );
 
-  const { mutate: createAnnotation } = useCreateAnnotation(
-    projectId!,
-    Number(image.id),
-    {
-      // Optimistically update cache before server responds
-      onMutate: async (newAnnotation: CreateAnnotationPayload) => {
-        // Cancel outgoing refetches
-        await queryClient.cancelQueries({ 
-          queryKey: ['annotations', projectId, Number(image.id)] 
-        });
+  const commands = useAnnotationCommands();
+  const { load: loadAnnotations, commit, remove, setClass } = commands;
 
-        // Snapshot previous value
-        const previousAnnotations = queryClient.getQueryData([
-          'annotations', 
-          projectId, 
-          Number(image.id)
-        ]);
-
-        // Optimistically update cache
-        queryClient.setQueryData(
-          ['annotations', projectId, Number(image.id)],
-          (old: any) => {
-            if (!old) return old;
-            return {
-              ...old,
-              annotations: [
-                ...old.annotations,
-                {
-                  annotation_uid: newAnnotation.annotation_uid,
-                  class_name: newAnnotation.annotation_class_name,
-                  color: getBoxesArray().find(b => b.id === newAnnotation.annotation_uid)?.color || '#888',
-                  class_id: getBoxesArray().find(b => b.id === newAnnotation.annotation_uid)?.class_id || 0,
-                  data: {
-                    x: newAnnotation.data[0],
-                    y: newAnnotation.data[1],
-                    width: newAnnotation.data[2] - newAnnotation.data[0],
-                    height: newAnnotation.data[3] - newAnnotation.data[1],
-                  },
-                  annotation_source: newAnnotation.annotation_source,
-                  confidence: newAnnotation.confidence,
-                }
-              ]
-            };
-          }
-        );
-
-        return { previousAnnotations };
-      },
-      
-      // On error, rollback
-      onError: (err, newAnnotation, context) => {
-        if (context?.previousAnnotations) {
-          queryClient.setQueryData(
-            ['annotations', projectId, Number(image.id)],
-            context.previousAnnotations
-          );
-        }
-        toast.error('Failed to save annotation');
-      },
-      
-      // On success, just mark as synced (no refetch needed)
-      onSuccess: () => {
-        toast.success('Annotation saved');
-        setIsDirty(false);
-
-        // CRITICAL: Invalidate cache so previous/next images reload fresh data
-        queryClient.invalidateQueries({ 
-          queryKey: ['projectImageDetails', currentOrganization?.id, projectId, image.image.image_id] 
-        });
-      },
-    }
-  );
-
-  useDirtyStateGuard({ 
-    isDirty,
-    message: 'You have unsaved annotations. Leave without saving?' 
+  useDirtyStateGuard({
+    isDirty: commands.hasUnsavedWork,
+    message: 'You have unsaved annotations. Leave without saving?'
   });
 
   // IMPERATIVE API: Load new image without remounting
   useImperativeHandle(ref, () => ({
     loadImage: (newImage: ProjectImageOut) => {
       setCurrentImageId(newImage.id);
-      
+
       // Reset zoom if configured
       if (!preserveZoom) {
         resetZoomInternal();
       }
-      
+
       // Clear selection (but keep tool)
       setSelectedBox(null);
       setSelectedPolygon(null);
-      
-      // Load annotations for new image
-      const annotations = newImage.annotations || [];
-      const boxes = annotations.map(ann => ({
-        id: ann.annotation_uid,
-        x: ann.data[0],
-        y: ann.data[1],
-        width: ann.data[2] - ann.data[0],
-        height: ann.data[3] - ann.data[1],
-        label: ann.class_name,
-        color: ann.color,
-        class_id: parseInt(ann.class_id),
-      }));
-      setAllBoxes(boxes);
-      setIsDirty(false);
+      loadAnnotations(newImage);
     },
-    
+
     resetZoom: () => {
       resetZoomInternal();
     },
-    
-    saveCurrentAnnotation: async () => {
-      if (selectedBox) {
-        await handleSave();
-      }
+
+    saveCurrentAnnotation: () => {
+      if (selectedBox) handleSave();
     },
   }));
 
-  // Auto-load on mount and when image prop changes
+  // Auto-load on mount and when the image changes
   useEffect(() => {
-    // Load on: (1) image change OR (2) first mount
     if (image.id !== currentImageId || !hasSyncedInitial) {
-      setIsLoadingAnnotation(true);
-      const annotations = image.annotations || [];
-      const boxes = annotations.map(ann => ({
-        id: ann.annotation_uid,
-        x: ann.data[0],
-        y: ann.data[1],
-        width: ann.data[2] - ann.data[0],
-        height: ann.data[3] - ann.data[1],
-        label: ann.class_name,
-        color: ann.color,
-        class_id: parseInt(ann.class_id),
-      }));
-      setAllBoxes(boxes);
+      loadAnnotations(image);
       setCurrentImageId(image.id);
       setHasSyncedInitial(true);
-      setIsDirty(false);
-      setIsLoadingAnnotation(false);
-      
+      setAnnotationStartTime(null);
+
       if (!preserveZoom) {
         resetZoomInternal();
       }
     }
-  }, [image.id, currentImageId, hasSyncedInitial, preserveZoom, resetZoomInternal, setAllBoxes, image.annotations]);
+  }, [image, currentImageId, hasSyncedInitial, preserveZoom, resetZoomInternal, loadAnnotations]);
 
-  const getRandomColor = (): string => {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
+  const handleSave = () => {
+    if (!selectedBox) return;
+    const timeSeconds = annotationStartTime ? (Date.now() - annotationStartTime) / 1000 : null;
+    commit(selectedBox, undefined, { timeSeconds });
+    setAnnotationStartTime(null);
   };
 
-  const handleSave = async () => {
-    if (image && selectedBox) {
-      const boxes = getBoxesArray();
-      const annotation = boxes.find((b: Box) => b.id === selectedBox);
-      
-      if (annotation) {
-        if (!annotation.color) {
-          const color = getRandomColor();
-          updateBox(annotation.id, { color });
-        }
-      
-        const annotationTimeSeconds = annotationStartTime 
-          ? (Date.now() - annotationStartTime) / 1000 
-          : null;
-
-        createAnnotation({
-          annotation_type: 'box',
-          annotation_class_name: annotation.label,
-          data: [
-            annotation.x, 
-            annotation.y, 
-            annotation.x + annotation.width, 
-            annotation.y + annotation.height
-          ],
-          annotation_source: 'manual',
-          confidence: 1.0,
-          annotation_uid: annotation.id,
-          annotation_time_seconds: annotationTimeSeconds!,
-        });
-
-        setAnnotationStartTime(null);
-        setIsDirty(false);
-      }
-    }
-  };
-
-  // OPTIMISTIC DELETE
-  const handleDelete = useCallback(async (id: string) => {
-    if (!projectId) {
-      toast.warning("Project ID is undefined");
-      return;
-    }
-
-    if (id) {
-      // Cancel queries
-      await queryClient.cancelQueries({ 
-        queryKey: ['annotations', projectId, Number(image.id)] 
-      });
-
-      // Snapshot
-      const previousAnnotations = queryClient.getQueryData([
-        'annotations', 
-        projectId, 
-        Number(image.id)
-      ]);
-
-      // Optimistically remove from cache
-      queryClient.setQueryData(
-        ['annotations', projectId, Number(image.id)],
-        (old: any) => {
-          Canvas.displayName = 'Canvas';if (!old) return old;
-          return {
-            ...old,
-            annotations: old.annotations.filter((a: any) => a.annotation_uid !== id)
-          };
-        }
-      );
-
-      deleteAnnotation(
-        {
-          projectId,
-          annotationId: id,
-          hardDelete: false
-        },
-        {
-          onError: () => {
-            // Rollback on error
-            queryClient.setQueryData(
-              ['annotations', projectId, Number(image.id)],
-              previousAnnotations
-            );
-            toast.error('Failed to delete annotation');
-          },
-          onSuccess: () => {
-            toast.success('Annotation deleted');
-          }
-        }
-      );
-
-      deleteBox(id)
-    }
-  }, [projectId, image.id, deleteAnnotation, queryClient]);
+  const handleDelete = useCallback((id: string) => {
+    if (id) remove(id);
+  }, [remove]);
 
   // CRITICAL: Now uses Map.set internally - O(1) operation
   const updateBoxPosition = useCallback((id: string, updates: Partial<Box>) => {
     updateBox(id, updates);
-    setIsDirty(true);
   }, [updateBox]);
+
+  // A finished drag/resize saves right away (one undo step). Drafts without a
+  // class are skipped by commit() and saved when they get one.
+  const handleBoxChangeEnd = useCallback((id: string, finalGeometry: Partial<Box>) => {
+    commit(id, finalGeometry);
+  }, [commit]);
 
   useEffect(() => {
     const isTyping = (e: KeyboardEvent) =>
@@ -402,10 +206,37 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
       if (e.key === 'Alt')     { setIsAltPressed(true);  return; }
       if (isTyping(e)) return;
       if (e.repeat) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // With a box selected, 1–9 give it a class and save it in one keystroke.
+      if (selectedBox && /^[1-9]$/.test(e.key)) {
+        const choice = classes?.[Number(e.key) - 1];
+        if (choice) {
+          e.preventDefault();
+          setClass(selectedBox, { name: choice.name, color: choice.color, classId: choice.classId });
+          setSelectedBox(null);
+          setAnnotationStartTime(null);
+        }
+        return;
+      }
 
       switch (e.key) {
+        case 'Enter':
+          // Enter saves the selected box; with nothing selected it approves the image.
+          if (selectedBox) {
+            e.preventDefault();
+            // An unlabeled box stays open in the editor until it gets a class.
+            if (!getBoxesArray().find((b) => b.id === selectedBox)?.label?.trim()) break;
+            handleSave();
+            setSelectedBox(null);
+          }
+          break;
         case 'Escape':
           if (tool === 'polygon' && currentPolygon) toast.error('Polygon drawing cancelled');
+          else if (selectedBox) {
+            commands.revert(selectedBox);
+            setSelectedBox(null);
+          }
           break;
         case '1': case 'd': case 'D':
           prevToolRef.current = null;
@@ -447,7 +278,8 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [tool, currentPolygon, selectedBox, handleDelete, setTool]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleSave reads current state each render
+  }, [tool, currentPolygon, selectedBox, handleDelete, setTool, classes, setClass, setSelectedBox, commands.revert, getBoxesArray]);
 
   // Combined mouse event handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -527,10 +359,10 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     return 'crosshair';
   };
 
-  if (isError || isLoading || isLoadingAnnotations) {
+  if (isError || isLoading) {
     return (
       <QueryState
-        isLoading={isLoading || isLoadingAnnotations}
+        isLoading={isLoading}
         isError={isError}
         onRetry={refetch}
         loadingMessage="Loading annotations..."
@@ -540,73 +372,6 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   }
 
 
-  // Render SAM suggestions as overlays
-  const renderSAMSuggestions = () => {
-    if (!samSession.suggestions.length) return null;
-    
-    return samSession.suggestions
-      .filter(s => s.status === 'pending')
-      .map(suggestion => (
-        <div
-          key={suggestion.id}
-          className="absolute border-2 border-blue-400 bg-blue-500/20 cursor-pointer hover:bg-blue-500/30 transition-colors"
-          style={{
-            left: `${suggestion.bbox.x * 100}%`,
-            top: `${suggestion.bbox.y * 100}%`,
-            width: `${suggestion.bbox.width * 100}%`,
-            height: `${suggestion.bbox.height * 100}%`,
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            const resolvedClass = classes?.find(c =>
-              c.name.toLowerCase() === (suggestion.suggested_class_name || '').toLowerCase()
-            );
-            samSession.acceptSuggestions(
-              {
-                suggestionIds: [suggestion.id],
-                classId: undefined,
-                className: suggestion.suggested_class_name || undefined,
-              },
-              {
-                onSuccess: () => addBox({
-                  id: suggestion.id,
-                  x: suggestion.bbox.x,
-                  y: suggestion.bbox.y,
-                  width: suggestion.bbox.width,
-                  height: suggestion.bbox.height,
-                  label: suggestion.suggested_class_name || resolvedClass?.name || '',
-                  color: resolvedClass?.color || '#888888',
-                  class_id: resolvedClass?.classId || 0,
-                }),
-              },
-            );
-          }}
-        >
-          <div className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-            {suggestion.suggested_class_name || 'AI'} ({Math.round(suggestion.confidence * 100)}%)
-          </div>
-        </div>
-      ));
-  };
-
-  // Render SAM points being collected
-  const renderSAMPoints = () => {
-    if (!samSession.isSessionActive || !samSession.points.length) return null;
-    
-    return samSession.points.map((point, index) => (
-      <div
-        key={index}
-        className="absolute w-3 h-3 rounded-full border-2 border-white pointer-events-none"
-        style={{
-          left: `${point.x * 100}%`,
-          top: `${point.y * 100}%`,
-          backgroundColor: point.label === 1 ? '#22c55e' : '#ef4444',
-          transform: 'translate(-50%, -50%)',
-        }}
-      />
-    ));
-  };
-
   return (
     <div className="flex relative p-4 flex-1 justify-center items-center w-full h-full">
       {selectedBox && (
@@ -614,6 +379,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
           classes={classes || []}
           onSaveClass={handleSave}
           onDeleteClass={handleDelete}
+          onCancel={commands.revert}
         />
       )}
 
@@ -632,7 +398,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
           className="absolute"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
-          onMouseUp={(e) => {
+          onMouseUp={() => {
             handleMouseUp();
             stopDrawing();
           }}
@@ -666,13 +432,8 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
               setSelectedBox={setSelectedBox}
               setSelectedPolygon={setSelectedPolygon}
               updateBoxPosition={updateBoxPosition}
+              onBoxChangeEnd={handleBoxChangeEnd}
             />
-
-            {/* SAM Suggestions */}
-            {/* {renderSAMSuggestions()} */}
-            
-            {/* SAM Points */}
-            {/* {renderSAMPoints()} */}
 
             <SAMSuggestionLayer
               suggestions={samSession.suggestions}

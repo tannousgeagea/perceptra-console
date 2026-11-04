@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useOrganizationUsers.ts
 
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS, User } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -66,8 +66,8 @@ export const fetchOrganizationUsers = async (
     limit: limit.toString(),
   });
 
-  const response = await fetch(
-    `${baseURL}/api/v1/organizations/users?${queryParams}`,
+  const response = await apiFetch(
+    `/api/v1/organizations/users?${queryParams}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,

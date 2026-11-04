@@ -1,5 +1,5 @@
+import { apiFetch } from '@/services/apiClient';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -22,7 +22,7 @@ export const deployModelVersion = async (
   versionId: string,
   targetEnv: "staging" | "production" = "production"
 ) => {
-  const resp = await fetch(`${baseURL}/api/v1/model-versions/${versionId}/deploy`, {
+  const resp = await apiFetch(`/api/v1/model-versions/${versionId}/deploy`, {
     method: "POST",
     headers: authHeaders(orgId),
     body: JSON.stringify({ target_env: targetEnv }),
@@ -35,7 +35,7 @@ export const deployModelVersion = async (
 };
 
 export const undeployModelVersion = async (orgId: string, versionId: string) => {
-  const resp = await fetch(`${baseURL}/api/v1/model-versions/${versionId}/undeploy`, {
+  const resp = await apiFetch(`/api/v1/model-versions/${versionId}/undeploy`, {
     method: "POST",
     headers: authHeaders(orgId),
   });
@@ -80,7 +80,7 @@ export const fetchModelEvaluations = async (
   orgId: string,
   modelId: string
 ): Promise<ModelEvaluationList> => {
-  const resp = await fetch(`${baseURL}/api/v1/models/${modelId}/evaluations?limit=20`, {
+  const resp = await apiFetch(`/api/v1/models/${modelId}/evaluations?limit=20`, {
     headers: authHeaders(orgId),
   });
   if (!resp.ok) throw new Error("Failed to fetch evaluations");
@@ -88,7 +88,7 @@ export const fetchModelEvaluations = async (
 };
 
 export const promoteChallenger = async (orgId: string, evaluationId: string) => {
-  const resp = await fetch(`${baseURL}/api/v1/model-evaluations/${evaluationId}/promote`, {
+  const resp = await apiFetch(`/api/v1/model-evaluations/${evaluationId}/promote`, {
     method: "POST",
     headers: authHeaders(orgId),
   });
@@ -130,7 +130,7 @@ export const fetchRetrainingPolicies = async (
   orgId: string,
   modelId: string
 ): Promise<{ count: number; results: RetrainingPolicy[] }> => {
-  const resp = await fetch(`${baseURL}/api/v1/models/${modelId}/retraining-policies`, {
+  const resp = await apiFetch(`/api/v1/models/${modelId}/retraining-policies`, {
     headers: authHeaders(orgId),
   });
   if (!resp.ok) throw new Error("Failed to fetch retraining policies");
@@ -142,7 +142,7 @@ export const createRetrainingPolicy = async (
   modelId: string,
   data: RetrainingPolicyCreate
 ): Promise<RetrainingPolicy> => {
-  const resp = await fetch(`${baseURL}/api/v1/models/${modelId}/retraining-policies`, {
+  const resp = await apiFetch(`/api/v1/models/${modelId}/retraining-policies`, {
     method: "POST",
     headers: authHeaders(orgId),
     body: JSON.stringify(data),
@@ -160,8 +160,8 @@ export const updateRetrainingPolicy = async (
   policyId: string,
   data: Partial<RetrainingPolicyCreate & { is_active: boolean }>
 ): Promise<RetrainingPolicy> => {
-  const resp = await fetch(
-    `${baseURL}/api/v1/models/${modelId}/retraining-policies/${policyId}`,
+  const resp = await apiFetch(
+    `/api/v1/models/${modelId}/retraining-policies/${policyId}`,
     {
       method: "PATCH",
       headers: authHeaders(orgId),
@@ -180,8 +180,8 @@ export const deleteRetrainingPolicy = async (
   modelId: string,
   policyId: string
 ): Promise<void> => {
-  const resp = await fetch(
-    `${baseURL}/api/v1/models/${modelId}/retraining-policies/${policyId}`,
+  const resp = await apiFetch(
+    `/api/v1/models/${modelId}/retraining-policies/${policyId}`,
     { method: "DELETE", headers: authHeaders(orgId) }
   );
   if (!resp.ok && resp.status !== 204) throw new Error("Failed to delete policy");
@@ -192,8 +192,8 @@ export const triggerRetrainingPolicy = async (
   modelId: string,
   policyId: string
 ) => {
-  const resp = await fetch(
-    `${baseURL}/api/v1/models/${modelId}/retraining-policies/${policyId}/trigger`,
+  const resp = await apiFetch(
+    `/api/v1/models/${modelId}/retraining-policies/${policyId}/trigger`,
     { method: "POST", headers: authHeaders(orgId) }
   );
   if (!resp.ok) {

@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useContractors.ts
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -68,8 +68,8 @@ export const listOrganizationContractors = async (
   if (filters?.billing_enabled !== undefined) params.append('billing_enabled', String(filters.billing_enabled));
   if (filters?.has_unbilled_actions !== undefined) params.append('has_unbilled_actions', String(filters.has_unbilled_actions));
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/${organizationId}/contractors?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/${organizationId}/contractors?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -98,8 +98,8 @@ export const listProjectContractors = async (
   const params = new URLSearchParams();
   if (filters?.billing_enabled !== undefined) params.append('billing_enabled', String(filters.billing_enabled));
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/projects/${projectId}/contractors?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/projects/${projectId}/contractors?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -125,8 +125,8 @@ export const enableOrgMemberBilling = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/${organizationId}/members/${userId}/billing/enable`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/${organizationId}/members/${userId}/billing/enable`,
     {
       method: 'POST',
       headers: {
@@ -155,8 +155,8 @@ export const enableProjectMemberBilling = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/projects/${projectId}/members/${userId}/billing/enable`,
+  const response = await apiFetch(
+    `/api/v1/billing/projects/${projectId}/members/${userId}/billing/enable`,
     {
       method: 'POST',
       headers: {
@@ -188,8 +188,8 @@ export const getOrgMemberBillingSummary = async (
   if (filters?.start_date) params.append('start_date', filters.start_date);
   if (filters?.end_date) params.append('end_date', filters.end_date);
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/${organizationId}/members/${userId}/summary?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/${organizationId}/members/${userId}/summary?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -220,8 +220,8 @@ export const getProjectMemberBillingSummary = async (
   if (filters?.start_date) params.append('start_date', filters.start_date);
   if (filters?.end_date) params.append('end_date', filters.end_date);
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/projects/${projectId}/members/${userId}/summary?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/projects/${projectId}/members/${userId}/summary?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -256,8 +256,8 @@ export const getUserBillableActions = async (
   if (pagination?.limit) params.append('limit', String(pagination.limit));
   if (pagination?.offset) params.append('offset', String(pagination.offset));
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/${organizationId}/members/${userId}/actions?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/${organizationId}/members/${userId}/actions?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,

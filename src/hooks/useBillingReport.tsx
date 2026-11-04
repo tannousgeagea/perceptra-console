@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useBillingReport.ts
 
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -24,8 +24,8 @@ export const getBillingReport = async (
   if (filters?.start_date) params.append('start_date', filters.start_date);
   if (filters?.end_date) params.append('end_date', filters.end_date);
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/billing-report?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/billing-report?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,

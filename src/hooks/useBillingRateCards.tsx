@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useBillingRateCards.ts
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -52,8 +52,8 @@ export const listRateCards = async (
   if (filters?.project_id !== undefined) params.append('project_id', filters.project_id || '');
   if (filters?.is_active !== undefined) params.append('is_active', String(filters.is_active));
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/rate-cards?${params}`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/rate-cards?${params}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -77,8 +77,8 @@ export const getRateCard = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/rate-cards/${rateCardId}`,
+  const response = await apiFetch(
+    `/api/v1/billing/rate-cards/${rateCardId}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -102,8 +102,8 @@ export const createRateCard = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/rate-cards`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/rate-cards`,
     {
       method: 'POST',
       headers: {
@@ -131,8 +131,8 @@ export const updateRateCard = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/rate-cards/${rateCardId}`,
+  const response = await apiFetch(
+    `/api/v1/billing/rate-cards/${rateCardId}`,
     {
       method: 'PATCH',
       headers: {
@@ -160,8 +160,8 @@ export const duplicateRateCard = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/rate-cards/${rateCardId}/duplicate`,
+  const response = await apiFetch(
+    `/api/v1/billing/rate-cards/${rateCardId}/duplicate`,
     {
       method: 'POST',
       headers: {
@@ -189,11 +189,11 @@ export const deleteRateCard = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const url = `${baseURL}/api/v1/billing/rate-cards/${rateCardId}${
+  const url = `/api/v1/billing/rate-cards/${rateCardId}${
     hardDelete ? '?hard_delete=true' : ''
   }`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,

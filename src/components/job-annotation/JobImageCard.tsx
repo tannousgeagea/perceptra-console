@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui/ui/card';
 import { Badge } from '@/components/ui/ui/badge';
 import { Checkbox } from '@/components/ui/ui/checkbox';
@@ -16,9 +16,11 @@ interface JobImageCardProps {
   selectionMode?: boolean;
   onToggleSelect?: (imageId: string) => void;
   handleClick: () => void;
+  /** Rendered over the image's bottom-right corner (e.g. who has it open). */
+  overlay?: ReactNode;
 }
 
-export function JobImageCard({ image, size, selected, selectionMode, onToggleSelect, handleClick }: JobImageCardProps) {
+export function JobImageCard({ image, size, selected, selectionMode, onToggleSelect, handleClick, overlay }: JobImageCardProps) {
   const [isUpdating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -114,6 +116,8 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
             </Badge>
           </div>
         )}
+
+        {overlay && <div className="absolute bottom-2 right-2 z-10">{overlay}</div>}
       </div>
 
       <div className="p-3">

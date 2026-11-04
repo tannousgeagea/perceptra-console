@@ -12,15 +12,17 @@ import {
   Rocket,
   ScanEye,
   Scan,
+  Search,
+  Users,
 } from 'lucide-react';
 import { MTXLogo } from '@/components/logo/MTXLogo';
 import { cn } from '@/lib/utils';
 import { UserProfileMenu } from '../users/UserProfileMenu';
 import { getCurrentUser } from '@/utils/user';
 import { OrganizationSection } from '@/components/organization/OrganizationSection';
-import { useAuthHelpers } from '@/hooks/useAuthHelpers';
+import { useAuthHelpers, useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { tr } from 'zod/v4/locales';
+import { PALETTE_SHORTCUT, useCommandPaletteStore } from '@/stores/commandPaletteStore';
 
 
 interface NavbarItem {
@@ -33,6 +35,8 @@ const Navbar: FC = () => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const location = useLocation();
   const helpers = useAuthHelpers();
+  const openPalette = useCommandPaletteStore((s) => s.setOpen);
+  const { hasAdminPermission } = useCurrentOrganization();
 
   useEffect(() => {
     if (location.pathname.includes('/projects/')) {
@@ -51,6 +55,8 @@ const Navbar: FC = () => {
     { item: "Inference", ref: "/inference", icon: <Scan size={20} /> },
     { item: "Models", ref: "/models", icon: <Brain size={20} /> },
     { item: "Deploy", ref: "/deploy", icon: <Rocket size={20} /> },
+    // Team progress and analytics are org-admin only (the API enforces it too).
+    ...(hasAdminPermission ? [{ item: "Team", ref: "/team", icon: <Users size={20} /> }] : []),
   ];
 
   const toggleNavbar = (): void => {
@@ -110,6 +116,29 @@ const Navbar: FC = () => {
               </div>
             )} */}
           </div>
+        </div>
+
+        {/* Command palette */}
+        <div className={cn('mb-3', isExpanded ? '' : 'flex justify-center')}>
+          <button
+            type="button"
+            onClick={() => openPalette(true)}
+            title={`Search and jump anywhere (${PALETTE_SHORTCUT})`}
+            aria-label="Open command palette"
+            className={cn(
+              'flex items-center rounded-xl border text-sm transition-colors',
+              'border-[var(--mtx-border)] text-[var(--mtx-text-muted)] hover:bg-[var(--mtx-surface)] hover:text-[var(--mtx-text)]',
+              isExpanded ? 'w-full gap-2 px-3 py-2' : 'h-[44px] w-[44px] justify-center'
+            )}
+          >
+            <Search size={isExpanded ? 16 : 20} className="shrink-0" />
+            {isExpanded && (
+              <>
+                <span className="flex-1 text-left">Search…</span>
+                <kbd className="rounded border border-[var(--mtx-border)] px-1.5 py-0.5 font-sans text-[10px]">{PALETTE_SHORTCUT}</kbd>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Nav Items */}

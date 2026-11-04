@@ -1,3 +1,4 @@
+import { apiFetch } from '@/services/apiClient';
 import type {
   CreateSessionRequest,
   SessionResponse,
@@ -13,7 +14,6 @@ import type {
   ModelConfig,
   SAMAutoRequest,
 } from '@/types/sam';
-import { baseURL } from '@/components/api/base';
 
 export const samService = {
   // Session Management
@@ -24,8 +24,8 @@ export const samService = {
     request: CreateSessionRequest,
     token: string
   ): Promise<SessionResponse> {
-    const response = await fetch(
-      `${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/session`,
+    const response = await apiFetch(
+      `/api/v1/projects/${projectId}/images/${imageId}/suggestions/session`,
       {
         method: 'POST',
         headers: {
@@ -46,7 +46,7 @@ export const samService = {
     organizationId: string,
     token: string
   ): Promise<SAMSession> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/suggestions/session/${sessionId}`, {
       headers: { 
         Authorization: `Bearer ${token}`,
         "X-Organization-ID": organizationId,
@@ -63,7 +63,7 @@ export const samService = {
     model_config: ModelConfig,
     token: string
   ): Promise<SessionResponse> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}/model`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/suggestions/session/${sessionId}/model`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export const samService = {
     organizationId: string, 
     token: string
   ): Promise<void> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/suggestions/session/${sessionId}`, {
       method: 'DELETE',
       headers: { 
         Authorization: `Bearer ${token}`,
@@ -100,7 +100,7 @@ export const samService = {
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/points`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/points`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export const samService = {
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/box`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/box`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ export const samService = {
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/text`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/text`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ export const samService = {
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/exemplar`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/images/${imageId}/suggestions/segment/exemplar`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ export const samService = {
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/propagate`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/images/${imageId}/suggestions/propagate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ export const samService = {
     organizationId: string,
     token: string
   ): Promise<SegmentationResponse> {
-    const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/images/${imageId}/suggestions/sam/auto`, {
+    const response = await apiFetch(`/api/v1/projects/${projectId}/images/${imageId}/suggestions/sam/auto`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -221,8 +221,8 @@ export const samService = {
     token: string,
     projectId: string,
   ): Promise<void> {
-    const response = await fetch(
-      `${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}/accept`,
+    const response = await apiFetch(
+      `/api/v1/projects/${projectId}/suggestions/session/${sessionId}/accept`,
       {
         method: 'POST',
         headers: {
@@ -243,8 +243,8 @@ export const samService = {
     token: string,
     projectId: string,
   ): Promise<void> {
-    const response = await fetch(
-      `${baseURL}/api/v1/projects/${projectId}/suggestions/session/${sessionId}/reject`,
+    const response = await apiFetch(
+      `/api/v1/projects/${projectId}/suggestions/session/${sessionId}/reject`,
       {
         method: 'POST',
         headers: {

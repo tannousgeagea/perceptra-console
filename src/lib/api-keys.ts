@@ -1,4 +1,4 @@
-import { baseURL } from '@/components/api/base';
+import { apiFetch } from '@/services/apiClient';
 import { authStorage } from '@/services/authService';
 import { AUTH_STORAGE_KEYS } from '@/types/auth';
 import type {
@@ -32,9 +32,9 @@ export const fetchAPIKeys = async (
     queryParams.append('scope', filters.scope);
   }
 
-  const url = `${baseURL}/api/v1/api-keys${queryParams.toString() ? `?${queryParams}` : ''}`;
+  const url = `/api/v1/api-keys${queryParams.toString() ? `?${queryParams}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       'X-Organization-ID': organizationId,
@@ -59,7 +59,7 @@ export const fetchAPIKey = async (
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${baseURL}/api/v1/api-keys/${keyId}`, {
+  const response = await apiFetch(`/api/v1/api-keys/${keyId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
       'X-Organization-ID': organizationId,
@@ -84,7 +84,7 @@ export const createAPIKey = async (
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${baseURL}/api/v1/api-keys`, {
+  const response = await apiFetch(`/api/v1/api-keys`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -113,7 +113,7 @@ export const updateAPIKey = async (
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${baseURL}/api/v1/api-keys/${keyId}`, {
+  const response = await apiFetch(`/api/v1/api-keys/${keyId}`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -141,7 +141,7 @@ export const revokeAPIKey = async (
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${baseURL}/api/v1/api-keys/${keyId}/revoke`, {
+  const response = await apiFetch(`/api/v1/api-keys/${keyId}/revoke`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -168,7 +168,7 @@ export const renewAPIKey = async (
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${baseURL}/api/v1/api-keys/${keyId}/renew`, {
+  const response = await apiFetch(`/api/v1/api-keys/${keyId}/renew`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -196,7 +196,7 @@ export const deleteAPIKey = async (
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${baseURL}/api/v1/api-keys/${keyId}`, {
+  const response = await apiFetch(`/api/v1/api-keys/${keyId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -221,7 +221,7 @@ export const fetchAPIKeyUsage = async (
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${baseURL}/api/v1/api-keys/${keyId}/usage?days=${days}`, {
+  const response = await apiFetch(`/api/v1/api-keys/${keyId}/usage?days=${days}`, {
     headers: {
       Authorization: `Bearer ${token}`,
       'X-Organization-ID': organizationId,

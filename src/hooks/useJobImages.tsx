@@ -53,24 +53,40 @@ export const fetchJobImageCounts = async (
   return response.json();
 };
 
-export const useJobImages = (
+/** Query key + fetcher for one page of a job's images (shared with prefetching). */
+export const jobImagesQuery = (
+  orgId: string | undefined,
   projectId: string,
   jobId: string,
   params: JobImagesParams = {}
+) => ({
+  queryKey: [...jobImagesKeys.all, orgId, projectId, jobId, params],
+  queryFn: () => fetchJobImages(projectId, jobId, params),
+});
+
+export const useJobImages = (
+  projectId: string,
+  jobId: string,
+  params: JobImagesParams = {},
+  /**
+   * frozen: keep the list exactly as loaded (no refetch on focus/reconnect).
+   * The annotator walks this list by index, so it must not reshuffle as
+   * images change status underneath it.
+   */
+  { frozen = false }: { frozen?: boolean } = {}
 ) => {
   const { currentOrganization } = useCurrentOrganization();
 
   return useQuery({
-    queryKey: [...jobImagesKeys.all, currentOrganization?.id, projectId, jobId, params],
-    queryFn: () => fetchJobImages(projectId, jobId, params),
+    ...jobImagesQuery(currentOrganization?.id, projectId, jobId, params),
     enabled: !!currentOrganization && !!projectId && !!jobId,
     // Keep showing the previous tab/page while the next one loads — no
     // blank grid flashes. Revisiting a tab within 30s is served from cache.
     placeholderData: keepPreviousData,
-    staleTime: 30 * 1000,
+    staleTime: frozen ? Infinity : 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnWindowFocus: !frozen,
+    refetchOnReconnect: !frozen,
   });
 };
 

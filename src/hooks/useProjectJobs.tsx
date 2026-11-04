@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 import { Job, JobsResponse } from '@/types/jobs';
 import { User } from '@/types/membership';
 import { useQuery } from '@tanstack/react-query';
-import { baseURL } from '@/components/api/base';
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -13,7 +13,7 @@ export async function fetchProjectJobs(projectId: string, organizationId: string
   if (!token) {
     throw new Error("No authentication token found");
   }
-  const response = await fetch(`${baseURL}/api/v1/projects/${projectId}/jobs`, {
+  const response = await apiFetch(`/api/v1/projects/${projectId}/jobs`, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-Organization-ID': organizationId, 

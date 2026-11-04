@@ -1,5 +1,5 @@
+import { apiFetch } from '@/services/apiClient';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "./useAuthHelpers";
@@ -39,9 +39,9 @@ export const fetchProjectVersions = async (
   if (params?.export_status) queryParams.append("export_status", params.export_status);
 
   const queryString = queryParams.toString();
-  const url = `${baseURL}/api/v1/projects/${projectId}/versions${queryString ? `?${queryString}` : ""}`;
+  const url = `/api/v1/projects/${projectId}/versions${queryString ? `?${queryString}` : ""}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-Organization-ID': organizationId,
@@ -88,8 +88,8 @@ export const createProjectVersion = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/versions`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/versions`,
     {
       method: "POST",
       headers: {
@@ -145,8 +145,8 @@ export const updateProjectVersion = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/versions/${versionId}`,
     {
       method: "PUT",
       headers: {
@@ -206,8 +206,8 @@ export const deleteProjectVersion = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/versions/${versionId}`,
     {
       method: "DELETE",
       headers: {
@@ -274,9 +274,9 @@ export const fetchVersionImages = async (
   if (params?.q) queryParams.append("q", params.q);
 
   const queryString = queryParams.toString();
-  const url = `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}/images${queryString ? `?${queryString}` : ""}`;
+  const url = `/api/v1/projects/${projectId}/versions/${versionId}/images${queryString ? `?${queryString}` : ""}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-Organization-ID': organizationId,
@@ -326,8 +326,8 @@ export const addImagesToVersion = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}/images`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/versions/${versionId}/images`,
     {
       method: "POST",
       headers: {
@@ -389,8 +389,8 @@ export const removeImagesFromVersion = async (
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}/images`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/versions/${versionId}/images`,
     {
       method: "DELETE",
       headers: {
@@ -454,8 +454,8 @@ export const downloadDataset = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}/download`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/versions/${versionId}/download`,
     {
       method: 'GET',
       headers: {
@@ -517,8 +517,8 @@ export const exportDataset = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/versions/${versionId}/export`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/versions/${versionId}/export`,
     {
       method: 'POST',
       headers: {

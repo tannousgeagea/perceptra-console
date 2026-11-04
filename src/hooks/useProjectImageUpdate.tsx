@@ -1,7 +1,7 @@
+import { apiFetch } from "@/services/apiClient";
 // hooks/useProjectImages.ts
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -83,8 +83,8 @@ export const reviewProjectImage = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/${projectImageId}/review`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/${projectImageId}/review`,
     {
       method: 'PATCH',
       headers: {
@@ -114,8 +114,8 @@ export const markImageAsNull = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/${projectImageId}/mark-null`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/${projectImageId}/mark-null`,
     {
       method: 'PATCH',
       headers: {
@@ -144,8 +144,8 @@ export const finalizeImage = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/${projectImageId}/finalize`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/${projectImageId}/finalize`,
     {
       method: 'PATCH',
       headers: {
@@ -173,11 +173,11 @@ export const deleteProjectImage = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const url = `${baseURL}/api/v1/projects/${projectId}/images/${projectImageId}${
+  const url = `/api/v1/projects/${projectId}/images/${projectImageId}${
     hardDelete ? '?hard_delete=true' : ''
   }`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -200,8 +200,8 @@ export const batchFinalizeImages = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/batch-finalize`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/batch-finalize`,
     {
       method: 'POST',
       headers: {
@@ -374,8 +374,8 @@ export const splitDataset = async (
 
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/projects/${projectId}/images/split`,
+  const response = await apiFetch(
+    `/api/v1/projects/${projectId}/images/split`,
     {
       method: 'POST',
       headers: {

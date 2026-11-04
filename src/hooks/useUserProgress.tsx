@@ -1,5 +1,5 @@
+import { apiFetch } from '@/services/apiClient';
 import { useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { UserProgress, ProgressSummary } from "@/types/progress";
 
 // Mock API function - replace with actual API call
@@ -137,18 +137,13 @@ import { UserProgress, ProgressSummary } from "@/types/progress";
 /**
  * Fetches user progress data for a specific organization from the API.
  *
- * @param org_id - The ID of the organization to fetch progress for.
  * @returns A promise that resolves to an array of UserProgress objects.
  * @throws Will throw an error if the network response is not ok.
  */
-const fetchUserProgress = async (org_id: string): Promise<UserProgress[]> => {
+const fetchUserProgress = async (): Promise<UserProgress[]> => {
   // Construct the API endpoint URL with the provided organization ID
-  const token = localStorage.getItem("token") || sessionStorage.getItem('token');
-  const response = await fetch(`${baseURL}/api/v1/organizations/${org_id}/progress`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  // The organization is the active one (X-Organization-ID); org_id only keys the cache.
+  const response = await apiFetch(`/api/v1/organizations/progress`);
 
   // Check if the request was successful
   if (!response.ok) {
@@ -169,12 +164,14 @@ const fetchUserProgress = async (org_id: string): Promise<UserProgress[]> => {
   return formattedData.sort((a, b) => b.progressPercentage - a.progressPercentage);
 };
 
-const fetchProgressSummary = async (org_id: string): Promise<ProgressSummary> => {
-  const progressData = await fetchUserProgress(org_id);
+const fetchProgressSummary = async (): Promise<ProgressSummary> => {
+  const progressData = await fetchUserProgress();
   
   const summary: ProgressSummary = {
     totalActiveUsers: progressData.length,
-    averageProgress: progressData.reduce((sum, user) => sum + user.progressPercentage, 0) / progressData.length,
+    averageProgress: progressData.length
+      ? progressData.reduce((sum, user) => sum + user.progressPercentage, 0) / progressData.length
+      : 0,
     totalImagesInProgress: progressData.reduce((sum, user) => sum + user.totalImages, 0),
     totalImagesCompleted: progressData.reduce((sum, user) => sum + user.completedImages, 0),
   };
@@ -191,7 +188,8 @@ const fetchProgressSummary = async (org_id: string): Promise<ProgressSummary> =>
 export const useUserProgress = (org_id: string) => {
   return useQuery({
     queryKey: ['userProgress', org_id],
-    queryFn: () => fetchUserProgress(org_id),
+    queryFn: () => fetchUserProgress(),
+    enabled: !!org_id,
     refetchInterval: 60000, // Refetch every minute for real-time updates
     staleTime: 30000, // Consider data stale after 30 seconds
   });
@@ -199,8 +197,9 @@ export const useUserProgress = (org_id: string) => {
 
 export const useProgressSummary = (org_id: string) => {
   return useQuery({
-    queryKey: ['progressSummary'],
-    queryFn: () => fetchProgressSummary(org_id),
+    queryKey: ['progressSummary', org_id],
+    queryFn: () => fetchProgressSummary(),
+    enabled: !!org_id,
     refetchInterval: 60000,
     staleTime: 30000,
   });

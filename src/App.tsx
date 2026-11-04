@@ -56,6 +56,8 @@ import AutoAnnotate from "./pages/AutoAnnotate";
 import { AppBoot } from './components/layout/AppBoot';
 import ScanHistory from './pages/ScanHistory';
 import ScanResults from './pages/ScanResults';
+import CommandPalette from './components/command-palette/CommandPalette';
+import { RealtimeProvider } from './contexts/RealtimeContext';
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,7 @@ const App = () => {
           <AuthProvider>
             <AuthProviderMock>
               <TooltipProvider delayDuration={100}>
+                <RealtimeProvider>
                 <Routes>
                   <Route element={<PublicRoute />}>
                     <Route element={<AuthLayout />}>
@@ -83,7 +86,8 @@ const App = () => {
                       <Route path="/no-permission" element={<NoPermissionPage />} />
                       <Route path='/organizations/:orgId' element={<OrganizationPage />} />
                       <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />
-                      <Route path='/organizations/:orgId/progress' element={<TeamProgress />} />
+                      <Route path='/team' element={<TeamProgress />} />
+                      <Route path='/organizations/:orgId/progress' element={<Navigate to="/team" replace />} />
                       <Route path='/datalake' element={<DataLake />} />
                       <Route path='/upload' element={<UploadIndex />} />
                       <Route path='/link' element={<RegisterFromStorage />} />
@@ -137,9 +141,11 @@ const App = () => {
                     <Route path='/projects/:projectId/images/:imageId' element={<Index />} />
                   </Route>
                 </Routes>
+                </RealtimeProvider>
               </TooltipProvider>
               <Toaster />
               <Sonner />
+              <CommandPalette />
             </AuthProviderMock>
           </AuthProvider>
         </AppBoot>

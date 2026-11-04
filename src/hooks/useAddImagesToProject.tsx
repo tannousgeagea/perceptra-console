@@ -1,6 +1,6 @@
+import { apiFetch } from '@/services/apiClient';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from '@/components/ui/ui/use-toast';
-import { baseURL } from '@/components/api/base';
 
 interface AddImagesRequest {
   project_id: number | string;
@@ -10,7 +10,7 @@ interface AddImagesRequest {
 export const useAddImagesToProject = () => {
   return useMutation({
     mutationFn: async ({ project_id, image_ids }: AddImagesRequest) => {
-      const response = await fetch(`${baseURL}/api/v1/projects/${project_id}/add-images`, {
+      const response = await apiFetch(`/api/v1/projects/${project_id}/add-images`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

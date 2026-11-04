@@ -1,7 +1,7 @@
+import { apiFetch } from '@/services/apiClient';
 // hooks/useBackfill.ts
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { baseURL } from "@/components/api/base";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
@@ -20,8 +20,8 @@ export const backfillUserInOrg = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/members/${userId}/backfill`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/members/${userId}/backfill`,
     {
       method: 'POST',
       headers: {
@@ -50,8 +50,8 @@ export const backfillUserInProject = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/projects/${projectId}/members/${userId}/backfill`,
+  const response = await apiFetch(
+    `/api/v1/billing/projects/${projectId}/members/${userId}/backfill`,
     {
       method: 'POST',
       headers: {
@@ -78,8 +78,8 @@ export const backfillOrganization = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/organizations/backfill`,
+  const response = await apiFetch(
+    `/api/v1/billing/organizations/backfill`,
     {
       method: 'POST',
       headers: {
@@ -106,8 +106,8 @@ export const getBackfillTaskStatus = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const response = await fetch(
-    `${baseURL}/api/v1/billing/backfill-tasks/${taskId}/status`,
+  const response = await apiFetch(
+    `/api/v1/billing/backfill-tasks/${taskId}/status`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,

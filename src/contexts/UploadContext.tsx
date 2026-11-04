@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { baseURL } from "@/components/api/base";
+import { apiUpload } from "@/services/apiClient";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { v4 as uuidv4 } from 'uuid';
 import { useQueryClient } from '@tanstack/react-query';
-import { UploadedImage, AnnotationFile, Project, TaskType, ProjectSection } from '@/types/upload';
+import { UploadedImage, AnnotationFile, TaskType, ProjectSection } from '@/types/upload';
 
 
 interface UploadContextType {
@@ -153,29 +153,9 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (options?.source_of_origin) formData.append('source_of_origin', options.source_of_origin);
         if (options?.storage_profile_id) formData.append('storage_profile_id', options.storage_profile_id);
 
-        return await new Promise<boolean>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', `${baseURL}/api/v1/images/upload`, true);
-          xhr.setRequestHeader('accept', 'application/json');
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-          xhr.setRequestHeader('X-Organization-ID', organizationId);
-
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-              onProgress(Math.round((e.loaded / e.total) * 100));
-            }
-          };
-
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(true);
-            } else {
-              reject(new Error(`Upload failed: ${xhr.statusText}`));
-            }
-          };
-          xhr.onerror = () => reject(new Error('Network error during upload'));
-          xhr.send(formData);
-        });
+        const result = await apiUpload('/api/v1/images/upload', formData, onProgress);
+        if (!result.ok) throw new Error(`Upload failed: ${result.status} ${result.statusText}`);
+        return true;
       } catch (err) {
         console.error('Error uploading image:', err);
         return false;
