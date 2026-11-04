@@ -35,6 +35,7 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
   const getStatusBadge = () => {
     const statusConfig = {
       unannotated: { label: 'Pending', variant: 'secondary' as const },
+      rejected: { label: 'Needs fixes', variant: 'destructive' as const },
       annotated: { label: 'Annotated', variant: 'default' as const },
       reviewed: { label: 'Reviewed', variant: 'default' as const },
       dataset: { label: 'Completed', variant: 'outline' as const },

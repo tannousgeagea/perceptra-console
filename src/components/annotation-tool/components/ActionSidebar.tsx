@@ -5,6 +5,7 @@ import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import ApproveButton from "./ButtonApprove";
 import DeleteButton from "./ButtonDelete";
 import MarkAsNullButton from "./ButtonMarkNull";
+import { SendBackButton } from "./ReviewFeedback";
 import { ProjectImageOut } from "@/types/image";
 import { AIAssistPanel } from "../sam/AIAssistPanel";
 import { SuggestionFloatingBar } from '../sam/SuggestionFloatingBar';
@@ -108,6 +109,14 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
                      disabled:opacity-40 text-[11px] font-medium"
         />
       </div>
+      {/* Reviewers only (renders nothing otherwise). */}
+      <SendBackButton
+        currentImage={currentImage}
+        projectId={projectId}
+        goToNextImage={goToNextImage}
+        className="h-10 w-full justify-center gap-2 rounded-none border-0 border-b border-slate-800 bg-transparent
+                   text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 text-[11px] font-medium"
+      />
 
       <SuggestionFloatingBar
         suggestions={samSession.suggestions}

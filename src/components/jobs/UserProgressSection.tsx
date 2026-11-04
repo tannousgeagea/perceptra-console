@@ -88,6 +88,35 @@ const UserProgressCard = ({
           </div>
         </div>
 
+        {/* Review quality: how often their work is sent back. */}
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-border/60 px-2.5 py-1.5 text-xs">
+          {userProgress.reviewsReceived ? (
+            <span title={`${userProgress.sentBack ?? 0} of ${userProgress.reviewsReceived} review decisions sent the image back`}>
+              <span
+                className={
+                  (userProgress.rejectionRate ?? 0) < 10
+                    ? 'font-semibold text-emerald-600'
+                    : (userProgress.rejectionRate ?? 0) < 25
+                      ? 'font-semibold text-amber-600'
+                      : 'font-semibold text-rose-600'
+                }
+              >
+                {userProgress.rejectionRate?.toFixed(1)}%
+              </span>{' '}
+              <span className="text-muted-foreground">
+                sent back ({userProgress.sentBack ?? 0}/{userProgress.reviewsReceived})
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">No reviews yet</span>
+          )}
+          {!!userProgress.openSentBack && (
+            <span className="rounded-full bg-rose-500/10 px-2 py-0.5 font-medium text-rose-600">
+              {userProgress.openSentBack} to fix
+            </span>
+          )}
+        </div>
+
         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-3">
           <Clock size={12} />
           <span>Updated {formatDistanceToNow(userProgress.lastUpdated, { addSuffix: true })}</span>

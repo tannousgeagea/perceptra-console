@@ -253,6 +253,34 @@ export const useReviewProjectImage = (projectId: string, options?: {
   });
 };
 
+/**
+ * The annotator fixed an image a reviewer sent back: return it to review.
+ * Goes through apiFetch, so the token, organization and tab id are attached.
+ */
+export const useResubmitProjectImage = (projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (projectImageId: number): Promise<ReviewImageResponse> => {
+      const response = await apiFetch(
+        `/api/v1/projects/${projectId}/images/${projectImageId}/resubmit`,
+        { method: 'POST' }
+      );
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Failed to resubmit image' }));
+        throw new Error(error.detail);
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['projectImages', projectId] });
+      invalidateJobImages(queryClient);
+      toast.success(data.message);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
 export const useMarkImageAsNull = (projectId: string, options?: {
   onSuccess?: (data: MarkNullResponse) => void;
   showToast?: boolean;
