@@ -121,7 +121,12 @@ const JobPage = () => {
   
 
   // Split a job into multiple slices
-  const handleSplitJob = (job: Job, numberOfSlices: number, userAssignments: (string | null)[]) => {
+  const handleSplitJob = (
+    job: Job,
+    numberOfSlices: number,
+    userAssignments: (string | null)[],
+    sliceSizes?: number[],
+  ) => {
     try {
       if (!job.id) {
         toast.error('Job Id is undefined');
@@ -137,6 +142,7 @@ const JobPage = () => {
         payload: {
           number_of_slices: numberOfSlices,
           user_assignments: userAssignments,
+          ...(sliceSizes ? { slice_sizes: sliceSizes } : {}),
         },
       });
       
@@ -242,6 +248,7 @@ const JobPage = () => {
           onClose={() => setIsAssignModalOpen(false)}
           job={selectedJob}
           users={users || []}
+          projectId={projectId}
           onAssign={handleAssignUser}
         />
       )}
@@ -252,6 +259,7 @@ const JobPage = () => {
           onClose={() => setIsSplitModalOpen(false)}
           job={selectedJob}
           users={users || []}
+          projectId={projectId}
           onSplitJob={handleSplitJob}
         />
       )}

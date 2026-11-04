@@ -49,6 +49,8 @@ export interface JobSlice {
 export interface SplitJobPayload {
   number_of_slices: number;
   user_assignments: (string | null)[]; // Array of user IDs or null for unassigned
+  /** Images per slice (e.g. balanced by pace); omitted = equal slices. */
+  slice_sizes?: number[];
 }
 
 export interface SplitJobResponse {
