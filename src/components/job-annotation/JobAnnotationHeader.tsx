@@ -11,6 +11,10 @@ interface JobAnnotationHeaderProps {
   onSearchChange: (text: string) => void; 
   onBack: () => void;
   onBuildDataset: () => void;
+  /** Replaces "Created at …" (e.g. for the "All jobs" view). */
+  subtitle?: string;
+  /** AI Label and Build Dataset act on one job; off for "All jobs". */
+  jobActions?: boolean;
 }
 
 export function JobAnnotationHeader({
@@ -21,6 +25,8 @@ export function JobAnnotationHeader({
   onSearchChange,
   onBack,
   onBuildDataset,
+  subtitle,
+  jobActions = true,
 }: JobAnnotationHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,7 +44,7 @@ export function JobAnnotationHeader({
         </Button>
         <div>
           <h1 className="text-2xl font-bold">{jobName}</h1>
-          <p className="text-sm text-muted-foreground">Created at {createdAt}</p>
+          <p className="text-sm text-muted-foreground">{subtitle ?? `Created at ${createdAt}`}</p>
         </div>
       </div>
 
@@ -61,15 +67,19 @@ export function JobAnnotationHeader({
           />
         </div>
 
-        <Button variant="outline" size="sm" onClick={() => navigate(`${location.pathname}/auto-annotate`)}>
-          <Sparkle className="w-4 h-4" />
-          AI Label
-        </Button>
+        {jobActions && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => navigate(`${location.pathname}/auto-annotate`)}>
+              <Sparkle className="w-4 h-4" />
+              AI Label
+            </Button>
 
-        <Button onClick={onBuildDataset} className="gap-2">
-          <List className="h-4 w-4" />
-          Build Dataset
-        </Button>
+            <Button onClick={onBuildDataset} className="gap-2">
+              <List className="h-4 w-4" />
+              Build Dataset
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

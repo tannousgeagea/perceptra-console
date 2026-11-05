@@ -209,6 +209,8 @@ export default function JobAnnotation() {
           onSearchChange={setSearchText}
           onBack={handleBack}
           onBuildDataset={handleBuildDataset}
+          subtitle={jobId === ALL_JOBS_ID ? "Images from every job in this project" : undefined}
+          jobActions={jobId !== ALL_JOBS_ID}
         />
 
         {workingHere.length > 0 && (

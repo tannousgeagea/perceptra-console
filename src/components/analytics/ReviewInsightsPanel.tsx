@@ -137,7 +137,7 @@ export const ReviewInsightsPanel = ({ projectId }: { projectId: string }) => {
               <CardContent>
                 <div className="h-56" role="img" aria-label="Approved and sent-back review decisions per week">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.weekly} margin={{ top: 8, right: 8, left: -16, bottom: 0 }} barCategoryGap="35%">
+                    <BarChart data={data.weekly} margin={{ top: 8, right: 8, left: -16, bottom: 0 }} barCategoryGap="35%" maxBarSize={48}>
                       <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.6} />
                       <XAxis dataKey="week" tickFormatter={weekLabel} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
