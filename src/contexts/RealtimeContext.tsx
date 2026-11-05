@@ -177,12 +177,14 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   const queueEvent = useCallback(
     (event: RealtimeEvent) => {
       const pending = pendingRef.current;
-      const data = (event.data ?? {}) as { project_image_id?: number; resource?: string };
+      const data = (event.data ?? {}) as { project_image_id?: number; resource?: string; status?: string };
       switch (event.type) {
         case 'annotation.changed':
         case 'image.changed':
           if (data.project_image_id != null) pending.images.add(Number(data.project_image_id));
           pending.lists = true;
+          // Sent back: the assignee's "to fix" counts (jobs/me) change right away.
+          if (event.type === 'image.changed' && data.status === 'rejected') pending.jobs = true;
           break;
         case 'project.changed':
           if (data.resource === 'classes') pending.classes = true;

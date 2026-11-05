@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Loader, MessageSquareWarning, Send, Undo2 } from 'lucide-react';
+import { CheckCircle2, Loader, MessageSquareWarning, Send, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/ui/button';
 import {
   Dialog,
@@ -158,6 +158,59 @@ export const SendBackButton = ({
         </DialogContent>
       </Dialog>
     </>
+  );
+};
+
+interface ReviewEntry {
+  approved?: boolean;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  feedback?: string | null;
+}
+
+/**
+ * Every review decision on this image, newest first: who approved it or sent
+ * it back, when, and the note. Repeated problems become visible.
+ */
+export const ReviewHistory = ({ image }: { image: ProjectImageOut }) => {
+  const history = ((image.metadata?.review_history as ReviewEntry[] | undefined) ?? []).slice().reverse();
+  if (history.length === 0) return null;
+  const sentBack = history.filter((h) => h.approved === false).length;
+
+  return (
+    <div className="space-y-2">
+      <h3 className="mt-2 border-b border-slate-800 pb-1 text-xs uppercase tracking-wide text-slate-400">
+        Review history
+        {sentBack > 0 && (
+          <span className="ml-2 normal-case tracking-normal text-rose-400">
+            sent back {sentBack}×
+          </span>
+        )}
+      </h3>
+      <ol className="space-y-2">
+        {history.map((entry, i) => (
+          <li key={i} className="flex gap-2 text-xs">
+            {entry.approved === false ? (
+              <Undo2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-400" />
+            ) : (
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            )}
+            <div className="min-w-0">
+              <div className="text-slate-300">
+                {entry.approved === false ? 'Sent back' : 'Approved'}
+                {entry.reviewed_by && <> by <span className="font-medium">{entry.reviewed_by}</span></>}
+              </div>
+              {entry.reviewed_at && (
+                <div className="text-slate-500">{new Date(entry.reviewed_at).toLocaleString()}</div>
+              )}
+              {entry.feedback && (
+                <div className="mt-0.5 whitespace-pre-wrap break-words text-slate-300">“{entry.feedback}”</div>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 };
 

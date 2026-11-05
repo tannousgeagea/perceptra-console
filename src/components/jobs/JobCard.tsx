@@ -98,7 +98,7 @@ const getStatusBadge = (status: JobStatus) => {
             {getStatusBadge(job.status)}
           </div>
         </div>
-        
+
         <div className="mt-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Images:</span>

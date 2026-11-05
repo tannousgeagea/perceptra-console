@@ -58,6 +58,7 @@ import ScanHistory from './pages/ScanHistory';
 import ScanResults from './pages/ScanResults';
 import CommandPalette from './components/command-palette/CommandPalette';
 import { RealtimeProvider } from './contexts/RealtimeContext';
+import { SentBackWatcher } from './components/review/SentBackWatcher';
 
 const queryClient = new QueryClient();
 
@@ -141,6 +142,7 @@ const App = () => {
                     <Route path='/projects/:projectId/images/:imageId' element={<Index />} />
                   </Route>
                 </Routes>
+                <SentBackWatcher />
                 </RealtimeProvider>
               </TooltipProvider>
               <Toaster />

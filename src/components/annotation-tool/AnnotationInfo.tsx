@@ -12,6 +12,7 @@ import {
 import { ProjectImageOut } from "@/types/image";
 import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { CopyableId } from "@/components/ui/ui/copyable-id";
+import { ReviewHistory } from "./components/ReviewFeedback";
 
 
 export interface AnnotationInfpProps {
@@ -133,6 +134,7 @@ export const AnnotationInfo: React.FC<AnnotationInfpProps>  = ({ image }) => {
               value={new Date(image.reviewed_at).toLocaleString()}
             />
           )}
+          <ReviewHistory image={image} />
         </div>
       </div>
     );
