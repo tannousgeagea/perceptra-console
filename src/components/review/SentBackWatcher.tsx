@@ -1,124 +1,115 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRealtime, useRealtimeEvent } from '@/contexts/RealtimeContext';
+import { useRealtimeEvent } from '@/contexts/RealtimeContext';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
+import { mergeNotice, useMarkNoticeRead, useNotifications, type Notice } from '@/hooks/useNotifications';
 import { toFixUrl, useUserJobs } from '@/hooks/useUserJobs';
-import { CLIENT_ID } from '@/services/apiClient';
-import { noticeScope, useNotificationStore, type NoticeKind } from '@/stores/notificationStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 const SESSION_KEY = 'mtx-sent-back-summary-shown';
+/** More new notices than this at once (e.g. back from a break): one summary toast. */
+const MAX_TOASTS = 3;
 
 const plural = (n: number) => `${n} image${n === 1 ? '' : 's'}`;
 
 /**
- * Tells annotators about new work, wherever they are in the app: a job newly
- * assigned to them, and images a reviewer sent back. Watches /jobs/me (polled,
- * and refreshed at once by live events inside a project): a job id not seen
- * before is a new assignment; a rising "to fix" count is work sent back. On
- * the first load of a browser session, one summary if fixes are already
- * waiting (existing jobs are not announced). Renders nothing.
+ * Toasts new notifications wherever the user is in the app. Notices are made
+ * on the server (job assigned, work sent back, a job ready for review) and
+ * arrive live on the realtime stream, or with the next poll after the tab was
+ * away; either way they land in the notifications cache and are toasted once.
+ * On the first load of a browser session, one summary if fixes are already
+ * waiting. Renders nothing.
  */
 export const SentBackWatcher = () => {
-  const { isAuthenticated, user } = useAuth();
-  const me = user?.id != null ? String(user.id) : null;
+  const { isAuthenticated } = useAuth();
   const { currentOrganization } = useCurrentOrganization();
-  const scope = noticeScope(me, currentOrganization?.id);
-  const addNotice = useNotificationStore((s) => s.add);
-  const { data: jobs } = useUserJobs();
-  const { presence } = useRealtime();
+  const orgId = currentOrganization?.id;
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const previous = useRef<Map<string, number> | null>(null);
-  const lastReviewer = useRef<string | null>(null);
+  const { data: jobs } = useUserJobs();
+  const { data: page } = useNotifications();
+  const { mutate: markRead } = useMarkNoticeRead();
+  const openPanel = useNotificationStore((s) => s.setOpen);
+  const seen = useRef<Map<number, string> | null>(null);
+  const summaryChecked = useRef(false);
 
-  /** Toast now, and keep it in the notifications panel. */
-  const notify = (kind: NoticeKind, title: string, description: string, url: string) => {
-    const show = kind === 'sent_back' ? toast.warning : toast.info;
-    show(title, { description, action: { label: 'Open', onClick: () => navigate(url) }, duration: 10_000 });
-    if (scope) addNotice(scope, { kind, title, description, url });
-  };
-
-  // Remember who sent something back most recently (live events carry the actor).
+  // Live notices: into the cache (the effect below toasts them); my jobs change too.
   useRealtimeEvent((event) => {
-    if (event.origin === CLIENT_ID || event.type !== 'image.changed') return;
-    if ((event.data as { status?: string })?.status !== 'rejected') return;
-    const who = presence.find((p) => event.actor != null && String(p.user_id) === String(event.actor));
-    lastReviewer.current = who?.name ?? null;
+    if (event.type !== 'notification' || !orgId) return;
+    const notice = event.data as Notice;
+    if (notice?.organization_id !== orgId) return;
+    mergeNotice(queryClient, orgId, notice);
+    if (notice.kind !== 'ready_for_review') {
+      queryClient.invalidateQueries({ queryKey: ['userAssignedJobs'] });
+    }
   });
 
+  // Another organization: a fresh baseline, nothing from it is "new".
   useEffect(() => {
-    if (!isAuthenticated || !jobs) return;
-    const counts = new Map(jobs.map((job) => [String(job.id), job.to_fix ?? 0]));
+    seen.current = null;
+  }, [orgId]);
 
-    if (previous.current === null) {
-      previous.current = counts;
-      const waiting = jobs.filter((job) => (job.to_fix ?? 0) > 0);
-      const total = waiting.reduce((sum, job) => sum + (job.to_fix ?? 0), 0);
-      let shown = false;
-      try {
-        shown = sessionStorage.getItem(SESSION_KEY) === '1';
-        sessionStorage.setItem(SESSION_KEY, '1');
-      } catch {
-        // storage unavailable: show it (once per page load)
-      }
-      if (total > 0 && !shown) {
-        toast(`${plural(total)} sent back to you`, {
-          description:
-            waiting.length === 1
-              ? `In ${waiting[0].name}. A reviewer left notes on what to fix.`
-              : `Across ${waiting.length} jobs. A reviewer left notes on what to fix.`,
-          action: { label: 'Open', onClick: () => navigate(toFixUrl(waiting[0])) },
-          duration: 10_000,
-        });
-      }
+  // Toast notices that are new, or updated (more images sent back), since the page loaded.
+  useEffect(() => {
+    if (!page) return;
+    const before = seen.current;
+    seen.current = new Map(page.items.map((n) => [n.id, n.updated_at]));
+    if (before === null) return; // first load: just the baseline
+    const fresh = page.items.filter((n) => !n.read && before.get(n.id) !== n.updated_at);
+    if (fresh.length > MAX_TOASTS) {
+      toast.info(`${fresh.length} new notifications`, {
+        id: 'notices-summary',
+        action: { label: 'Show', onClick: () => openPanel(true) },
+        duration: 10_000,
+      });
       return;
     }
-
-    // New assignments: job ids that were not in the last snapshot (not ones I gave myself).
-    const added = jobs.filter(
-      (job) =>
-        !previous.current!.has(String(job.id)) &&
-        String(job.status) !== 'sliced' &&
-        !(me && job.assigned_by_id === me),
-    );
-    const givers = [...new Set(added.map((job) => job.assigned_by).filter(Boolean))];
-    const giver = givers.length === 1 ? givers[0] : null;
-    if (added.length === 1) {
-      const job = added[0];
-      notify(
-        'assigned',
-        giver ? `${giver} assigned you ${job.name}` : `New job assigned: ${job.name}`,
-        `${job.image_count.toLocaleString()} images${job.project_name ? ` in ${job.project_name}` : ''}.`,
-        `/projects/${job.project_id}/annotate/job/${job.id}`,
-      );
-    } else if (added.length > 1) {
-      const images = added.reduce((sum, job) => sum + (job.image_count ?? 0), 0);
-      notify(
-        'assigned',
-        giver ? `${giver} assigned you ${added.length} jobs` : `${added.length} new jobs assigned to you`,
-        `${images.toLocaleString()} images: ${added.map((job) => job.name).join(', ')}.`,
-        `/projects/${added[0].project_id}/annotate/job/${added[0].id}`,
-      );
+    for (const notice of fresh) {
+      const show = notice.kind === 'sent_back' ? toast.warning : toast.info;
+      show(notice.title, {
+        id: `notice-${notice.id}`, // a merged notice updates its toast instead of stacking
+        description: notice.body,
+        duration: 10_000,
+        action: notice.url
+          ? {
+              label: 'Open',
+              onClick: () => {
+                markRead(notice.id);
+                navigate(notice.url);
+              },
+            }
+          : undefined,
+      });
     }
+  }, [page, markRead, navigate, openPanel]);
 
-    for (const job of jobs) {
-      if (!previous.current.has(String(job.id))) continue; // new: announced above
-      const before = previous.current.get(String(job.id)) ?? 0;
-      const now = job.to_fix ?? 0;
-      if (now > before) {
-        notify(
-          'sent_back',
-          `${lastReviewer.current ?? 'A reviewer'} sent back ${plural(now - before)}`,
-          `In ${job.name}: open it to see what needs fixing.`,
-          toFixUrl(job),
-        );
-      }
+  // Once per browser session: fixes already waiting from before.
+  useEffect(() => {
+    if (!isAuthenticated || !jobs || summaryChecked.current) return;
+    summaryChecked.current = true;
+    const waiting = jobs.filter((job) => (job.to_fix ?? 0) > 0);
+    const total = waiting.reduce((sum, job) => sum + (job.to_fix ?? 0), 0);
+    let shown = false;
+    try {
+      shown = sessionStorage.getItem(SESSION_KEY) === '1';
+      sessionStorage.setItem(SESSION_KEY, '1');
+    } catch {
+      // storage unavailable: show it (once per page load)
     }
-    lastReviewer.current = null;
-    previous.current = counts;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- notify reads scope/navigate, listed here
-  }, [jobs, isAuthenticated, navigate, me, scope]);
+    if (total > 0 && !shown) {
+      toast(`${plural(total)} sent back to you`, {
+        description:
+          waiting.length === 1
+            ? `In ${waiting[0].name}. A reviewer left notes on what to fix.`
+            : `Across ${waiting.length} jobs. A reviewer left notes on what to fix.`,
+        action: { label: 'Open', onClick: () => navigate(toFixUrl(waiting[0])) },
+        duration: 10_000,
+      });
+    }
+  }, [jobs, isAuthenticated, navigate]);
 
   return null;
 };

@@ -16,9 +16,9 @@ import {
   Users,
   Bell,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useUserJobs } from '@/hooks/useUserJobs';
-import { noticeScope, useNotificationStore } from '@/stores/notificationStore';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { MTXLogo } from '@/components/logo/MTXLogo';
 import { cn } from '@/lib/utils';
 import { UserProfileMenu } from '../users/UserProfileMenu';
@@ -40,13 +40,11 @@ const Navbar: FC = () => {
   const location = useLocation();
   const helpers = useAuthHelpers();
   const openPalette = useCommandPaletteStore((s) => s.setOpen);
-  const { hasAdminPermission, currentOrganization } = useCurrentOrganization();
-  const { user } = useAuth();
-  const scope = noticeScope(user?.id, currentOrganization?.id);
+  const { hasAdminPermission } = useCurrentOrganization();
   const openNotifications = useNotificationStore((s) => s.setOpen);
-  const notices = useNotificationStore((s) => (scope ? s.byScope[scope] : undefined));
-  const unreadCount = notices?.filter((n) => !n.read).length ?? 0;
-  const unreadSentBack = !!notices?.some((n) => !n.read && n.kind === 'sent_back');
+  const { data: noticePage } = useNotifications();
+  const unreadCount = noticePage?.unread ?? 0;
+  const unreadSentBack = !!noticePage?.items.some((n) => !n.read && n.kind === 'sent_back');
   const { data: myJobs } = useUserJobs();
   const toFixTotal = (myJobs ?? []).reduce((sum, job) => sum + (job.to_fix ?? 0), 0);
 

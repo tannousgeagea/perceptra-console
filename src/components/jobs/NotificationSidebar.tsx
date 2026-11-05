@@ -1,9 +1,14 @@
-import { Bell, Clock, Inbox, MessageSquareWarning, Package, X, ChevronRight } from "lucide-react";
+import { Bell, ClipboardCheck, Clock, Inbox, MessageSquareWarning, Package, X, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { FC, useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
-import { noticeScope, useNotificationStore, type Notice } from "@/stores/notificationStore";
+import { useNotificationStore } from "@/stores/notificationStore";
+import {
+  useClearNotices,
+  useMarkAllNoticesRead,
+  useMarkNoticeRead,
+  useNotifications,
+  type Notice,
+} from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/ui/badge";
 import { Button } from "@/components/ui/ui/button";
@@ -134,38 +139,51 @@ const NoticeItem: FC<{ notice: Notice; onOpen: (notice: Notice) => void }> = ({ 
     <div
       className={cn(
         "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-        notice.kind === "sent_back" ? "bg-rose-500/10 text-rose-600" : "bg-primary/10 text-primary"
+        notice.kind === "sent_back"
+          ? "bg-rose-500/10 text-rose-600"
+          : notice.kind === "ready_for_review"
+          ? "bg-emerald-500/10 text-emerald-600"
+          : "bg-primary/10 text-primary"
       )}
     >
-      {notice.kind === "sent_back" ? <MessageSquareWarning className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
+      {notice.kind === "sent_back" ? (
+        <MessageSquareWarning className="h-4 w-4" />
+      ) : notice.kind === "ready_for_review" ? (
+        <ClipboardCheck className="h-4 w-4" />
+      ) : (
+        <Inbox className="h-4 w-4" />
+      )}
     </div>
     <div className="min-w-0 flex-1">
       <div className="flex items-start justify-between gap-2">
         <p className={cn("text-sm text-foreground", !notice.read && "font-semibold")}>{notice.title}</p>
         {!notice.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
       </div>
-      {notice.description && <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{notice.description}</p>}
-      <p className="mt-1 text-[11px] text-muted-foreground">{formatDistanceToNow(notice.at, { addSuffix: true })}</p>
+      {notice.body && <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{notice.body}</p>}
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {formatDistanceToNow(new Date(notice.updated_at), { addSuffix: true })}
+      </p>
     </div>
   </button>
 );
 
 /**
- * App-wide panel (opened from the nav bell): recent notices (new jobs, work
- * sent back), kept in this browser, and the jobs assigned to the user.
+ * App-wide panel (opened from the nav bell): the user's notifications (new
+ * jobs, work sent back, jobs ready for review), from the server, and the
+ * jobs assigned to them.
  */
 export const NotificationSidebar: FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { currentOrganization } = useCurrentOrganization();
-  const scope = noticeScope(user?.id, currentOrganization?.id);
   const isOpen = useNotificationStore((s) => s.open);
   const setOpen = useNotificationStore((s) => s.setOpen);
-  const notices = useNotificationStore((s) => (scope ? s.byScope[scope] : undefined)) ?? EMPTY;
-  const { markAllRead, markRead, clear } = useNotificationStore.getState();
+  const { data: page } = useNotifications();
+  const notices = page?.items ?? EMPTY;
+  const unread = page?.unread ?? 0;
+  const { mutate: markRead } = useMarkNoticeRead();
+  const { mutate: markAllRead } = useMarkAllNoticesRead();
+  const { mutate: clear } = useClearNotices();
   const { data } = useUserJobs();
   const jobs = data ?? [];
-  const unread = notices.filter((n) => !n.read).length;
   const [tab, setTab] = useState<"notifications" | "jobs">("notifications");
   const onClose = () => setOpen(false);
 
@@ -176,7 +194,7 @@ export const NotificationSidebar: FC = () => {
   }, [isOpen]);
 
   const openNotice = (notice: Notice) => {
-    if (scope) markRead(scope, notice.id);
+    if (!notice.read) markRead(notice.id);
     onClose();
     if (notice.url) navigate(notice.url);
   };
@@ -245,14 +263,14 @@ export const NotificationSidebar: FC = () => {
               {label}
             </button>
           ))}
-          {tab === "notifications" && notices.length > 0 && scope && (
+          {tab === "notifications" && notices.length > 0 && (
             <div className="ml-auto flex gap-2 text-xs">
               {unread > 0 && (
-                <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => markAllRead(scope)}>
+                <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => markAllRead()}>
                   Mark all read
                 </button>
               )}
-              <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => clear(scope)}>
+              <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => clear()}>
                 Clear
               </button>
             </div>
@@ -268,7 +286,7 @@ export const NotificationSidebar: FC = () => {
                 </div>
                 <h3 className="mb-2 text-sm font-semibold text-foreground">You're all caught up</h3>
                 <p className="max-w-[220px] text-xs text-muted-foreground">
-                  New jobs and work sent back to you show up here.
+                  New jobs, work sent back to you, and jobs ready for your review show up here.
                 </p>
               </div>
             ) : (

@@ -16,7 +16,7 @@ import { useCurrentProjectId } from '@/hooks/useCurrentProjectId';
 import { jobImagesKeys } from '@/hooks/useJobImages';
 import { apiFetch, CLIENT_ID } from '@/services/apiClient';
 import { authStorage } from '@/services/authService';
-import { openProjectStream, type RealtimeEvent, type StreamStatus } from '@/services/realtimeStream';
+import { openProjectStream, openUserStream, type RealtimeEvent, type StreamStatus } from '@/services/realtimeStream';
 import type { ProjectImageOut } from '@/types/image';
 
 export interface PresenceEntry {
@@ -238,6 +238,17 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [enabled, projectId, orgId, queueEvent, scheduleRefresh]);
 
+  // Outside a project: the user's own stream (notifications), so a tab only
+  // ever holds one connection. Listeners get its events like project ones.
+  const userStreamOn = !projectId && isAuthenticated && !!orgId && active;
+  useEffect(() => {
+    if (!userStreamOn) return;
+    return openUserStream({
+      onStatus: () => undefined,
+      onEvent: (event) => listenersRef.current.forEach((listener) => listener(event)),
+    });
+  }, [userStreamOn]);
+
   // A new project starts without a backlog.
   useEffect(() => {
     missedEventsRef.current = false;
@@ -293,7 +304,10 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
 
 export const useRealtime = () => useContext(RealtimeContext);
 
-/** Calls the handler for every live event of the current project (the latest handler, no resubscribing). */
+/**
+ * Calls the handler for every live event (the latest handler, no
+ * resubscribing): the current project's, and the user's notifications.
+ */
 export const useRealtimeEvent = (handler: Listener) => {
   const { subscribe } = useRealtime();
   const handlerRef = useRef(handler);
