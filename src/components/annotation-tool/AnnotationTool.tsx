@@ -9,7 +9,7 @@ import LabelPanel from './LabelPanel';
 import AnnotationControls from './components/AnnotationControl';
 import ActionSidebar from './components/ActionSidebar';
 import { fetchProjectImageDetails, useProjectImageDetails } from '@/hooks/useProjectImage';
-import { jobImagesQuery, useJobImageCounts, useJobImages } from "@/hooks/useJobImages";
+import { ALL_JOBS_ID, jobImagesQuery, useJobImageCounts, useJobImages } from "@/hooks/useJobImages";
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { AnnotationCommandsProvider } from '@/contexts/AnnotationCommandsContext';
 import { annotationsToBoxes } from './boxes';
@@ -136,6 +136,9 @@ const AnnotationTool = () => {
   const { user } = useAuth();
   const recordSession = useResumeStore((s) => s.record);
   const jobName = jobImages?.job?.name;
+  // In "All jobs", the job (and assignee) this image comes from. The details
+  // API sends job summaries here, despite the JobImage[] type.
+  const sourceJob = (image?.jobs?.[0] as unknown as { name?: string; assignee?: string | null } | undefined);
   useEffect(() => {
     if (!image || isSwitchingImage || !user?.id || !orgId || !projectId || !imageId) return;
     recordSession({
@@ -308,7 +311,9 @@ const AnnotationTool = () => {
           }
           onNext={handleNext}
           onPrevious={handlePrevious}
-          subtitle={jobId
+          subtitle={jobId === ALL_JOBS_ID
+            ? `All jobs · ${status || "all"}${sourceJob?.name ? ` · from ${sourceJob.name}${sourceJob.assignee ? ` (${sourceJob.assignee})` : ""}` : ""}`
+            : jobId
             ? `${jobImages?.job?.name ? `Job: ${jobImages.job.name} · ` : ""}${status || "all"} · page ${page}`
             : "Not in an annotation job"}
           backTo={backUrl}

@@ -52,7 +52,7 @@ export interface ProjectImage {
   split?: SplitType;
   annotations: Annotation[];
   /** Annotation jobs the image is in (active assignments). */
-  jobs?: { id: string; name: string; status?: string }[];
+  jobs?: { id: string; name: string; status?: string; assignee?: string | null }[];
 }
 
 export interface ProjectImagesResponse {

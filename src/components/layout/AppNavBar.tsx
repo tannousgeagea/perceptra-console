@@ -14,7 +14,11 @@ import {
   Scan,
   Search,
   Users,
+  Bell,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserJobs } from '@/hooks/useUserJobs';
+import { noticeScope, useNotificationStore } from '@/stores/notificationStore';
 import { MTXLogo } from '@/components/logo/MTXLogo';
 import { cn } from '@/lib/utils';
 import { UserProfileMenu } from '../users/UserProfileMenu';
@@ -36,7 +40,15 @@ const Navbar: FC = () => {
   const location = useLocation();
   const helpers = useAuthHelpers();
   const openPalette = useCommandPaletteStore((s) => s.setOpen);
-  const { hasAdminPermission } = useCurrentOrganization();
+  const { hasAdminPermission, currentOrganization } = useCurrentOrganization();
+  const { user } = useAuth();
+  const scope = noticeScope(user?.id, currentOrganization?.id);
+  const openNotifications = useNotificationStore((s) => s.setOpen);
+  const notices = useNotificationStore((s) => (scope ? s.byScope[scope] : undefined));
+  const unreadCount = notices?.filter((n) => !n.read).length ?? 0;
+  const unreadSentBack = !!notices?.some((n) => !n.read && n.kind === 'sent_back');
+  const { data: myJobs } = useUserJobs();
+  const toFixTotal = (myJobs ?? []).reduce((sum, job) => sum + (job.to_fix ?? 0), 0);
 
   useEffect(() => {
     if (location.pathname.includes('/projects/')) {
@@ -138,6 +150,37 @@ const Navbar: FC = () => {
                 <kbd className="rounded border border-[var(--mtx-border)] px-1.5 py-0.5 font-sans text-[10px]">{PALETTE_SHORTCUT}</kbd>
               </>
             )}
+          </button>
+        </div>
+
+        {/* Notifications (new jobs, work sent back) and my jobs */}
+        <div className={cn('mb-3', isExpanded ? '' : 'flex justify-center')}>
+          <button
+            type="button"
+            onClick={() => openNotifications(true)}
+            title={unreadCount ? `${unreadCount} unread notifications` : toFixTotal ? `${toFixTotal} images sent back to you` : 'Notifications and my jobs'}
+            aria-label="Open notifications"
+            className={cn(
+              'relative flex items-center rounded-xl border text-sm transition-colors',
+              'border-[var(--mtx-border)] text-[var(--mtx-text-muted)] hover:bg-[var(--mtx-surface)] hover:text-[var(--mtx-text)]',
+              isExpanded ? 'w-full gap-2 px-3 py-2' : 'h-[44px] w-[44px] justify-center'
+            )}
+          >
+            <Bell size={isExpanded ? 16 : 20} className="shrink-0" />
+            {isExpanded && <span className="flex-1 text-left">Notifications</span>}
+            {unreadCount > 0 ? (
+              <span
+                className={cn(
+                  'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white',
+                  isExpanded ? '' : 'absolute -right-1 -top-1',
+                  unreadSentBack ? 'bg-rose-600' : 'bg-[var(--mtx-primary)]'
+                )}
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            ) : toFixTotal > 0 ? (
+              <span className={cn('h-2 w-2 rounded-full bg-rose-600', isExpanded ? '' : 'absolute right-1.5 top-1.5')} />
+            ) : null}
           </button>
         </div>
 

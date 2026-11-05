@@ -1,13 +1,18 @@
-import { Bell, Clock, Package, X, ChevronRight } from "lucide-react";
+import { Bell, Clock, Inbox, MessageSquareWarning, Package, X, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
+import { noticeScope, useNotificationStore, type Notice } from "@/stores/notificationStore";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/ui/badge";
 import { Button } from "@/components/ui/ui/button";
 import { ScrollArea } from "@/components/ui/ui/scroll-area";
 import { Job, JobStatus } from "@/types/jobs";
 import { cn } from "@/lib/utils";
-import { toFixUrl } from "@/hooks/useUserJobs";
+import { toFixUrl, useUserJobs } from "@/hooks/useUserJobs";
+
+const EMPTY: Notice[] = [];
 
 const getStatusColor = (status: JobStatus) => {
   switch (status) {
@@ -41,14 +46,16 @@ const getStatusLabel = (status: JobStatus) => {
 
 interface JobItemProps {
   job: Job;
+  onOpened?: () => void;
 }
 
-const JobItem: FC<JobItemProps> = ({ job }) => {
+const JobItem: FC<JobItemProps> = ({ job, onOpened }) => {
   const navigate = useNavigate();
   const toFix = job.to_fix ?? 0;
 
   // Work sent back first: open straight on the "Needs fixes" tab.
   const handleJobClick = () => {
+    onOpened?.();
     navigate(toFix > 0 ? toFixUrl(job) : `/projects/${job.project_id}/annotate/job/${job.id}`);
   };
 
@@ -115,17 +122,65 @@ const EmptyState = () => (
   </div>
 );
 
-interface NotificationSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  jobs: Job[];
-}
+const NoticeItem: FC<{ notice: Notice; onOpen: (notice: Notice) => void }> = ({ notice, onOpen }) => (
+  <button
+    type="button"
+    onClick={() => onOpen(notice)}
+    className={cn(
+      "flex w-full gap-3 border-b border-border p-4 text-left transition-colors hover:bg-accent/5",
+      !notice.read && "bg-primary/5"
+    )}
+  >
+    <div
+      className={cn(
+        "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+        notice.kind === "sent_back" ? "bg-rose-500/10 text-rose-600" : "bg-primary/10 text-primary"
+      )}
+    >
+      {notice.kind === "sent_back" ? <MessageSquareWarning className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
+    </div>
+    <div className="min-w-0 flex-1">
+      <div className="flex items-start justify-between gap-2">
+        <p className={cn("text-sm text-foreground", !notice.read && "font-semibold")}>{notice.title}</p>
+        {!notice.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
+      </div>
+      {notice.description && <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{notice.description}</p>}
+      <p className="mt-1 text-[11px] text-muted-foreground">{formatDistanceToNow(notice.at, { addSuffix: true })}</p>
+    </div>
+  </button>
+);
 
-export const NotificationSidebar: FC<NotificationSidebarProps> = ({
-  isOpen,
-  onClose,
-  jobs,
-}) => {
+/**
+ * App-wide panel (opened from the nav bell): recent notices (new jobs, work
+ * sent back), kept in this browser, and the jobs assigned to the user.
+ */
+export const NotificationSidebar: FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { currentOrganization } = useCurrentOrganization();
+  const scope = noticeScope(user?.id, currentOrganization?.id);
+  const isOpen = useNotificationStore((s) => s.open);
+  const setOpen = useNotificationStore((s) => s.setOpen);
+  const notices = useNotificationStore((s) => (scope ? s.byScope[scope] : undefined)) ?? EMPTY;
+  const { markAllRead, markRead, clear } = useNotificationStore.getState();
+  const { data } = useUserJobs();
+  const jobs = data ?? [];
+  const unread = notices.filter((n) => !n.read).length;
+  const [tab, setTab] = useState<"notifications" | "jobs">("notifications");
+  const onClose = () => setOpen(false);
+
+  // Open where there is something new.
+  useEffect(() => {
+    if (isOpen) setTab(unread > 0 ? "notifications" : "jobs");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the panel opens
+  }, [isOpen]);
+
+  const openNotice = (notice: Notice) => {
+    if (scope) markRead(scope, notice.id);
+    onClose();
+    if (notice.url) navigate(notice.url);
+  };
+
   const activeJobs = jobs.filter(
     (job) => job.status === JobStatus.ASSIGNED || job.status === JobStatus.IN_REVIEW
   );
@@ -154,8 +209,9 @@ export const NotificationSidebar: FC<NotificationSidebarProps> = ({
               <Bell className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold text-base text-foreground">My Jobs</h2>
+              <h2 className="font-semibold text-base text-foreground">Notifications</h2>
               <p className="text-xs text-muted-foreground">
+                {unread > 0 ? `${unread} unread · ` : ""}
                 {activeJobs.length} active {activeJobs.length === 1 ? "job" : "jobs"}
               </p>
             </div>
@@ -165,12 +221,61 @@ export const NotificationSidebar: FC<NotificationSidebarProps> = ({
             size="icon"
             onClick={onClose}
             className="h-8 w-8 rounded-full hover:bg-muted"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Jobs List */}
+        {/* Tabs */}
+        <div className="flex items-center gap-1 border-b border-border px-4 py-2 text-sm">
+          {([
+            ["notifications", `Notifications${unread ? ` (${unread})` : ""}`],
+            ["jobs", `My jobs (${jobs.length})`],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={cn(
+                "rounded-md px-2.5 py-1",
+                tab === id ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {label}
+            </button>
+          ))}
+          {tab === "notifications" && notices.length > 0 && scope && (
+            <div className="ml-auto flex gap-2 text-xs">
+              {unread > 0 && (
+                <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => markAllRead(scope)}>
+                  Mark all read
+                </button>
+              )}
+              <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => clear(scope)}>
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
+
+        {tab === "notifications" ? (
+          <ScrollArea className="flex-1">
+            {notices.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                <div className="mb-4 rounded-full bg-muted p-4">
+                  <Inbox className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="mb-2 text-sm font-semibold text-foreground">You're all caught up</h3>
+                <p className="max-w-[220px] text-xs text-muted-foreground">
+                  New jobs and work sent back to you show up here.
+                </p>
+              </div>
+            ) : (
+              notices.map((notice) => <NoticeItem key={notice.id} notice={notice} onOpen={openNotice} />)
+            )}
+          </ScrollArea>
+        ) : (
         <ScrollArea className="flex-1">
           {jobs.length === 0 ? (
             <EmptyState />
@@ -180,14 +285,15 @@ export const NotificationSidebar: FC<NotificationSidebarProps> = ({
               {[...jobs]
                 .sort((a, b) => Number((b.to_fix ?? 0) > 0) - Number((a.to_fix ?? 0) > 0))
                 .map((job) => (
-                  <JobItem key={job.id} job={job} />
+                  <JobItem key={job.id} job={job} onOpened={onClose} />
                 ))}
             </div>
           )}
         </ScrollArea>
+        )}
 
         {/* Footer */}
-        {jobs.length > 0 && (
+        {tab === "jobs" && jobs.length > 0 && (
           <div className="p-4 border-t border-border bg-muted/30">
             <p className="text-xs text-center text-muted-foreground">
               Showing {jobs.length} total {jobs.length === 1 ? "job" : "jobs"}

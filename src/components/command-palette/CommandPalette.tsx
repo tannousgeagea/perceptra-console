@@ -7,6 +7,7 @@ import {
   Activity,
   BarChart3,
   Building2,
+  ClipboardCheck,
   Copy,
   CreditCard,
   Database,
@@ -47,6 +48,8 @@ import { useUserProjects } from '@/hooks/useUserProjects';
 import { useUserJobs } from '@/hooks/useUserJobs';
 import { formatAgo, useRecentSessions, useResumeSession } from '@/hooks/useResumeSession';
 import { projectNavItems } from '@/components/layout/projectNav';
+import { useCanReview } from '@/hooks/useCanReview';
+import { reviewQueueUrl } from '@/hooks/useJobImages';
 import { PALETTE_SHORTCUT, useCommandPaletteStore } from '@/stores/commandPaletteStore';
 
 
@@ -100,6 +103,7 @@ const PaletteBody = ({ close }: { close: () => void }) => {
   const { setTheme } = useTheme();
   const { currentOrganization, hasAdminPermission } = useCurrentOrganization();
   const currentProjectId = useCurrentProjectId();
+  const canReview = useCanReview(currentProjectId ?? undefined);
   const [search, setSearch] = useState('');
 
   const { data: projects, isLoading: projectsLoading } = useUserProjects();
@@ -217,6 +221,15 @@ const PaletteBody = ({ close }: { close: () => void }) => {
                 onSelect={() => go(item.path)}
               />
             ))}
+            {canReview && (
+              <PaletteItem
+                value="project-review-queue"
+                keywords={['review', 'queue', 'approve', 'send back', 'all jobs']}
+                icon={ClipboardCheck}
+                label="Review queue (all jobs)"
+                onSelect={() => go(reviewQueueUrl(currentProjectId))}
+              />
+            )}
           </CommandGroup>
         )}
 

@@ -3,12 +3,10 @@ import { ContinueCard } from '@/components/resume/ContinueCard';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserProjects } from '@/hooks/useUserProjects';
-import { useUserJobs } from '@/hooks/useUserJobs';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { fetchProjectById } from '@/hooks/useProjectDetails';
 import { useDeleteProject, useUpdateProject } from '@/hooks/useProjectMutations';
-import { NotificationSidebar } from "@/components/jobs/NotificationSidebar";
-import { AlertTriangle, FolderPlus, Search, Plus, ArrowUpDown, Bell, X } from 'lucide-react';
+import { AlertTriangle, FolderPlus, Search, Plus, ArrowUpDown, X } from 'lucide-react';
 
 import { Button } from "@/components/ui/ui/button";
 import { Input } from "@/components/ui/ui/input";
@@ -21,7 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/ui/select";
 
-import { Badge } from "@/components/ui/ui/badge";
 import { ProjectCard } from "@/components/project/ProjectCardV2";
 import { EditProjectDialog } from "@/components/project/EditProjectDialog";
 import { DeleteProjectDialog } from "@/components/project/DeleteProjectDialog";
@@ -44,9 +41,6 @@ const projectHref = (projectId: string) => `/projects/${projectId}/dataset`;
 const Projects: FC = () => {
     // The page has an Active / Inactive filter, so it needs both.
     const { data: projects, isLoading, error, refetch } = useUserProjects({ includeInactive: true });
-    // Notifications are secondary: never block or blank the page on them.
-    const { data: jobs } = useUserJobs();
-    const toFixTotal = (jobs ?? []).reduce((sum, job) => sum + (job.to_fix ?? 0), 0);
     const { currentOrganization, isAdmin: isOrgAdmin, isOwner: isOrgOwner } = useCurrentOrganization();
     // Mirrors the API: org admins/owners can do anything; project owners/admins can edit.
     const canDelete = isOrgAdmin || isOrgOwner;
@@ -76,7 +70,6 @@ const Projects: FC = () => {
 
     const [editTarget, setEditTarget] = useState<Project | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
-    const [notificationSidebarOpen, setNotificationSidebarOpen] = useState(false);
 
     const updateProject = useUpdateProject();
     const deleteProject = useDeleteProject();
@@ -240,24 +233,7 @@ const Projects: FC = () => {
                         </p>
                     </div>
                     <div className='flex gap-2'>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setNotificationSidebarOpen(true)}
-                            className="relative"
-                            aria-label="Training notifications"
-                        >
-                            <Bell className="h-4 w-4" />
-                            {!!jobs?.length && (
-                                <Badge
-                                    variant={toFixTotal > 0 ? "destructive" : "secondary"}
-                                    className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full px-1 flex items-center justify-center text-xs"
-                                    title={toFixTotal > 0 ? `${toFixTotal} images sent back to you` : `${jobs.length} assigned jobs`}
-                                >
-                                    {toFixTotal > 0 ? toFixTotal : jobs.length}
-                                </Badge>
-                            )}
-                        </Button>
+                        {/* Notifications and "My jobs" moved to the app-wide bell in the left navbar. */}
                         <Button onClick={() => navigate('/projects/add')}>
                             <Plus className="mr-2 h-4 w-4" />
                             New Project
@@ -347,12 +323,6 @@ const Projects: FC = () => {
                 project={deleteTarget}
                 onConfirm={handleDeleteProject}
                 isDeleting={deleteProject.isPending}
-            />
-
-            <NotificationSidebar
-                isOpen={notificationSidebarOpen}
-                onClose={() => setNotificationSidebarOpen(false)}
-                jobs={jobs ?? []}
             />
         </div>
     );

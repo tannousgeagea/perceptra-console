@@ -138,6 +138,8 @@ export interface JobImageCounts {
   /** Sent back by a reviewer, waiting for the annotator's fixes. */
   rejected: number;
   annotated: number;
+  /** All jobs only: when the longest-waiting annotated image last changed. */
+  oldest_annotated_at?: string | null;
   reviewed: number;
   /** Completed: moved to a dataset. */
   dataset: number;

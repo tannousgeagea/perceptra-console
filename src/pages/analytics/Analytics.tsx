@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
 import { Skeleton } from "@/components/ui/ui/skeleton";
-import { BarChart3, Database, Image, Tag, TrendingUp, GitCompare } from "lucide-react";
+import { BarChart3, ClipboardCheck, Database, Image, Tag, TrendingUp, GitCompare } from "lucide-react";
+import { ReviewInsightsPanel } from "@/components/analytics/ReviewInsightsPanel";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 import { ImageStatsChart } from "@/components/analytics/AnalyticsImageStatsChart";
 import { AnnotationStatsChart } from "@/components/analytics/AnalyticsAnnotationStatsChart";
@@ -88,7 +89,7 @@ const Analytics = () => {
         <AnalyticsOverview data={summary} />
 
         <Tabs defaultValue="images" className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5">
+          <TabsList className="grid w-full max-w-4xl grid-cols-6">
             <TabsTrigger value="images" className="gap-2">
               <Image className="h-4 w-4" />
               Images
@@ -96,6 +97,10 @@ const Analytics = () => {
             <TabsTrigger value="annotations" className="gap-2">
               <Tag className="h-4 w-4" />
               Annotations
+            </TabsTrigger>
+            <TabsTrigger value="review" className="gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Review quality
             </TabsTrigger>
             <TabsTrigger value="performance" className="gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -110,6 +115,10 @@ const Analytics = () => {
               Metadata
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="review" className="space-y-6">
+            <ReviewInsightsPanel projectId={projectId!} />
+          </TabsContent>
 
           <TabsContent value="images" className="space-y-6">
             {imageLoading ? (
