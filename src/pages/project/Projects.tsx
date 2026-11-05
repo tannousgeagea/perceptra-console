@@ -46,6 +46,7 @@ const Projects: FC = () => {
     const { data: projects, isLoading, error, refetch } = useUserProjects({ includeInactive: true });
     // Notifications are secondary: never block or blank the page on them.
     const { data: jobs } = useUserJobs();
+    const toFixTotal = (jobs ?? []).reduce((sum, job) => sum + (job.to_fix ?? 0), 0);
     const { currentOrganization, isAdmin: isOrgAdmin, isOwner: isOrgOwner } = useCurrentOrganization();
     // Mirrors the API: org admins/owners can do anything; project owners/admins can edit.
     const canDelete = isOrgAdmin || isOrgOwner;
@@ -249,10 +250,11 @@ const Projects: FC = () => {
                             <Bell className="h-4 w-4" />
                             {!!jobs?.length && (
                                 <Badge
-                                    variant="destructive"
+                                    variant={toFixTotal > 0 ? "destructive" : "secondary"}
                                     className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full px-1 flex items-center justify-center text-xs"
+                                    title={toFixTotal > 0 ? `${toFixTotal} images sent back to you` : `${jobs.length} assigned jobs`}
                                 >
-                                    {jobs.length}
+                                    {toFixTotal > 0 ? toFixTotal : jobs.length}
                                 </Badge>
                             )}
                         </Button>

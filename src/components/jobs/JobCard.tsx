@@ -96,9 +96,17 @@ const getStatusBadge = (status: JobStatus) => {
               </Select>
             )}
             {getStatusBadge(job.status)}
+            {!!job.progress?.rejected && (
+              <Badge
+                variant="destructive"
+                title="Sent back by a reviewer, waiting for the assignee's fixes"
+              >
+                {job.progress.rejected} to fix
+              </Badge>
+            )}
           </div>
         </div>
-        
+
         <div className="mt-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Images:</span>

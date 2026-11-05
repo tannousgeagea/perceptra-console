@@ -1,27 +1,24 @@
 import { apiFetch } from '@/services/apiClient';
 
 import { useQuery } from "@tanstack/react-query";
-import { Job, JobStatus } from "@/types/jobs";
-import { authStorage } from "@/services/authService";
-import { AUTH_STORAGE_KEYS } from "@/types/auth";
+import { Job } from "@/types/jobs";
 import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 
+/** The "Needs fixes" tab of a job (images sent back to its assignee). */
+export const toFixUrl = (job: Pick<Job, 'id' | 'project_id'>) =>
+  `/projects/${job.project_id}/annotate/job/${job.id}?status=rejected`;
+
 export const fetchMyAssignedJobs = async (organizationId: string): Promise<Job[]> => {
-  const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
+  // apiFetch adds the token; the organization is passed explicitly so the
+  // cache key and the request always agree.
   const response = await apiFetch(`/api/v1/jobs/me`, {
-    headers: { 
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-ID': organizationId, // ✅ Added organization header
-    },
+    headers: { 'X-Organization-ID': organizationId },
   });
 
   if (!response.ok) throw new Error("Failed to fetch assigned jobs");
-  return response.json();
+  const jobs: (Job & { imageCount?: number })[] = await response.json();
+  // The API names it imageCount; the Job type (and the UI) use image_count.
+  return jobs.map(({ imageCount, ...job }) => ({ ...job, image_count: job.image_count ?? imageCount ?? 0 }));
 };
 
 export const useUserJobs = () => {

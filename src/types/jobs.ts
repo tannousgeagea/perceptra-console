@@ -17,6 +17,8 @@ export interface JobProgress {
   annotated: number;
   reviewed: number;
   completed: number;
+  /** Sent back, waiting for the assignee's fixes. */
+  rejected?: number;
 }
 
 export interface Job {
@@ -33,6 +35,8 @@ export interface Job {
     project_id?: string;
     project_name?: string;
     progress?: JobProgress;   // 👈 new
+    /** Images a reviewer sent back, waiting for the assignee (jobs/me only). */
+    to_fix?: number;
   }
 
 export interface JobsResponse {

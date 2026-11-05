@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/ui/button";
 import { ScrollArea } from "@/components/ui/ui/scroll-area";
 import { Job, JobStatus } from "@/types/jobs";
 import { cn } from "@/lib/utils";
+import { toFixUrl } from "@/hooks/useUserJobs";
 
 const getStatusColor = (status: JobStatus) => {
   switch (status) {
@@ -44,9 +45,11 @@ interface JobItemProps {
 
 const JobItem: FC<JobItemProps> = ({ job }) => {
   const navigate = useNavigate();
+  const toFix = job.to_fix ?? 0;
 
+  // Work sent back first: open straight on the "Needs fixes" tab.
   const handleJobClick = () => {
-    navigate(`/projects/${job.project_id}/annotate/job/${job.id}`);
+    navigate(toFix > 0 ? toFixUrl(job) : `/projects/${job.project_id}/annotate/job/${job.id}`);
   };
 
   return (
@@ -72,12 +75,19 @@ const JobItem: FC<JobItemProps> = ({ job }) => {
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <Badge
-          variant="outline"
-          className={cn("text-xs font-medium", getStatusColor(job.status))}
-        >
-          {getStatusLabel(job.status)}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn("text-xs font-medium", getStatusColor(job.status))}
+          >
+            {getStatusLabel(job.status)}
+          </Badge>
+          {toFix > 0 && (
+            <Badge variant="destructive" className="text-xs font-medium">
+              {toFix} to fix
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Package className="h-3 w-3" />
@@ -166,9 +176,12 @@ export const NotificationSidebar: FC<NotificationSidebarProps> = ({
             <EmptyState />
           ) : (
             <div className="divide-y divide-border">
-              {jobs.map((job) => (
-                <JobItem key={job.id} job={job} />
-              ))}
+              {/* Jobs with work sent back come first (stable otherwise). */}
+              {[...jobs]
+                .sort((a, b) => Number((b.to_fix ?? 0) > 0) - Number((a.to_fix ?? 0) > 0))
+                .map((job) => (
+                  <JobItem key={job.id} job={job} />
+                ))}
             </div>
           )}
         </ScrollArea>
