@@ -18,9 +18,12 @@ interface JobImageCardProps {
   handleClick: () => void;
   /** Rendered over the image's bottom-right corner (e.g. who has it open). */
   overlay?: ReactNode;
+  /** Show which job (and assignee) the image comes from, e.g. in "All jobs". */
+  showJob?: boolean;
 }
 
-export function JobImageCard({ image, size, selected, selectionMode, onToggleSelect, handleClick, overlay }: JobImageCardProps) {
+export function JobImageCard({ image, size, selected, selectionMode, onToggleSelect, handleClick, overlay, showJob }: JobImageCardProps) {
+  const job = showJob ? image.jobs?.[0] : undefined;
   const [isUpdating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -123,6 +126,11 @@ export function JobImageCard({ image, size, selected, selectionMode, onToggleSel
 
       <div className="p-3">
         <p className="text-sm font-medium truncate" title={image.name}>{image.name}</p>
+        {job && (
+          <p className="truncate text-xs text-muted-foreground" title={`From ${job.name}${job.assignee ? `, assigned to ${job.assignee}` : ''}`}>
+            {job.name}{job.assignee ? ` · ${job.assignee}` : ''}
+          </p>
+        )}
         <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="shrink-0">{image.width} × {image.height}</span>
           <CopyableId value={image.image_id} label="Image ID" truncate={8} />

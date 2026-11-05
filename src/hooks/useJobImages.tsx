@@ -13,6 +13,16 @@ interface JobImagesParams {
   includeCounts?: boolean;
 }
 
+/**
+ * Pseudo job id: every image of the project's active jobs as one list (same
+ * endpoints' shapes, under /jobs/all/…). The review queue is All jobs → Annotated.
+ */
+export const ALL_JOBS_ID = "all";
+
+/** The project-wide review queue: annotated images across all jobs, oldest first. */
+export const reviewQueueUrl = (projectId: string) =>
+  `/projects/${projectId}/annotate/job/${ALL_JOBS_ID}?status=annotated`;
+
 export const jobImagesKeys = {
   all: ["job-images"] as const,
   counts: ["job-image-counts"] as const,

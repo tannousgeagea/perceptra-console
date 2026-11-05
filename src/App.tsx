@@ -59,6 +59,7 @@ import ScanResults from './pages/ScanResults';
 import CommandPalette from './components/command-palette/CommandPalette';
 import { RealtimeProvider } from './contexts/RealtimeContext';
 import { SentBackWatcher } from './components/review/SentBackWatcher';
+import { NotificationSidebar } from './components/jobs/NotificationSidebar';
 
 const queryClient = new QueryClient();
 
@@ -143,6 +144,7 @@ const App = () => {
                   </Route>
                 </Routes>
                 <SentBackWatcher />
+                <NotificationSidebar />
                 </RealtimeProvider>
               </TooltipProvider>
               <Toaster />

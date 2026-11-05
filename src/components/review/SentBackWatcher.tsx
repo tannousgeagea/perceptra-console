@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRealtime, useRealtimeEvent } from '@/contexts/RealtimeContext';
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { toFixUrl, useUserJobs } from '@/hooks/useUserJobs';
 import { CLIENT_ID } from '@/services/apiClient';
+import { noticeScope, useNotificationStore, type NoticeKind } from '@/stores/notificationStore';
 
 const SESSION_KEY = 'mtx-sent-back-summary-shown';
 
@@ -21,11 +23,21 @@ const plural = (n: number) => `${n} image${n === 1 ? '' : 's'}`;
 export const SentBackWatcher = () => {
   const { isAuthenticated, user } = useAuth();
   const me = user?.id != null ? String(user.id) : null;
+  const { currentOrganization } = useCurrentOrganization();
+  const scope = noticeScope(me, currentOrganization?.id);
+  const addNotice = useNotificationStore((s) => s.add);
   const { data: jobs } = useUserJobs();
   const { presence } = useRealtime();
   const navigate = useNavigate();
   const previous = useRef<Map<string, number> | null>(null);
   const lastReviewer = useRef<string | null>(null);
+
+  /** Toast now, and keep it in the notifications panel. */
+  const notify = (kind: NoticeKind, title: string, description: string, url: string) => {
+    const show = kind === 'sent_back' ? toast.warning : toast.info;
+    show(title, { description, action: { label: 'Open', onClick: () => navigate(url) }, duration: 10_000 });
+    if (scope) addNotice(scope, { kind, title, description, url });
+  };
 
   // Remember who sent something back most recently (live events carry the actor).
   useRealtimeEvent((event) => {
@@ -74,18 +86,20 @@ export const SentBackWatcher = () => {
     const giver = givers.length === 1 ? givers[0] : null;
     if (added.length === 1) {
       const job = added[0];
-      toast.info(giver ? `${giver} assigned you ${job.name}` : `New job assigned: ${job.name}`, {
-        description: `${job.image_count.toLocaleString()} images${job.project_name ? ` in ${job.project_name}` : ''}.`,
-        action: { label: 'Open', onClick: () => navigate(`/projects/${job.project_id}/annotate/job/${job.id}`) },
-        duration: 10_000,
-      });
+      notify(
+        'assigned',
+        giver ? `${giver} assigned you ${job.name}` : `New job assigned: ${job.name}`,
+        `${job.image_count.toLocaleString()} images${job.project_name ? ` in ${job.project_name}` : ''}.`,
+        `/projects/${job.project_id}/annotate/job/${job.id}`,
+      );
     } else if (added.length > 1) {
       const images = added.reduce((sum, job) => sum + (job.image_count ?? 0), 0);
-      toast.info(giver ? `${giver} assigned you ${added.length} jobs` : `${added.length} new jobs assigned to you`, {
-        description: `${images.toLocaleString()} images: ${added.map((job) => job.name).join(', ')}.`,
-        action: { label: 'Open', onClick: () => navigate(`/projects/${added[0].project_id}/annotate/job/${added[0].id}`) },
-        duration: 10_000,
-      });
+      notify(
+        'assigned',
+        giver ? `${giver} assigned you ${added.length} jobs` : `${added.length} new jobs assigned to you`,
+        `${images.toLocaleString()} images: ${added.map((job) => job.name).join(', ')}.`,
+        `/projects/${added[0].project_id}/annotate/job/${added[0].id}`,
+      );
     }
 
     for (const job of jobs) {
@@ -93,17 +107,18 @@ export const SentBackWatcher = () => {
       const before = previous.current.get(String(job.id)) ?? 0;
       const now = job.to_fix ?? 0;
       if (now > before) {
-        const who = lastReviewer.current;
-        toast.warning(`${who ?? 'A reviewer'} sent back ${plural(now - before)}`, {
-          description: `In ${job.name}: open it to see what needs fixing.`,
-          action: { label: 'Open', onClick: () => navigate(toFixUrl(job)) },
-          duration: 10_000,
-        });
+        notify(
+          'sent_back',
+          `${lastReviewer.current ?? 'A reviewer'} sent back ${plural(now - before)}`,
+          `In ${job.name}: open it to see what needs fixing.`,
+          toFixUrl(job),
+        );
       }
     }
     lastReviewer.current = null;
     previous.current = counts;
-  }, [jobs, isAuthenticated, navigate, me]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- notify reads scope/navigate, listed here
+  }, [jobs, isAuthenticated, navigate, me, scope]);
 
   return null;
 };

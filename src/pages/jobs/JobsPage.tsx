@@ -18,6 +18,7 @@ import DeleteJobModal from "@/components/jobs/DeleteJobModal";
 import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { toast } from 'sonner';
 import { ContinueCard } from "@/components/resume/ContinueCard";
+import { ReviewQueueCard } from "@/components/review/ReviewQueueCard";
 
 const JobPage = () => {
   const { projectId } = useParams<{ projectId: string }>()
@@ -182,6 +183,7 @@ const JobPage = () => {
       />
 
       <ContinueCard projectId={projectId} className="mx-4" />
+      <ReviewQueueCard projectId={projectId!} className="mx-4 mt-3" />
 
       {/* Main content */}
       <main className="mx-auto px-4 py-6">

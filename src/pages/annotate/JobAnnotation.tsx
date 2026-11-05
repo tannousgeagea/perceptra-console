@@ -12,7 +12,7 @@ import { useBulkOperations } from '@/hooks/useBulkOperation';
 import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
 import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
 import { DatasetBuilder } from '@/components/dataset-builder/DatasetBuilder';
-import { useJobImages, useJobImageCounts, invalidateJobImages } from '@/hooks/useJobImages';
+import { useJobImages, useJobImageCounts, invalidateJobImages, ALL_JOBS_ID } from '@/hooks/useJobImages';
 import { useBulkMarkImagesAsNull } from '@/hooks/useProjectImageBulkOperation';
 import { JOB_TABS } from '@/components/job-annotation/jobTabs';
 import type { JobImageTab } from '@/types/image';
@@ -319,6 +319,7 @@ export default function JobAnnotation() {
               selectionMode={selectionMode}
               onToggleSelect={selection.toggle}
               onImageClick={(index: number, image_id: string) => handleImageClick(index, image_id)}
+              showJob={jobId === ALL_JOBS_ID}
             />
             </div>
 

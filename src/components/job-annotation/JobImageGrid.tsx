@@ -14,6 +14,8 @@ interface JobImageGridProps {
   selectionMode: boolean;
   onToggleSelect: (imageId: string) => void;
   onImageClick: (index: number, image_id: string) => void;
+  /** Label each card with its job (the "All jobs" view mixes jobs). */
+  showJob?: boolean;
 }
 
 const gridClasses = {
@@ -52,7 +54,7 @@ const OpenBy = ({ people }: { people: PresenceEntry[] }) => (
   </Tooltip>
 );
 
-export function JobImageGrid({ images, imageSize, selectedIds, selectionMode, onToggleSelect,  onImageClick }: JobImageGridProps) {
+export function JobImageGrid({ images, imageSize, selectedIds, selectionMode, onToggleSelect,  onImageClick, showJob }: JobImageGridProps) {
   const peopleByImage = usePeopleByImage();
   return (
     <div className={cn('grid', gridClasses[imageSize])}>
@@ -66,6 +68,7 @@ export function JobImageGrid({ images, imageSize, selectedIds, selectionMode, on
           onToggleSelect={onToggleSelect}
           handleClick={() => onImageClick(index, image.image_id)}
           overlay={peopleByImage.has(image.image_id) ? <OpenBy people={peopleByImage.get(image.image_id)!} /> : undefined}
+          showJob={showJob}
         />
       ))}
     </div>
