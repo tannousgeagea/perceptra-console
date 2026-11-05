@@ -1,6 +1,8 @@
 // services/realtimeStream.ts
 //
-// One server-sent-events stream per project (GET /projects/{id}/events).
+// One server-sent-events stream per tab: the project's (GET /projects/{id}/events,
+// which also carries the user's notifications), or outside a project the
+// user's own (GET /notifications/events).
 // Read with fetch instead of EventSource so it carries the same auth and
 // organization headers as every other request (and refreshes the token on
 // 401 through apiFetch). Reconnects with backoff; a silent connection (no
@@ -31,8 +33,16 @@ const MAX_BACKOFF_MS = 30_000;
 /** A stream that lasted this long was healthy: the next reconnect starts fresh. */
 const HEALTHY_STREAM_MS = 10_000;
 
-/** Opens the stream; returns a function that closes it for good. */
-export function openProjectStream(projectId: string, { onEvent, onStatus }: StreamHandlers): () => void {
+/** A project's stream: its events, presence, and the user's own notifications. */
+export const openProjectStream = (projectId: string, handlers: StreamHandlers) =>
+  openEventStream(`/api/v1/projects/${projectId}/events`, handlers);
+
+/** Outside a project: only the user's own notifications. */
+export const openUserStream = (handlers: StreamHandlers) =>
+  openEventStream('/api/v1/notifications/events', handlers);
+
+/** Opens an SSE stream; returns a function that closes it for good. */
+function openEventStream(path: string, { onEvent, onStatus }: StreamHandlers): () => void {
   let stopped = false;
   let attempt = 0;
   let controller: AbortController | null = null;
@@ -73,13 +83,13 @@ export function openProjectStream(projectId: string, { onEvent, onStatus }: Stre
     controller = new AbortController();
     if (attempt === 0) onStatus('connecting');
     try {
-      const response = await apiFetch(`/api/v1/projects/${projectId}/events`, {
+      const response = await apiFetch(path, {
         signal: controller.signal,
         headers: { Accept: 'text/event-stream' },
         cache: 'no-store',
       });
       if (response.status === 403 || response.status === 404) {
-        onStatus('unavailable'); // no access to this project: don't hammer the server
+        onStatus('unavailable'); // no access (or not deployed yet): don't hammer the server
         return;
       }
       if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);

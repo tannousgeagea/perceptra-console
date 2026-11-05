@@ -14,6 +14,9 @@
 .project-layout-main {
     width: 100%;
     height: 100%;
+    /* A flex child defaults to min-width: auto and would grow to its widest
+       content (header rows, card carousels), making the page scroll sideways. */
+    min-width: 0;
     }
   
 .project-layout-content {
