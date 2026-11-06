@@ -1,6 +1,8 @@
 
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRealtimeEvent } from "@/contexts/RealtimeContext";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/ui/input";
@@ -39,6 +41,14 @@ const JobPage = () => {
   const { mutate: updateJob, isPending } = useUpdateJob(projectId!);
   const { mutate: splitJob, isPending: splitPending } = useSplitJob(projectId!);
   const { mutate: deleteJob, isPending: deletePending } = useDeleteJob(projectId!);
+
+  // Live: the server moved a job (ready for review, completed, sent back to work).
+  const queryClient = useQueryClient();
+  useRealtimeEvent((event) => {
+    if (event.type !== 'job_status') return;
+    queryClient.invalidateQueries({ queryKey: ['jobs', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['userAssignedJobs'] });
+  });
 
   if (isLoading || !data?.jobs) {
     return (
@@ -174,9 +184,13 @@ const JobPage = () => {
     <div className="space-y-6 p-6 w-full">
       <JobsHeader 
         projectId={projectId!}
-        totalJobs={data?.jobs.length || 0}
-        reviewedJobs={jobsByStatus.inReview.length}
-        processingJobs={jobsByStatus.assigned.length}
+        totalJobs={data.jobs.length}
+        counts={{
+          unassigned: data.jobs.filter((job) => job.status === JobStatus.UNASSIGNED).length,
+          assigned: data.jobs.filter((job) => job.status === JobStatus.ASSIGNED).length,
+          inReview: data.jobs.filter((job) => job.status === JobStatus.IN_REVIEW).length,
+          completed: data.jobs.filter((job) => job.status === JobStatus.COMPLETED).length,
+        }}
         onRefresh={refetch}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}

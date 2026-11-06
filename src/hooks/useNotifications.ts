@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { apiFetch } from '@/services/apiClient';
 
-export type NoticeKind = 'assigned' | 'sent_back' | 'ready_for_review';
+export type NoticeKind = 'assigned' | 'sent_back' | 'ready_for_review' | 'completed';
 
 export interface Notice {
   id: number;

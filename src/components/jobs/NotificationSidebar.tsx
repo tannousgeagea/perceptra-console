@@ -1,4 +1,4 @@
-import { Bell, ClipboardCheck, Clock, Inbox, MessageSquareWarning, Package, X, ChevronRight } from "lucide-react";
+import { Bell, CircleCheckBig, ClipboardCheck, Clock, Inbox, MessageSquareWarning, Package, X, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { FC, useEffect, useState } from "react";
 import { useNotificationStore } from "@/stores/notificationStore";
@@ -143,6 +143,8 @@ const NoticeItem: FC<{ notice: Notice; onOpen: (notice: Notice) => void }> = ({ 
           ? "bg-rose-500/10 text-rose-600"
           : notice.kind === "ready_for_review"
           ? "bg-emerald-500/10 text-emerald-600"
+          : notice.kind === "completed"
+          ? "bg-green-500/10 text-green-600"
           : "bg-primary/10 text-primary"
       )}
     >
@@ -150,6 +152,8 @@ const NoticeItem: FC<{ notice: Notice; onOpen: (notice: Notice) => void }> = ({ 
         <MessageSquareWarning className="h-4 w-4" />
       ) : notice.kind === "ready_for_review" ? (
         <ClipboardCheck className="h-4 w-4" />
+      ) : notice.kind === "completed" ? (
+        <CircleCheckBig className="h-4 w-4" />
       ) : (
         <Inbox className="h-4 w-4" />
       )}
@@ -192,6 +196,16 @@ export const NotificationSidebar: FC = () => {
     if (isOpen) setTab(unread > 0 ? "notifications" : "jobs");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the panel opens
   }, [isOpen]);
+
+  // Escape closes the panel.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, setOpen]);
 
   const openNotice = (notice: Notice) => {
     if (!notice.read) markRead(notice.id);
