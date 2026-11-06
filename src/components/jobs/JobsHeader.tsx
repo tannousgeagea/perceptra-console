@@ -5,11 +5,18 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/ui/input";
 import { useNavigate } from "react-router-dom";
 
+/** Jobs per status column (the server keeps statuses in step with the images). */
+export interface JobStatusCounts {
+  unassigned: number;
+  assigned: number;
+  inReview: number;
+  completed: number;
+}
+
 interface JobsHeaderProps {
   projectId: string;
   totalJobs: number;
-  reviewedJobs: number;
-  processingJobs: number;
+  counts: JobStatusCounts;
   onRefresh: () => void;
   searchQuery: string;
   setSearchQuery: (searchQuery: string) => void;
@@ -18,8 +25,7 @@ interface JobsHeaderProps {
 export function JobsHeader({
   projectId,
   totalJobs,
-  reviewedJobs,
-  processingJobs,
+  counts,
   onRefresh,
   searchQuery,
   setSearchQuery,
@@ -68,16 +74,20 @@ export function JobsHeader({
             <Badge variant="secondary">{totalJobs}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Reviewed:</span>
-            <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">{reviewedJobs}</Badge>
+            <span className="text-sm text-muted-foreground">Unassigned:</span>
+            <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">{counts.unassigned}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Processing:</span>
-            <Badge className="bg-green-500/10 text-green-500 border-green-500/20">{processingJobs}</Badge>
+            <span className="text-sm text-muted-foreground">In progress:</span>
+            <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">{counts.assigned}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Pending:</span>
-            <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">{processingJobs}</Badge>
+            <span className="text-sm text-muted-foreground">In review:</span>
+            <Badge className="bg-violet-500/10 text-violet-500 border-violet-500/20">{counts.inReview}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Completed:</span>
+            <Badge className="bg-green-500/10 text-green-600 border-green-500/20">{counts.completed}</Badge>
           </div>
         </div>
       </div>
