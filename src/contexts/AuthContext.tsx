@@ -33,6 +33,8 @@ interface AuthContextType {
   refreshToken: () => Promise<boolean>;
   getCurrentOrganization: () => Organization | null;
   switchOrganization: (organizationId: string) => boolean;
+  /** Add an organization just joined (e.g. by invitation) to the session and switch to it. */
+  joinOrganization: (organization: Organization) => void;
   hasPermission: (organizationId: string, requiredRole: 'owner' | 'admin') => boolean;
   loginWithOAuth: (provider: OAuthProviderType) => Promise<void>;
   handleOAuthCallback: (
@@ -409,6 +411,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user]
   );
 
+  const joinOrganization = useCallback(
+    (organization: Organization) => {
+      setUser((current) => {
+        if (!current) return current;
+        const others = current.organizations.filter((o) => o.id !== organization.id);
+        const updated = { ...current, organizations: [...others, organization] };
+        authStorage.updateUser(updated);
+        return updated;
+      });
+      setCurrentOrgId(organization.id);
+    },
+    []
+  );
+
   const hasPermission = useCallback(
     (organizationId: string, requiredRole: 'owner' | 'admin'): boolean => {
       if (!user) return false;
@@ -476,6 +492,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshToken,
     getCurrentOrganization,
     switchOrganization,
+    joinOrganization,
     hasPermission,
     loginWithOAuth,
     handleOAuthCallback,

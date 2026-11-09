@@ -11,10 +11,12 @@ interface LoginFormProps {
   onSubmit: (email: string, password: string, rememberMe: boolean) => Promise<void>;
   isSubmitting?: boolean;
   error?: string | null;
+  /** Prefilled email (e.g. arriving from an invitation). */
+  initialEmail?: string;
 }
 
-export const LoginForm = ({ onSubmit, isSubmitting = false, error }: LoginFormProps) => {
-  const [email, setEmail] = useState('');
+export const LoginForm = ({ onSubmit, isSubmitting = false, error, initialEmail }: LoginFormProps) => {
+  const [email, setEmail] = useState(initialEmail ?? '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

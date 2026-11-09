@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/ui/card';
 import { SignupHeader } from '@/components/auth/SignupHeader';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { OAuthButtons } from '@/components/auth/OAuthButtons';
+import { InvitationBox } from '@/components/invitations/InvitationBox';
+import { useInvitationPreview } from '@/hooks/useInvitations';
 import { UserCreate } from '@/types/auth';
 
 const Signup = () => {
@@ -12,6 +14,11 @@ const Signup = () => {
   const [error, setError] = useState<string | null>(null);
   const { signup, login } = useAuth();
   const navigate = useNavigate();
+  // Arriving from an invitation link: the account joins that organization.
+  const [params] = useSearchParams();
+  const inviteToken = params.get('invite') ?? undefined;
+  const { data: invite } = useInvitationPreview(inviteToken);
+  const joining = invite?.state === 'pending' ? invite : undefined;
 
   const handleSignup = async (data: UserCreate) => {
     setIsSubmitting(true);
@@ -25,14 +32,15 @@ const Signup = () => {
         firstName: data.firstName,
         lastName: data.lastName,
         username: data.username,
+        inviteToken: joining ? inviteToken : undefined,
       });
-      
+
       if (result.success) {
         // Automatically log in the user after successful signup
         const loginResult = await login(data.email, data.password, false);
-        
+
         if (loginResult.success) {
-          navigate('/', { replace: true });
+          navigate(joining ? '/projects' : '/', { replace: true });
         } else {
           // If auto-login fails, redirect to login page
           navigate('/login', { 
@@ -55,13 +63,26 @@ const Signup = () => {
       {/* Header */}
       <SignupHeader />
 
+      {/* What this account joins, when it comes from an invitation */}
+      {joining && (
+        <div className="rounded-xl border border-[var(--mtx-border)] bg-[var(--mtx-surface)] px-5 pb-4 pt-3">
+          <p className="text-sm text-[var(--mtx-text-muted)]">
+            {joining.invited_by ? `${joining.invited_by.name} invited you to join` : 'You were invited to join'}
+          </p>
+          <InvitationBox name={joining.organization.name} role={joining.role.label} size="compact" tone="paper" />
+        </div>
+      )}
+
       {/* Form Card */}
       <Card className="p-6 sm:p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 transition-all duration-300 hover:shadow-2xl">
-        <OAuthButtons className="mb-6" />
-        <SignupForm 
+        {/* Social sign-up would create a separate workspace instead of joining. */}
+        {!joining && <OAuthButtons className="mb-6" />}
+        <SignupForm
+          key={joining ? 'invite' : 'plain'}
           onSubmit={handleSignup}
           isSubmitting={isSubmitting}
           error={error}
+          lockedEmail={joining?.email}
         />
       </Card>
 

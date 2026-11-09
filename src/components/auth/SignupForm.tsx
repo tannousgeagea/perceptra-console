@@ -11,9 +11,11 @@ interface SignupFormProps {
   onSubmit: (data: SignupFormData) => Promise<void>;
   isSubmitting?: boolean;
   error?: string | null;
+  /** Fixed email (signing up from an invitation, which is for this address). */
+  lockedEmail?: string;
 }
 
-export interface SignupFormData extends UserCreate {
+export interface SignupFormData extends Omit<UserCreate, 'inviteToken'> {
   acceptTerms: boolean;
 }
 
@@ -30,11 +32,11 @@ const passwordRequirements: PasswordRequirement[] = [
   { label: 'One special character', test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
 ];
 
-export const SignupForm = ({ onSubmit, isSubmitting = false, error }: SignupFormProps) => {
+export const SignupForm = ({ onSubmit, isSubmitting = false, error, lockedEmail }: SignupFormProps) => {
   const [formData, setFormData] = useState<SignupFormData>({
     firstName: '',
     lastName: '',
-    email: '',
+    email: lockedEmail ?? '',
     username: '',
     password: '',
     confirmPassword: '',
@@ -222,6 +224,8 @@ export const SignupForm = ({ onSubmit, isSubmitting = false, error }: SignupForm
             onChange={(e) => handleFieldChange('email', e.target.value)}
             onBlur={() => handleFieldBlur('email')}
             disabled={isSubmitting}
+            readOnly={!!lockedEmail}
+            aria-describedby={lockedEmail ? 'email-locked-hint' : undefined}
             className={cn(
               "pl-10 h-11 transition-all duration-300",
               "focus:ring-2 focus:ring-primary/20",
@@ -234,6 +238,11 @@ export const SignupForm = ({ onSubmit, isSubmitting = false, error }: SignupForm
           <p className="text-sm text-destructive animate-fade-in flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
             {getFieldError('email')}
+          </p>
+        )}
+        {lockedEmail && (
+          <p id="email-locked-hint" className="text-xs text-muted-foreground">
+            The invitation was sent to this address, so your account uses it.
           </p>
         )}
       </div>

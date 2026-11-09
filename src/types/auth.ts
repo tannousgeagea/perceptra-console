@@ -86,6 +86,8 @@ export interface UserCreate {
   firstName: string;
   lastName: string;
   username: string;
+  /** From an invitation link: join that organization instead of a personal workspace. */
+  inviteToken?: string;
 }
 
 /**

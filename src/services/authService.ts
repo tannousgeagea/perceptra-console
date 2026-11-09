@@ -108,6 +108,11 @@ class AuthStorage {
    * Updates only the token fields after a successful refresh, writing to the
    * same backend that was chosen at login time.
    */
+  /** Replace the stored user (e.g. after joining an organization), in the session's storage. */
+  updateUser(user: User): void {
+    this.getStorage().setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(user));
+  }
+
   updateTokens(accessToken: string, refreshToken: string, expiresIn: number): void {
     const storage = this.getStorage();
     const expiryDate = new Date(Date.now() + expiresIn * 1000);
@@ -312,6 +317,8 @@ export const authService = {
     firstName: string;
     lastName: string;
     username: string;
+    /** From an invitation link: join that organization instead of a personal workspace. */
+    inviteToken?: string;
   }): Promise<LoginResponse> => {
     try {
       const res = await fetch(`${baseURL}/api/v1/auth/register`, {
@@ -323,15 +330,24 @@ export const authService = {
           password_confirm: data.confirmPassword,
           first_name: data.firstName,
           last_name: data.lastName,
-          username: data.username,
+          // Optional: left blank, the server makes one from the email.
+          ...(data.username.trim() ? { username: data.username.trim() } : {}),
+          ...(data.inviteToken ? { invite_token: data.inviteToken } : {}),
         }),
       });
 
       if (!res.ok) {
         const error = await res.json();
+        // Invitation errors come as { code, message }; validation errors as
+        // { error, details: [{ field, message }] }.
+        const firstInvalid = Array.isArray(error.details) ? error.details[0] : undefined;
+        const detail = typeof error.detail === "object" && error.detail?.message
+          ? error.detail.message
+          : error.detail
+            ?? (firstInvalid ? `${String(firstInvalid.field ?? "").split(" -> ").pop()}: ${firstInvalid.message}` : undefined);
         throw new ApiError(
           res.status,
-          error.detail || "Sign up failed",
+          detail || "Sign up failed",
           error
         );
       }
