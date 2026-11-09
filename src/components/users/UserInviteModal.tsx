@@ -23,19 +23,26 @@ import { Shield, Edit3, Eye } from 'lucide-react';
 interface UserInviteModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInvite: (email: string, role: UserRole) => void;
+  /** Resolves true when the user was added; the form keeps its values otherwise. */
+  onInvite: (email: string, role: UserRole) => Promise<boolean>;
 }
 
 export function UserInviteModal({ open, onOpenChange, onInvite }: UserInviteModalProps) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('viewer');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && role) {
-      onInvite(email, role);
-      setEmail('');
-      setRole('viewer');
+    if (!email || !role || submitting) return;
+    setSubmitting(true);
+    try {
+      if (await onInvite(email, role)) {
+        setEmail('');
+        setRole('viewer');
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -44,9 +51,9 @@ export function UserInviteModal({ open, onOpenChange, onInvite }: UserInviteModa
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Invite User</DialogTitle>
+            <DialogTitle>Add User</DialogTitle>
             <DialogDescription>
-              Send an invitation to join your organization
+              Add someone who already has an account to your organization
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -109,7 +116,9 @@ export function UserInviteModal({ open, onOpenChange, onInvite }: UserInviteModa
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Send Invitation</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Adding…' : 'Add User'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

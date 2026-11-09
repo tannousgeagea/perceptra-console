@@ -6,7 +6,7 @@ import { Download, Check, TagIcon, Database, Activity, ExternalLink } from "luci
 import { VersionTag } from "@/types/models";
 import { ModelArtifact, ModelDetail, ModelVersion } from "@/types/models";
 import { TrainingSession } from "@/types/training_session";
-import { ModelService } from "./ModelService";
+import { apiFetch } from "@/services/apiClient";
 import { Button } from "@/components/ui/ui/button";
 import {
   Table,
@@ -81,13 +81,22 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
     }
   };
 
-  // Mutation to set a version tag
+  // Set or clear a version tag on the server ("baseline": one version per model)
   const tagMutation = useMutation({
-    mutationFn: ({ modelId, versionId, tag, value }: { modelId: string; versionId: string; tag: string; value: boolean }) =>
-      ModelService.setVersionTag(modelId, versionId, tag, value),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["model", model.id] });
-      toast.success("Version tag updated successfully");
+    mutationFn: async ({ modelId, versionId, tag, value }: { modelId: string; versionId: string; tag: string; value: boolean }) => {
+      const response = await apiFetch(
+        `/api/v1/models/${modelId}/versions/${encodeURIComponent(versionId)}/tags/${tag}`,
+        { method: value ? "PUT" : "DELETE" }
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed (${response.status})`);
+      }
+      return response.json();
+    },
+    onSuccess: (_data, { tag, value }) => {
+      queryClient.invalidateQueries({ queryKey: ["modelDetail"] });
+      toast.success(value ? `Marked as ${tag}` : `Removed ${tag} tag`);
     },
     onError: (error) => {
       toast.error("Failed to update version tag", {
@@ -108,12 +117,14 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
   // Are we comparing versions
   const isComparing = selectedVersions.length > 0;
 
-  // Download artifacts
+  // Download an artifact: the server sends a short-lived (signed) URL for each one.
   const handleDownload = (artifactType: keyof ModelArtifact, version: ModelVersion) => {
-    // In a real app, this would download the file
-    toast.info(`Downloading ${artifactType} for version ${version.version_number}`, {
-      description: `This would download ${version.artifacts[artifactType] || "the file"}`,
-    });
+    const url = version.artifacts?.[artifactType];
+    if (!url) {
+      toast.error(`No ${artifactType} file for version ${version.version_number}`);
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   // Set version tag
@@ -275,38 +286,25 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Tag Version</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                            {/* Baseline: the reference version, one per model */}
                             <DropdownMenuItem
-                              onClick={() => handleSetTag(version, "production", true)}
+                              disabled={tagMutation.isPending}
+                              onClick={() =>
+                                handleSetTag(version, "baseline", !version.tags?.includes("baseline"))
+                              }
                             >
-                              {version?.tags?.includes("production") && (
-                                <Check className="mr-2 h-4 w-4" />
-                              )}
-                              Production
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleSetTag(version, "staging", true)}
-                            >
-                              {version?.tags?.includes("staging") && (
-                                <Check className="mr-2 h-4 w-4" />
-                              )}
-                              Staging
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleSetTag(version, "baseline", true)}
-                            >
-                              {version?.tags?.includes("baseline") && (
+                              {version.tags?.includes("baseline") && (
                                 <Check className="mr-2 h-4 w-4" />
                               )}
                               Baseline
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleSetTag(version, "experimental", true)}
-                            >
-                              {version?.tags?.includes("experimental") && (
-                                <Check className="mr-2 h-4 w-4" />
-                              )}
-                              Experimental
-                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {/* Staging / production is where it runs: set by Deploy, shown here */}
+                            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                              {version.deployment_status === "production" || version.deployment_status === "staging"
+                                ? `Deployed to ${version.deployment_status}`
+                                : "Not deployed (use Deploy)"}
+                            </DropdownMenuLabel>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}

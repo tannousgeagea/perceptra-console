@@ -25,10 +25,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/ui/accordion";
 import { Play, Loader2, Settings2, GitBranch, Cpu, Sparkles, Tag } from "lucide-react";
-import { mockDatasets } from "./mockModels";
 import { Badge } from "@/components/ui/ui/badge";
 import { useModelDetail } from "@/hooks/useModels";
-import { ModelDetail, TrainingConfig, ComputeProfile, TrainingTriggerRequest, ComputeProfiles } from "@/types/models";
+import { useProjectDatasets } from "@/hooks/useProjectDatasets";
+import { useComputeProfiles } from "@/hooks/useCompute";
+import { ModelDetail, TrainingConfig, TrainingTriggerRequest } from "@/types/models";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/ui/radio-group";
 import { Separator } from "@/components/ui/ui/separator";
 
@@ -36,7 +37,8 @@ interface StartTrainingDialogProps {
   modelId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (model: ModelDetail, request: TrainingTriggerRequest ) => void;
+  /** Starts the run; resolves once the server accepted it, rejects if it did not. */
+  onConfirm: (model: ModelDetail, request: TrainingTriggerRequest) => Promise<unknown>;
 }
 
 const defaultConfig: TrainingConfig = {
@@ -74,8 +76,12 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
   const [trainingMode, setTrainingMode] = useState<"scratch" | "transfer">("transfer");
   const [versionName, setVersionName] = useState<string>("");
   const [selectedComputeProfile, setSelectedComputeProfile] = useState<string>("");
-  const { data: model, error } = useModelDetail(modelId!);
-  
+  const { data: model } = useModelDetail(modelId!);
+  // The project's exported dataset versions, and the organization's compute profiles.
+  const { data: datasets = [], isLoading: datasetsLoading } = useProjectDatasets(model?.project_id ?? "");
+  const { data: computeProfiles = [] } = useComputeProfiles();
+  const activeProfiles = computeProfiles.filter((p) => p.is_active);
+
 
   // Get sorted versions (latest first)
   const sortedVersions = model?.versions
@@ -85,18 +91,17 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
   const latestVersion = sortedVersions[0];
   const hasVersions = sortedVersions.length > 0;
 
-  // Get default compute profile
-  const defaultComputeProfile = ComputeProfiles.find(p => p.isDefault);
+  // The organization's default compute profile, if it has one
+  const defaultComputeProfile = activeProfiles.find((p) => p.is_default);
 
 
   useEffect(() => {
     if (open && model) {
       setConfig(defaultConfig);
-      setSelectedDataset(mockDatasets[0]?.id || "");
-      
+      setSelectedDataset("");
       setVersionName("");
-      setSelectedComputeProfile(defaultComputeProfile?.id || "");
-      
+      setSelectedComputeProfile("");
+
       // Set training mode and base version based on available versions
       if (hasVersions) {
         setTrainingMode("transfer");
@@ -106,7 +111,22 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
         setSelectedBaseVersion("");
       }
     }
-  }, [open, model, latestVersion?.id, hasVersions, defaultComputeProfile?.id]);
+  }, [open, model, latestVersion?.id, hasVersions]);
+
+  // Once loaded: the newest dataset version, and the default compute profile
+  // (left empty, the server picks the organization's default). `model` is a
+  // dependency so these re-apply after the reset above, which runs first when
+  // the model (re)loads; the lists may already be cached by then.
+  const newestDatasetId = datasets[0]?.id;
+  const defaultComputeProfileId = defaultComputeProfile?.id;
+  useEffect(() => {
+    if (open && model && newestDatasetId) setSelectedDataset((current) => current || newestDatasetId);
+  }, [open, model, newestDatasetId]);
+  useEffect(() => {
+    if (open && model && defaultComputeProfileId) {
+      setSelectedComputeProfile((current) => current || defaultComputeProfileId);
+    }
+  }, [open, model, defaultComputeProfileId]);
 
   const handleConfirm = async () => {
     if (!model || !selectedDataset) return;
@@ -119,10 +139,14 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
       version_name: versionName || undefined,
       compute_profile_id: selectedComputeProfile || undefined,
     }
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    onConfirm(model, request);
-    setIsLoading(false);
-    onOpenChange(false);
+    try {
+      await onConfirm(model, request);
+      onOpenChange(false);
+    } catch {
+      // The error toast is shown by the training mutation; stay open to adjust and retry.
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const updateConfig = <K extends keyof TrainingConfig>(
@@ -134,8 +158,8 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
 
   if (!model) return null;
 
-  const selectedDatasetInfo = mockDatasets.find((d) => d.id === selectedDataset);
-  const selectedComputeInfo = ComputeProfiles.find((p) => p.id === selectedComputeProfile);
+  const selectedDatasetInfo = datasets.find((d) => d.id === selectedDataset);
+  const selectedComputeInfo = activeProfiles.find((p) => p.id === selectedComputeProfile);
   const nextVersionNumber = Math.max(...model.versions.map(v => v.version_number), 0) + 1
 
   return (
@@ -241,7 +265,7 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
                             Latest
                           </Badge>
                         )}
-                        {version.tags?.includes("production") && (
+                        {version.deployment_status === "production" && (
                           <Badge variant="default" className="text-xs py-0 px-1.5 bg-green-600">
                             Prod
                           </Badge>
@@ -263,33 +287,51 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
           {/* Dataset Selection */}
           <div className="space-y-2">
             <Label htmlFor="dataset">Training Dataset</Label>
-            <Select value={selectedDataset} onValueChange={setSelectedDataset}>
+            <Select
+              value={selectedDataset}
+              onValueChange={setSelectedDataset}
+              disabled={datasetsLoading || datasets.length === 0}
+            >
               <SelectTrigger id="dataset">
-                <SelectValue placeholder="Select a dataset" />
+                <SelectValue
+                  placeholder={
+                    datasetsLoading
+                      ? "Loading dataset versions…"
+                      : datasets.length === 0
+                      ? "No exported dataset versions"
+                      : "Select a dataset version"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {mockDatasets.map((dataset) => (
+                {datasets.map((dataset) => (
                   <SelectItem key={dataset.id} value={dataset.id}>
                     <div className="flex items-center gap-2">
                       <span>{dataset.name}</span>
                       {dataset.version && (
                         <Badge variant="outline" className="text-xs py-0">
-                          {dataset.version}
+                          v{dataset.version}
                         </Badge>
                       )}
-                      <span className="text-muted-foreground text-xs">
-                        ({dataset.itemCount?.toLocaleString()} items)
-                      </span>
+                      {dataset.itemCount !== undefined && (
+                        <span className="text-muted-foreground text-xs">
+                          ({dataset.itemCount.toLocaleString()} images)
+                        </span>
+                      )}
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {selectedDatasetInfo && (
+            {!datasetsLoading && datasets.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                {selectedDatasetInfo.itemCount?.toLocaleString()} images available for training
+                Training needs an exported dataset version. Create and export one under Versions first.
               </p>
-            )}
+            ) : selectedDatasetInfo?.itemCount !== undefined ? (
+              <p className="text-xs text-muted-foreground">
+                {selectedDatasetInfo.itemCount.toLocaleString()} images available for training
+              </p>
+            ) : null}
           </div>
 
           {/* Compute Profile Selection */}
@@ -298,35 +340,37 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
               <Cpu className="h-4 w-4" />
               Compute Profile
             </Label>
-            <Select value={selectedComputeProfile} onValueChange={setSelectedComputeProfile}>
+            <Select
+              value={selectedComputeProfile}
+              onValueChange={setSelectedComputeProfile}
+              disabled={activeProfiles.length === 0}
+            >
               <SelectTrigger id="compute">
-                <SelectValue placeholder="Select compute profile" />
+                <SelectValue placeholder="Organization default" />
               </SelectTrigger>
               <SelectContent>
-                {ComputeProfiles.map((profile) => (
+                {activeProfiles.map((profile) => (
                   <SelectItem key={profile.id} value={profile.id}>
                     <div className="flex items-center gap-2">
                       <span>{profile.name}</span>
-                      {profile.isDefault && (
+                      {profile.is_default && (
                         <Badge variant="secondary" className="text-xs py-0 px-1.5">
                           Default
                         </Badge>
                       )}
-                      {profile.gpuType && (
-                        <span className="text-muted-foreground text-xs">
-                          ({profile.gpuCount}x {profile.gpuType})
-                        </span>
-                      )}
+                      <span className="text-muted-foreground text-xs">
+                        ({profile.provider.name})
+                      </span>
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {selectedComputeInfo && (
-              <p className="text-xs text-muted-foreground">
-                {selectedComputeInfo.description}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {selectedComputeInfo
+                ? `${selectedComputeInfo.provider.name} · ${selectedComputeInfo.default_instance_type}`
+                : "The organization's default compute is used."}
+            </p>
           </div>
 
           {/* Training Configuration */}
@@ -467,7 +511,7 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
               <div className="text-muted-foreground">New Version:</div>
               <div className="font-medium">v{nextVersionNumber}</div>
               <div className="text-muted-foreground">Compute:</div>
-              <div className="font-medium">{selectedComputeInfo?.name || "Default"}</div>
+              <div className="font-medium">{selectedComputeInfo?.name || "Organization default"}</div>
             </div>
           </div>
         </div>

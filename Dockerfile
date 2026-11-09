@@ -20,4 +20,7 @@ RUN npm run build
 # ── Production serve ──────────────────────────────────────────────────────────
 FROM nginx:alpine AS prod
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# A template: at start the image fills in ${NGINX_LOCAL_RESOLVERS} (read from
+# /etc/resolv.conf) and writes /etc/nginx/conf.d/default.conf.
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
+COPY nginx.conf /etc/nginx/templates/default.conf.template
