@@ -6,6 +6,7 @@ import { SignupHeader } from '@/components/auth/SignupHeader';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { OAuthButtons } from '@/components/auth/OAuthButtons';
 import { InvitationBox } from '@/components/invitations/InvitationBox';
+import { welcomeFrom } from '@/components/invitations/welcome';
 import { useInvitationPreview } from '@/hooks/useInvitations';
 import { UserCreate } from '@/types/auth';
 
@@ -40,7 +41,8 @@ const Signup = () => {
         const loginResult = await login(data.email, data.password, false);
 
         if (loginResult.success) {
-          navigate(joining ? '/projects' : '/', { replace: true });
+          if (joining) navigate('/projects', { replace: true, state: welcomeFrom(joining) });
+          else navigate('/', { replace: true });
         } else {
           // If auto-login fails, redirect to login page
           navigate('/login', { 

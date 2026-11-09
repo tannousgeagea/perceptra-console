@@ -52,6 +52,8 @@ export function PendingInvitations({ orgId }: { orgId: string | undefined }) {
                 <p className="truncate text-sm font-medium text-[var(--mtx-text)]">{invitation.email}</p>
                 <p className="text-xs text-[var(--mtx-text-muted)]">
                   {roleLabel(invitation.role)}
+                  {invitation.projects.length > 0 &&
+                    ` in ${invitation.projects.length === 1 ? invitation.projects[0].name : `${invitation.projects.length} projects`}`}
                   {invitation.invited_by ? `, invited by ${invitation.invited_by}` : ''}
                   {', '}
                   {expired ? (

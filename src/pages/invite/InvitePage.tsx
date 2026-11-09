@@ -8,9 +8,9 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { Check, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { MTXLogo } from '@/components/logo/MTXLogo';
 import { InvitationBox } from '@/components/invitations/InvitationBox';
+import { welcomeFrom } from '@/components/invitations/welcome';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   InvitationApiError,
@@ -133,6 +133,21 @@ const RoleDetails = ({ invite }: { invite: InvitationPreview }) => (
         </li>
       ))}
     </ul>
+
+    {invite.projects.length > 0 && (
+      <div className="mt-7">
+        <p className="text-[15px] font-medium text-[#0F172A]">
+          You'll have access to {invite.projects.length === 1 ? 'this project' : `these ${invite.projects.length} projects`}
+        </p>
+        <ul className="mt-2.5 flex flex-wrap gap-2">
+          {invite.projects.map((name) => (
+            <li key={name} className="rounded-md border border-[#E5E7EB] bg-[#F8FAFC] px-2.5 py-1 text-sm text-[#334155]">
+              {name}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
   </div>
 );
 
@@ -151,8 +166,7 @@ const NextStep = ({ invite, token }: { invite: InvitationPreview; token: string 
     accept.mutate(token, {
       onSuccess: ({ organization }) => {
         joinOrganization({ ...organization, role: organization.role as Organization['role'] });
-        toast.success(`Welcome to ${invite.organization.name}`);
-        navigate('/projects', { replace: true });
+        navigate('/projects', { replace: true, state: welcomeFrom(invite) });
       },
     });
 
