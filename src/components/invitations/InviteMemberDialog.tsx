@@ -18,7 +18,13 @@ import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
 import { Label } from '@/components/ui/ui/label';
 import { Textarea } from '@/components/ui/ui/textarea';
-import { InvitableRole, InvitationApiError, useCreateInvitation } from '@/hooks/useInvitations';
+import { Check } from 'lucide-react';
+import {
+  InvitableRole,
+  InvitationApiError,
+  useCreateInvitation,
+  useInvitableProjects,
+} from '@/hooks/useInvitations';
 import { cn } from '@/lib/utils';
 import { ROLE_CHOICES } from './roleChoices';
 
@@ -33,8 +39,10 @@ export function InviteMemberDialog({ open, onOpenChange, orgId, orgName }: Invit
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<InvitableRole>('editor');
   const [message, setMessage] = useState('');
+  const [projectIds, setProjectIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const create = useCreateInvitation(orgId);
+  const { data: projects = [] } = useInvitableProjects(orgId, open);
 
   // A fresh form each time the dialog opens.
   useEffect(() => {
@@ -42,9 +50,13 @@ export function InviteMemberDialog({ open, onOpenChange, orgId, orgName }: Invit
       setEmail('');
       setRole('editor');
       setMessage('');
+      setProjectIds([]);
       setError(null);
     }
   }, [open]);
+
+  const toggleProject = (id: string) =>
+    setProjectIds((current) => (current.includes(id) ? current.filter((p) => p !== id) : [...current, id]));
 
   const roleLabel = ROLE_CHOICES.find((r) => r.value === role)?.label ?? role;
 
@@ -53,9 +65,17 @@ export function InviteMemberDialog({ open, onOpenChange, orgId, orgName }: Invit
     if (!email.trim() || create.isPending) return;
     setError(null);
     try {
-      const invitation = await create.mutateAsync({ email: email.trim(), role, message: message.trim() || undefined });
+      const invitation = await create.mutateAsync({
+        email: email.trim(),
+        role,
+        message: message.trim() || undefined,
+        project_ids: projectIds,
+      });
+      const projectsNote = invitation.projects.length
+        ? ` and ${invitation.projects.length} project${invitation.projects.length === 1 ? '' : 's'}`
+        : '';
       toast.success(`Invitation sent to ${invitation.email}`, {
-        description: `They'll join ${orgName} as ${roleLabel} when they accept.`,
+        description: `They'll join ${orgName}${projectsNote} as ${roleLabel} when they accept.`,
       });
       onOpenChange(false);
     } catch (err) {
@@ -65,7 +85,7 @@ export function InviteMemberDialog({ open, onOpenChange, orgId, orgName }: Invit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[480px]">
         <form onSubmit={submit}>
           <DialogHeader>
             <DialogTitle>Invite to {orgName}</DialogTitle>
@@ -126,6 +146,48 @@ export function InviteMemberDialog({ open, onOpenChange, orgId, orgName }: Invit
                 })}
               </div>
             </fieldset>
+
+            {projects.length > 0 && (
+              <fieldset>
+                <legend className="text-sm font-medium">
+                  Projects <span className="font-normal text-[var(--mtx-text-muted)]">(optional)</span>
+                </legend>
+                <p className="mb-2 mt-0.5 text-xs text-[var(--mtx-text-muted)]">
+                  They're added to these as {roleLabel.toLowerCase()} when they join. Without any, they start with no projects.
+                </p>
+                <div className="max-h-40 overflow-y-auto rounded-lg border border-[var(--mtx-border)]">
+                  {projects.map((project) => {
+                    const checked = projectIds.includes(project.id);
+                    return (
+                      <label
+                        key={project.id}
+                        className="flex cursor-pointer items-center gap-3 border-b border-[var(--mtx-border)] px-3.5 py-2.5 last:border-b-0 hover:bg-[var(--mtx-surface)]"
+                      >
+                        <input
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={checked}
+                          onChange={() => toggleProject(project.id)}
+                        />
+                        <span
+                          aria-hidden
+                          className={cn(
+                            'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                            'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--mtx-primary)]',
+                            checked
+                              ? 'border-[var(--mtx-primary)] bg-[var(--mtx-primary)] text-white'
+                              : 'border-[var(--mtx-text-muted)]/50'
+                          )}
+                        >
+                          {checked && <Check className="h-3 w-3" strokeWidth={3} />}
+                        </span>
+                        <span className="truncate text-sm text-[var(--mtx-text)]">{project.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="invite-message">

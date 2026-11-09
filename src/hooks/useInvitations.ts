@@ -23,9 +23,16 @@ export interface InvitationPreview {
   };
   role: { name: InvitableRole; label: string; summary: string; abilities: string[] };
   invited_by: { name: string; email: string } | null;
+  /** Names of the projects they'll be added to. */
+  projects: string[];
   message: string;
   created_at: string;
   expires_at: string;
+}
+
+export interface InvitableProject {
+  id: string;
+  name: string;
 }
 
 export interface AdminInvitation {
@@ -40,6 +47,7 @@ export interface AdminInvitation {
   last_sent_at: string | null;
   send_count: number;
   link: string;
+  projects: InvitableProject[];
 }
 
 /** An API error with the server's code (e.g. "expired", "wrong_account") when it sent one. */
@@ -111,8 +119,20 @@ const useAdminMutation = <V, R>(orgId: string | undefined, request: (vars: V) =>
   });
 };
 
+/** The organization's active projects, to pick from when inviting. */
+export const useInvitableProjects = (orgId: string | undefined, enabled = true) =>
+  useQuery({
+    queryKey: ['org-invitable-projects', orgId],
+    queryFn: () =>
+      call<InvitableProject[]>('/api/v1/organizations/invitations/projects', {
+        headers: { 'X-Organization-ID': orgId! },
+      }),
+    enabled: !!orgId && enabled,
+    staleTime: 60_000,
+  });
+
 export const useCreateInvitation = (orgId: string | undefined) =>
-  useAdminMutation(orgId, (vars: { email: string; role: InvitableRole; message?: string }) =>
+  useAdminMutation(orgId, (vars: { email: string; role: InvitableRole; message?: string; project_ids?: string[] }) =>
     call<AdminInvitation>('/api/v1/organizations/invitations', {
       ...json('POST', vars),
       headers: { 'Content-Type': 'application/json', 'X-Organization-ID': orgId! },

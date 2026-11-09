@@ -1,5 +1,6 @@
 import { FC, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ContinueCard } from '@/components/resume/ContinueCard';
+import { JoinWelcomeBanner } from '@/components/invitations/JoinWelcomeBanner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserProjects } from '@/hooks/useUserProjects';
@@ -175,14 +176,25 @@ const Projects: FC = () => {
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                         <FolderPlus className="h-8 w-8 text-primary" />
                     </div>
-                    <div>
-                        <h3 className="text-lg font-semibold">No projects yet</h3>
-                        <p className="text-sm text-muted-foreground">Create your first project to start uploading and annotating images.</p>
-                    </div>
-                    <Button onClick={() => navigate('/projects/add')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Project
-                    </Button>
+                    {canDelete ? (
+                        <>
+                            <div>
+                                <h3 className="text-lg font-semibold">No projects yet</h3>
+                                <p className="text-sm text-muted-foreground">Create your first project to start uploading and annotating images.</p>
+                            </div>
+                            <Button onClick={() => navigate('/projects/add')}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Project
+                            </Button>
+                        </>
+                    ) : (
+                        <div>
+                            <h3 className="text-lg font-semibold">You're not in any projects yet</h3>
+                            <p className="max-w-sm text-sm text-muted-foreground">
+                                Projects in {currentOrganization?.name ?? 'this organization'} appear here once an organization admin adds you to one.
+                            </p>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -234,12 +246,18 @@ const Projects: FC = () => {
                     </div>
                     <div className='flex gap-2'>
                         {/* Notifications and "My jobs" moved to the app-wide bell in the left navbar. */}
-                        <Button onClick={() => navigate('/projects/add')}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            New Project
-                        </Button>
+                        {/* Creating projects is for org admins/owners (the API enforces it too). */}
+                        {canDelete && (
+                            <Button onClick={() => navigate('/projects/add')}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Project
+                            </Button>
+                        )}
                     </div>
                 </div>
+
+                {/* Right after joining by invitation */}
+                <JoinWelcomeBanner projectCount={isLoading ? undefined : projects?.filter((p) => p.is_active !== false).length ?? 0} />
 
                 <ContinueCard />
 
