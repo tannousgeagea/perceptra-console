@@ -203,21 +203,12 @@ const ModelsList: React.FC = () => {
   };
 
 
-  // Handle confirm training
+  // Handle confirm training. The dialog waits for this: it closes when the
+  // server accepts the run, and the training hook shows the success or error toast.
   const handleConfirmTraining = (
     model: ModelDetail,
     request: TrainingTriggerRequest,
-  ) => {
-
-    triggerTraining.mutate({
-      modelId: model.id,
-      request
-    });
-
-    toast.success("Training started!", {
-      description: `Training v${model.latest_version} of ${model.name} has begun.`,
-    });
-  };
+  ) => triggerTraining.mutateAsync({ modelId: model.id, request });
 
   return (
     <div className="space-y-6 p-6 w-full">

@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
-import { ModelService } from "./ModelService";
+import { getMetricsConfig } from "./metricsConfig";
 import {
   BarChart,
   Bar,
@@ -39,7 +39,7 @@ const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
   );
 
   // Get metrics config based on model type
-  const metricsConfig = ModelService.getMetricsConfig(model.task);
+  const metricsConfig = getMetricsConfig(model.task);
 
   // Only use versions that are trained
   const trainedVersions = model.versions.filter(
@@ -114,7 +114,7 @@ const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                     .map((version) => (
                       <SelectItem key={version.id} value={version.id}>
                         v{version.version_number}
-                        {version?.tags?.includes("production")
+                        {version?.deployment_status === "production"
                           ? " (Production)"
                           : ""}
                       </SelectItem>
@@ -147,7 +147,7 @@ const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                           className="px-4 py-3 text-left text-sm font-medium"
                         >
                           v{version.version_number}
-                          {version?.tags?.includes("production")
+                          {version?.deployment_status === "production"
                             ? " (Production)"
                             : ""}
                         </th>
@@ -199,7 +199,7 @@ const ModelMetricsView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                             key={version.id}
                             dataKey={`v${version.version_number}`}
                             name={`Version ${version.version_number}`}
-                            fill={version?.tags?.includes("production") ? "#8884d8" : "#82ca9d"}
+                            fill={version?.deployment_status === "production" ? "#8884d8" : "#82ca9d"}
                           />
                         ))}
                       </BarChart>

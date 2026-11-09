@@ -22,7 +22,9 @@ import { UserRole } from '@/types/auth';
 import { UserPlus, Search, MoreVertical, Shield, Eye, Pencil, Crown, Loader2 } from 'lucide-react';
 import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
 import { UserInviteModal } from './UserInviteModal';
-import { useUpdateOrganizationUser } from '@/hooks/useUpdateOrganizationUser'; // ✅ Add this
+import { useUpdateOrganizationUser } from '@/hooks/useUpdateOrganizationUser';
+import { useInviteMember, useRemoveMember } from '@/hooks/useOrganization';
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -100,6 +102,9 @@ export function UserManagement() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const { data, isLoading, error, refetch } = useOrganizationUsers();
   const { updateUser, isLoading: isUpdating } = useUpdateOrganizationUser();
+  const { currentOrganization } = useCurrentOrganization();
+  const inviteMember = useInviteMember(currentOrganization?.id);
+  const removeMember = useRemoveMember(currentOrganization?.id);
 
   const users = data?.users || [];
 
@@ -111,12 +116,17 @@ export function UserManagement() {
   );
 
   const handleRemoveUser = async (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    const who = user ? user.email : 'this user';
+    if (!window.confirm(`Remove ${who} from the organization? They lose access to its projects.`)) return;
     try {
-      // await api.deleteUser(userId);
-      // setUsers(users.filter((u) => u.id !== userId));
-      toast.success('User removed from organization');
+      await removeMember.mutateAsync(userId);
+      toast.success(`${who} removed from the organization`);
+      refetch();
     } catch (error) {
-      toast.error('Failed to remove user');
+      toast.error('Failed to remove user', {
+        description: error instanceof Error ? error.message : undefined,
+      });
     }
   };
 
@@ -136,16 +146,20 @@ export function UserManagement() {
     });
   };
 
-  const handleInviteUser = async (email: string, role: string) => {
+  // Adds an existing account to the organization (the person must have signed up).
+  const handleInviteUser = async (email: string, role: string): Promise<boolean> => {
     try {
-      // TODO: Add actual API call to invite user
-      // await inviteUser({ email, role });
-      
-      toast.success(`Invitation sent to ${email}`);
-      refetch(); // ✅ Refetch to get updated list
+      const result = await inviteMember.mutateAsync({ email, role: role.toLowerCase() });
+      toast.success(`${result.email} added as ${result.role}`);
+      refetch();
       setInviteModalOpen(false);
+      return true;
     } catch (error) {
-      toast.error('Failed to send invitation');
+      // The dialog stays open with what was typed, to correct and retry.
+      toast.error('Could not add user', {
+        description: error instanceof Error ? error.message : undefined,
+      });
+      return false;
     }
   };
 
@@ -189,7 +203,7 @@ export function UserManagement() {
             </div>
             <Button onClick={() => setInviteModalOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
-              Invite User
+              Add User
             </Button>
           </div>
         </CardHeader>

@@ -15,11 +15,9 @@ export type ModelStatus =
   | 'failed' 
   | 'deployed';
 
-export type VersionTag = 
-  | 'production' 
-  | 'staging' 
-  | 'baseline' 
-  | 'experimental';
+// Version tags the API accepts. Staging / production is a version's
+// deployment_status (set by Deploy), not a tag.
+export type VersionTag = 'baseline';
 
 export type ModelTask = 
   | 'classification' 

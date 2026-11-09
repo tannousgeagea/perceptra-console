@@ -58,7 +58,7 @@ const DatasetTab: React.FC<DatasetTabProps> = ({
                   .sort((a, b) => b.version_number - a.version_number)
                   .map(version => (
                     <SelectItem key={version.id} value={version.id}>
-                      v{version.version_number}{version.tags.includes("production") ? " (Production)" : ""}
+                      v{version.version_number}{version.deployment_status === "production" ? " (Production)" : ""}
                     </SelectItem>
                   ))}
               </SelectContent>
