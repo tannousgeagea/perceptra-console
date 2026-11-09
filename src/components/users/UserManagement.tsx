@@ -21,9 +21,10 @@ import {
 import { UserRole } from '@/types/auth';
 import { UserPlus, Search, MoreVertical, Shield, Eye, Pencil, Crown, Loader2 } from 'lucide-react';
 import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
-import { UserInviteModal } from './UserInviteModal';
+import { InviteMemberDialog } from '@/components/invitations/InviteMemberDialog';
+import { PendingInvitations } from '@/components/invitations/PendingInvitations';
 import { useUpdateOrganizationUser } from '@/hooks/useUpdateOrganizationUser';
-import { useInviteMember, useRemoveMember } from '@/hooks/useOrganization';
+import { useRemoveMember } from '@/hooks/useOrganization';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { toast } from 'sonner';
 import {
@@ -103,7 +104,6 @@ export function UserManagement() {
   const { data, isLoading, error, refetch } = useOrganizationUsers();
   const { updateUser, isLoading: isUpdating } = useUpdateOrganizationUser();
   const { currentOrganization } = useCurrentOrganization();
-  const inviteMember = useInviteMember(currentOrganization?.id);
   const removeMember = useRemoveMember(currentOrganization?.id);
 
   const users = data?.users || [];
@@ -146,23 +146,6 @@ export function UserManagement() {
     });
   };
 
-  // Adds an existing account to the organization (the person must have signed up).
-  const handleInviteUser = async (email: string, role: string): Promise<boolean> => {
-    try {
-      const result = await inviteMember.mutateAsync({ email, role: role.toLowerCase() });
-      toast.success(`${result.email} added as ${result.role}`);
-      refetch();
-      setInviteModalOpen(false);
-      return true;
-    } catch (error) {
-      // The dialog stays open with what was typed, to correct and retry.
-      toast.error('Could not add user', {
-        description: error instanceof Error ? error.message : undefined,
-      });
-      return false;
-    }
-  };
-
   // ✅ Handle loading state
   if (isLoading) {
     return (
@@ -203,7 +186,7 @@ export function UserManagement() {
             </div>
             <Button onClick={() => setInviteModalOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
-              Add User
+              Invite people
             </Button>
           </div>
         </CardHeader>
@@ -339,6 +322,7 @@ export function UserManagement() {
               </TableBody>
             </Table>
           </div>
+          <PendingInvitations orgId={currentOrganization?.id} />
         </CardContent>
       </Card>
 
@@ -388,10 +372,11 @@ export function UserManagement() {
         </CardContent>
       </Card>
 
-      <UserInviteModal
+      <InviteMemberDialog
         open={inviteModalOpen}
         onOpenChange={setInviteModalOpen}
-        onInvite={handleInviteUser}
+        orgId={currentOrganization?.id}
+        orgName={currentOrganization?.name ?? 'your organization'}
       />
     </div>
   );

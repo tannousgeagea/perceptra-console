@@ -16,6 +16,13 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  // Where to go after signing in (e.g. back to an invitation). Same-site paths
+  // only: "/x" but not "//host" or "/\host", which browsers treat as other sites.
+  const params = new URLSearchParams(location.search);
+  const rawNext = params.get('next') ?? '';
+  const next = /^\/(?![/\\])/.test(rawNext) ? rawNext : '/';
+  const fromInvitation = next.startsWith('/invite/');
+  const initialEmail = params.get('email') ?? undefined;
   
   useEffect(() => {
     const state = location.state as { message?: string } | null;
@@ -35,7 +42,7 @@ const Login = () => {
       const result = await login(email, password, rememberMe);
       
       if (result.success) {
-        navigate('/', { replace: true });
+        navigate(next, { replace: true });
       } else {
         setError(result.error || 'Login failed. Please check your credentials.');
       }
@@ -59,13 +66,21 @@ const Login = () => {
       {/* Header */}
       <LoginHeader />
 
+      {fromInvitation && (
+        <p className="rounded-lg border border-[var(--mtx-border)] bg-[var(--mtx-surface)] px-4 py-3 text-sm text-[var(--mtx-text-muted)]">
+          Sign in{initialEmail ? <> as <span className="font-medium text-[var(--mtx-text)]">{initialEmail}</span></> : null} to
+          accept your invitation. You'll go straight back to it.
+        </p>
+      )}
+
       {/* Form Card */}
       <Card className="p-6 sm:p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 transition-all duration-300 hover:shadow-2xl">
         <OAuthButtons className="mb-6" />
-        <LoginForm 
+        <LoginForm
           onSubmit={handleLogin}
           isSubmitting={isSubmitting}
           error={error}
+          initialEmail={initialEmail}
         />
       </Card>
 

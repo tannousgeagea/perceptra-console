@@ -2,8 +2,10 @@ import { useState, useMemo } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import {
   useOrganizationSummary, useOrganizationMembers,
-  useInviteMember, useUpdateMember, useRemoveMember,
+  useUpdateMember, useRemoveMember,
 } from '@/hooks/useOrganization';
+import { InviteMemberDialog } from '@/components/invitations/InviteMemberDialog';
+import { PendingInvitations } from '@/components/invitations/PendingInvitations';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrgMember } from '@/types/organization';
@@ -18,12 +20,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
   DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
 } from '@/components/ui/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/ui/dialog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/ui/alert-dialog';
-import { Label } from '@/components/ui/ui/label';
 import {
   Users, Search, UserPlus, ArrowLeft, MoreHorizontal, ShieldCheck,
   Mail, Crown, UserCog, Eye, Check, Loader2,
@@ -197,81 +197,6 @@ function MemberTableRow({ member, isSelf, onRoleChange, onRemove, isUpdating, is
   );
 }
 
-// ─── invite dialog ────────────────────────────────────────────────────────────
-
-function InviteDialog({ open, onClose, onInvite, isPending }: {
-  open: boolean; onClose: () => void;
-  onInvite: (email: string, role: string) => Promise<void>;
-  isPending: boolean;
-}) {
-  const [email, setEmail] = useState('');
-  const [role, setRole]   = useState('viewer');
-  const [error, setError] = useState('');
-
-  const reset = () => { setEmail(''); setRole('viewer'); setError(''); };
-
-  const handleClose = () => { reset(); onClose(); };
-
-  const handleSubmit = async () => {
-    if (!email.trim()) return;
-    setError('');
-    try {
-      await onInvite(email.trim(), role);
-      reset();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add member');
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={o => !o && handleClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus size={18} className="text-primary" />Add Member
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-email">Email address</Label>
-            <Input
-              id="inv-email"
-              type="email"
-              placeholder="colleague@company.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && !isPending && handleSubmit()}
-              disabled={isPending}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-role">Role</Label>
-            <Select value={role} onValueChange={setRole} disabled={isPending}>
-              <SelectTrigger id="inv-role"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="viewer">Viewer — read-only</SelectItem>
-                <SelectItem value="annotator">Annotator — can label data</SelectItem>
-                <SelectItem value="admin">Admin — full management</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isPending}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!email.trim() || isPending}>
-            {isPending
-              ? <Loader2 size={14} className="mr-1.5 animate-spin" />
-              : <Mail size={14} className="mr-1.5" />
-            }
-            Add Member
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ─── remove confirm dialog ────────────────────────────────────────────────────
 
 function RemoveDialog({ member, onClose, onConfirm, isPending }: {
@@ -357,7 +282,6 @@ export default function OrganizationMembersPage() {
     status: statusFilter !== 'all' ? statusFilter : undefined,
   });
 
-  const inviteMutation = useInviteMember(orgId);
   const updateMutation = useUpdateMember(orgId);
   const removeMutation = useRemoveMember(orgId);
 
@@ -373,12 +297,6 @@ export default function OrganizationMembersPage() {
 
   // ── Role gate — after all hooks ──
   if (!isOwner && !isAdmin) return <Navigate to="/no-permission" replace />;
-
-  const handleInvite = async (email: string, role: string) => {
-    await inviteMutation.mutateAsync({ email, role });
-    toast.success('Member added successfully');
-    setInviteOpen(false);
-  };
 
   const handleRoleUpdate = (member: OrgMember, role: string) => {
     updateMutation.mutate(
@@ -428,7 +346,7 @@ export default function OrganizationMembersPage() {
           </div>
         </div>
         <Button onClick={() => setInviteOpen(true)} className="flex-shrink-0">
-          <UserPlus size={15} className="mr-1.5" />Add Member
+          <UserPlus size={15} className="mr-1.5" />Invite people
         </Button>
       </div>
 
@@ -536,11 +454,13 @@ export default function OrganizationMembersPage() {
         )}
       </Card>
 
-      <InviteDialog
+      <PendingInvitations orgId={orgId} />
+
+      <InviteMemberDialog
         open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        onInvite={handleInvite}
-        isPending={inviteMutation.isPending}
+        onOpenChange={setInviteOpen}
+        orgId={orgId}
+        orgName={summary?.name ?? 'your organization'}
       />
 
       <RemoveDialog

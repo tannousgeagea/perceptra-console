@@ -26,6 +26,7 @@ import JobPage from './pages/jobs/JobsPage';
 import NoPermissionPage from './pages/NoPermissionPage';
 import DataLake from './pages/datalake/DataLake';
 import Login from './pages/Login';
+import InvitePage from './pages/invite/InvitePage';
 import { AuthProviderMock } from './hooks/useAuthMock';
 import { AuthProvider } from './contexts/AuthContext';
 import ModelsList from "./pages/models/ModelsList";
@@ -82,6 +83,8 @@ const App = () => {
                       <Route path="/auth/callback" element={<OAuthCallback />} />
                     </Route>
                   </Route>
+                  {/* Invitation links: for signed-out and signed-in visitors alike */}
+                  <Route path="/invite/:token" element={<InvitePage />} />
                   <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Navigate to="/projects" replace />} />
