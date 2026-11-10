@@ -80,9 +80,11 @@ const App = () => {
                       <Route path="/signup" element={<Signup />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
-                      <Route path="/auth/callback" element={<OAuthCallback />} />
                     </Route>
                   </Route>
+                  {/* Outside PublicRoute: it signs the user in, then decides where to go
+                      (e.g. back to an invitation), so it must not be redirected away. */}
+                  <Route path="/auth/callback" element={<OAuthCallback />} />
                   {/* Invitation links: for signed-out and signed-in visitors alike */}
                   <Route path="/invite/:token" element={<InvitePage />} />
                   <Route element={<ProtectedRoute />}>

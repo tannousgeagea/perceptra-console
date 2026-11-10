@@ -79,10 +79,13 @@ const json = (method: string, body?: unknown): RequestInit => ({
 
 // ─── Invitee ─────────────────────────────────────────────────────────────────
 
+export const fetchInvitationPreview = (token: string) =>
+  call<InvitationPreview>(`/api/v1/invitations/${encodeURIComponent(token)}`);
+
 export const useInvitationPreview = (token: string | undefined) =>
   useQuery({
     queryKey: ['invitation', token],
-    queryFn: () => call<InvitationPreview>(`/api/v1/invitations/${encodeURIComponent(token!)}`),
+    queryFn: () => fetchInvitationPreview(token!),
     enabled: !!token,
     retry: false,
     staleTime: 30_000,

@@ -77,8 +77,12 @@ const Signup = () => {
 
       {/* Form Card */}
       <Card className="p-6 sm:p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 transition-all duration-300 hover:shadow-2xl">
-        {/* Social sign-up would create a separate workspace instead of joining. */}
-        {!joining && <OAuthButtons className="mb-6" />}
+        {/* From an invitation, social sign-up joins that organization too. */}
+        <OAuthButtons
+          className="mb-6"
+          next={joining && inviteToken ? `/invite/${encodeURIComponent(inviteToken)}` : undefined}
+          inviteToken={joining ? inviteToken : undefined}
+        />
         <SignupForm
           key={joining ? 'invite' : 'plain'}
           onSubmit={handleSignup}

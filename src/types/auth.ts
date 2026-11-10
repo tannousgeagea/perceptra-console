@@ -116,6 +116,9 @@ export const AUTH_STORAGE_KEYS = {
 export const OAUTH_STORAGE_KEYS = {
   STATE: 'oauth_state',
   PROVIDER: 'oauth_provider',
+  // Where to go after signing in, and the invitation being accepted (if any).
+  NEXT: 'oauth_next',
+  INVITE: 'oauth_invite',
 } as const;
 
 /**
