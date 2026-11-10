@@ -46,7 +46,7 @@ export const LoginHeader = ({
 
       {/* Subtitle */}
       <p className="text-muted-foreground">
-        Sign in to continue to VisionNest
+        Sign in to continue to Malumetrix
       </p>
     </div>
   );

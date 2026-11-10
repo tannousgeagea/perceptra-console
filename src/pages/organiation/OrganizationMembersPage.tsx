@@ -33,7 +33,8 @@ import { toast } from 'sonner';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-const ROLES = ['owner', 'admin', 'annotator', 'viewer'] as const;
+// Organization roles as stored by the API ("annotator" is a project-level role only).
+const ROLES = ['owner', 'admin', 'editor', 'viewer'] as const;
 
 function roleMeta(role: string): { label: string; classes: string; icon: React.ElementType } {
   switch (role.toLowerCase()) {
@@ -42,8 +43,7 @@ function roleMeta(role: string): { label: string; classes: string; icon: React.E
     case 'admin':
       return { label: 'Admin',    classes: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',         icon: ShieldCheck };
     case 'editor':
-    case 'annotator':
-      return { label: role,       classes: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',             icon: UserCog };
+      return { label: 'Editor',   classes: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',             icon: UserCog };
     default:
       return { label: 'Viewer',   classes: 'bg-muted text-muted-foreground',                                           icon: Eye };
   }
@@ -351,10 +351,11 @@ export default function OrganizationMembersPage() {
       </div>
 
       {/* ── Role breakdown ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <RoleStatCard icon={Users}       label="Total"   count={summary?.user_count ?? total}  colorClass="bg-primary/10 text-primary" />
         <RoleStatCard icon={Crown}       label="Owners"  count={roleCounts['owner'] ?? 0}      colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400" />
         <RoleStatCard icon={ShieldCheck} label="Admins"  count={roleCounts['admin'] ?? 0}      colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" />
+        <RoleStatCard icon={UserCog}     label="Editors" count={roleCounts['editor'] ?? 0}     colorClass="bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400" />
         <RoleStatCard icon={Eye}         label="Viewers" count={roleCounts['viewer'] ?? 0}     colorClass="bg-muted text-muted-foreground" />
       </div>
 
@@ -375,7 +376,7 @@ export default function OrganizationMembersPage() {
             <SelectItem value="all">All roles</SelectItem>
             <SelectItem value="owner">Owner</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="annotator">Annotator</SelectItem>
+            <SelectItem value="editor">Editor</SelectItem>
             <SelectItem value="viewer">Viewer</SelectItem>
           </SelectContent>
         </Select>

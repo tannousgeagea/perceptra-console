@@ -2,10 +2,10 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, type OAuthReturn } from '@/contexts/AuthContext';
 import { OAuthProviderType } from '@/types/auth';
 
-interface OAuthButtonsProps {
+interface OAuthButtonsProps extends OAuthReturn {
   className?: string;
 }
 
@@ -27,14 +27,14 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ className = '' }) => {
+export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ className = '', next, inviteToken }) => {
   const { loginWithOAuth } = useAuth();
   const [loading, setLoading] = useState<OAuthProviderType | null>(null);
 
   const handleOAuthLogin = async (provider: OAuthProviderType) => {
     try {
       setLoading(provider);
-      await loginWithOAuth(provider);
+      await loginWithOAuth(provider, { next, inviteToken });
       // User will be redirected, no need to handle response
     } catch (error) {
       console.error(`${provider} login failed:`, error);

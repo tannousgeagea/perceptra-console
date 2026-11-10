@@ -1,12 +1,37 @@
 // pages/OAuthCallback.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, type OAuthCallbackResult } from '@/contexts/AuthContext';
+import { fetchInvitationPreview } from '@/hooks/useInvitations';
+import { welcomeFrom } from '@/components/invitations/welcome';
 import { Button } from '@/components/ui/ui/button';
 import { Card } from '@/components/ui/ui/card';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 type ProcessingState = 'loading' | 'success' | 'error';
+
+/**
+ * Where to go once signed in. A first-time account from an invitation has
+ * already joined the organization: show the welcome. Otherwise return to
+ * the page that started sign-in (e.g. the invitation, to join or explain).
+ */
+const landingAfterSignIn = async ({
+  next,
+  inviteToken,
+  organizationIds = [],
+}: OAuthCallbackResult): Promise<{ path: string; state?: unknown }> => {
+  const back = next && /^\/(?![/\\])/.test(next) ? next : '/';
+  if (!inviteToken) return { path: back };
+  try {
+    const invite = await fetchInvitationPreview(inviteToken);
+    if (invite.state === 'accepted' && organizationIds.includes(invite.organization.id)) {
+      return { path: '/projects', state: welcomeFrom(invite) };
+    }
+  } catch {
+    // The invitation page explains any problem with the link.
+  }
+  return { path: back };
+};
 
 export const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -51,9 +76,10 @@ export const OAuthCallback = () => {
 
         if (result.success) {
           setState('success');
-            setTimeout(() => {
-              navigate('/', { replace: true });
-            }, 1000);
+          const destination = await landingAfterSignIn(result);
+          setTimeout(() => {
+            navigate(destination.path, { replace: true, state: destination.state });
+          }, 1000);
         } else {
           setState('error');
           setError(result.error || 'Authentication failed');

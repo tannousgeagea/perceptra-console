@@ -19,6 +19,19 @@ import {
   getPrimaryOrganization,
 } from '@/types/auth';
 
+/** Where to land after an OAuth round trip, and the invitation it accepts. */
+export interface OAuthReturn {
+  next?: string;
+  inviteToken?: string;
+}
+
+export interface OAuthCallbackResult extends OAuthReturn {
+  success: boolean;
+  error?: string;
+  /** The signed-in user's organizations, to tell whether the invitation was joined. */
+  organizationIds?: string[];
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -36,12 +49,12 @@ interface AuthContextType {
   /** Add an organization just joined (e.g. by invitation) to the session and switch to it. */
   joinOrganization: (organization: Organization) => void;
   hasPermission: (organizationId: string, requiredRole: 'owner' | 'admin') => boolean;
-  loginWithOAuth: (provider: OAuthProviderType) => Promise<void>;
+  loginWithOAuth: (provider: OAuthProviderType, options?: OAuthReturn) => Promise<void>;
   handleOAuthCallback: (
     provider: OAuthProviderType,
     code: string,
     state: string
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<OAuthCallbackResult>;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
@@ -313,11 +326,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // OAuth
   // ---------------------------------------------------------------------------
 
-  const loginWithOAuth = async (provider: OAuthProviderType): Promise<void> => {
+  const loginWithOAuth = async (provider: OAuthProviderType, options: OAuthReturn = {}): Promise<void> => {
     try {
       const response = await authService.initiateOAuth(provider);
       sessionStorage.setItem(OAUTH_STORAGE_KEYS.STATE, response.state);
       sessionStorage.setItem(OAUTH_STORAGE_KEYS.PROVIDER, provider);
+      // Survive the round trip to the provider (same tab, so sessionStorage).
+      if (options.next) sessionStorage.setItem(OAUTH_STORAGE_KEYS.NEXT, options.next);
+      else sessionStorage.removeItem(OAUTH_STORAGE_KEYS.NEXT);
+      if (options.inviteToken) sessionStorage.setItem(OAUTH_STORAGE_KEYS.INVITE, options.inviteToken);
+      else sessionStorage.removeItem(OAUTH_STORAGE_KEYS.INVITE);
       window.location.href = response.authorization_url;
     } catch (error) {
       throw error;
@@ -349,7 +367,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     provider: OAuthProviderType,
     code: string,
     state: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<OAuthCallbackResult> => {
+    const next = sessionStorage.getItem(OAUTH_STORAGE_KEYS.NEXT) ?? undefined;
+    const inviteToken = sessionStorage.getItem(OAUTH_STORAGE_KEYS.INVITE) ?? undefined;
+    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.NEXT);
+    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.INVITE);
     try {
       const storedState = sessionStorage.getItem(OAUTH_STORAGE_KEYS.STATE);
       const storedProvider = sessionStorage.getItem(OAUTH_STORAGE_KEYS.PROVIDER);
@@ -358,7 +380,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Invalid OAuth state — possible CSRF attack');
       }
 
-      const response = await authService.completeOAuth(provider, code, state);
+      const response = await authService.completeOAuth(provider, code, state, inviteToken);
 
       // Write tokens to storage exactly once
       authStorage.setAuthData(
@@ -376,7 +398,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
 
-      return { success: true };
+      return {
+        success: true,
+        next,
+        inviteToken,
+        organizationIds: response.user.organizations.map((org) => org.id),
+      };
     } catch (error) {
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);

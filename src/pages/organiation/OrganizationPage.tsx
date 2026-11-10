@@ -19,8 +19,7 @@ function roleColor(role: string) {
   switch (role.toLowerCase()) {
     case 'owner':   return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300';
     case 'admin':   return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
-    case 'editor':
-    case 'annotator': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
+    case 'editor': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
     default:        return 'bg-muted text-muted-foreground';
   }
 }

@@ -281,13 +281,14 @@ export const authService = {
   completeOAuth: async (
     provider: 'microsoft' | 'google',
     code: string,
-    state: string
+    state: string,
+    inviteToken?: string
   ): Promise<LoginResponse> => {
     try {
       const res = await fetch(`${baseURL}/api/v1/auth/oauth/callback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, code, state }),
+        body: JSON.stringify({ provider, code, state, invite_token: inviteToken }),
       });
 
       if (!res.ok) {

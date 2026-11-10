@@ -18,7 +18,8 @@ export interface Organization {
 /**
  * User interface matching your API response
  */
-export type UserRole = 'owner' | 'admin' | 'annotator' | 'viewer';
+// Organization roles as stored by the API ("annotator" is a project-level role only).
+export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer';
 export type UserStatus = 'active' | 'inactive' | 'pending';
 
 export interface InviteUserData {
@@ -115,6 +116,9 @@ export const AUTH_STORAGE_KEYS = {
 export const OAUTH_STORAGE_KEYS = {
   STATE: 'oauth_state',
   PROVIDER: 'oauth_provider',
+  // Where to go after signing in, and the invitation being accepted (if any).
+  NEXT: 'oauth_next',
+  INVITE: 'oauth_invite',
 } as const;
 
 /**

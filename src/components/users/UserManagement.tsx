@@ -34,13 +34,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/ui/dropdown-menu';
 
-const roleIcons = {
-  owner: Crown,
-  admin: Shield,
-  editor: Pencil,
-  annotator: Pencil,
-  viewer: Eye,
-};
 
 type RoleConfig = {
   icon: React.ElementType;
@@ -59,9 +52,9 @@ const ROLE_CONFIG: Record<string, RoleConfig> = {
     label: 'Admin',
     color: 'bg-primary text-primary-foreground',
   },
-  annotator: {
+  editor: {
     icon: Pencil,
-    label: 'Annotator',
+    label: 'Editor',
     color: 'bg-secondary text-secondary-foreground',
   },
   viewer: {
@@ -91,12 +84,6 @@ const getRoleConfig = (role?: string): RoleConfig => {
   );
 };
 
-const roleColors = {
-  Owner: 'bg-accent text-accent-foreground',
-  Admin: 'bg-primary text-primary-foreground',
-  Annotator: 'bg-secondary text-secondary-foreground',
-  Viewer: 'bg-muted text-muted-foreground',
-};
 
 export function UserManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -253,10 +240,10 @@ export function UserManagement() {
                                   <span>Admin</span>
                                 </div>
                               </SelectItem>
-                              <SelectItem value="Annotator">
+                              <SelectItem value="Editor">
                                 <div className="flex items-center gap-2">
                                   <Pencil className="h-4 w-4" />
-                                  <span>Annotator</span>
+                                  <span>Editor</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="Viewer">
@@ -353,9 +340,9 @@ export function UserManagement() {
             <div className="flex items-start gap-3">
               <Pencil className="h-5 w-5 text-foreground mt-0.5" />
               <div>
-                <div className="font-medium">Annotator</div>
+                <div className="font-medium">Editor</div>
                 <div className="text-sm text-muted-foreground">
-                  Can create and edit annotations on assigned datasets
+                  Can annotate, review and build datasets in their projects
                 </div>
               </div>
             </div>

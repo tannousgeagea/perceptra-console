@@ -5,7 +5,8 @@ import { Card } from '@/components/ui/ui/card';
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
 import { Label } from '@/components/ui/ui/label';
-import { ScanEye, Mail, Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Mail, Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { MTXLogo } from '@/components/logo/MTXLogo';
 import { cn } from '@/lib/utils';
 
 const ForgotPassword = () => {
@@ -54,13 +55,7 @@ const ForgotPassword = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <Link to="/login" className="inline-flex justify-center items-center">
-          <div className="flex items-center gap-2 group">
-            <div className="relative">
-              <ScanEye className="w-8 h-8 text-primary transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" />
-              <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground">VisionNest</h1>
-          </div>
+          <MTXLogo badgeClassName="w-8 h-8" />
         </Link>
 
         <div className="space-y-2">

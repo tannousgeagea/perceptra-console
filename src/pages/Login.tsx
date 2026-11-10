@@ -22,6 +22,9 @@ const Login = () => {
   const rawNext = params.get('next') ?? '';
   const next = /^\/(?![/\\])/.test(rawNext) ? rawNext : '/';
   const fromInvitation = next.startsWith('/invite/');
+  // Also sent with Microsoft/Google sign-in: a first-time account then joins
+  // the organization instead of getting its own workspace.
+  const inviteToken = fromInvitation ? decodeURIComponent(next.slice('/invite/'.length)) : undefined;
   const initialEmail = params.get('email') ?? undefined;
   
   useEffect(() => {
@@ -75,7 +78,7 @@ const Login = () => {
 
       {/* Form Card */}
       <Card className="p-6 sm:p-8 shadow-xl border-border/50 backdrop-blur-sm bg-card/95 transition-all duration-300 hover:shadow-2xl">
-        <OAuthButtons className="mb-6" />
+        <OAuthButtons className="mb-6" next={next} inviteToken={inviteToken} />
         <LoginForm
           onSubmit={handleLogin}
           isSubmitting={isSubmitting}
