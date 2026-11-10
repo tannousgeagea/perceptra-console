@@ -18,7 +18,8 @@ export interface Organization {
 /**
  * User interface matching your API response
  */
-export type UserRole = 'owner' | 'admin' | 'annotator' | 'viewer';
+// Organization roles as stored by the API ("annotator" is a project-level role only).
+export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer';
 export type UserStatus = 'active' | 'inactive' | 'pending';
 
 export interface InviteUserData {
