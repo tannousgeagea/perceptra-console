@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Outlet } from "react-router-dom";
+import { PageFallback } from "@/components/layout/PageFallback";
 import { Button } from "@/components/ui/ui/button";
 import { Sun, Moon } from "lucide-react";
 import { LoginVisual } from "@/components/auth/LoginVisual";
@@ -34,7 +35,10 @@ export const AuthLayout = () => {
         {/* Page Content */}
         <div className="w-full max-w-md px-4 sm:px-6 relative z-10">
           <div className="space-y-8 animate-fade-in-up">
-            <Outlet />
+            {/* Sign-in ↔ sign-up ↔ reset: only this column waits for the page. */}
+            <Suspense fallback={<PageFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
         </div>
       </div>

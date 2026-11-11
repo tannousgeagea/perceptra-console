@@ -1,23 +1,14 @@
 import React from "react";
 import { Navigate, Outlet, useLocation} from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
+import { PageFallback } from '@/components/layout/PageFallback';
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
 }
 
-/**
- * Spinner shared between ProtectedRoute and PublicRoute.
- * Extracted to avoid duplication and keep both components readable.
- */
-const AuthSpinner: React.FC = () => (
-  <div className="flex min-h-screen w-full items-center justify-center">
-    <div className="flex flex-col items-center gap-4">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-visionNest-purple border-t-transparent" />
-      <p className="text-visionNest-navy font-medium">Loading...</p>
-    </div>
-  </div>
-);
+/** Shown by both guards while the session is restored (same look as page loads). */
+const AuthSpinner: React.FC = () => <PageFallback fullScreen />;
 
 
 /**

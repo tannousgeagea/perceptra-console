@@ -1,5 +1,6 @@
-import { FC } from 'react';
+import { FC, Suspense } from 'react';
 import ProjectSideBar from '@/components/layout/ProjectSidebar';
+import { PageFallback } from '@/components/layout/PageFallback';
 import { Outlet } from 'react-router-dom';
 import './project-layout.css';
 import { ClassesProvider } from '@/contexts/ClassesContext';
@@ -27,7 +28,10 @@ const ProjectLayout: FC = () => {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Projects
               </Button>
-              <Outlet />
+              {/* The next project page loads here; the sidebar stays. */}
+              <Suspense fallback={<PageFallback />}>
+                <Outlet />
+              </Suspense>
             </div>
           </div>
       </div>
