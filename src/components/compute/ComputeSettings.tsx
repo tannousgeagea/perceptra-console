@@ -13,6 +13,7 @@ import { api } from './api';
 import { ComputeProvider, ComputeStrategy, ComputeCredentials, CredentialField, ComputeProfile, ComputeProfileUpdateRequest } from '@/types/compute';
 import { Cpu, Cloud, Server, Zap, CheckCircle2, XCircle, Loader2, Eye, EyeOff, Key } from 'lucide-react';
 import { ComputeProfileCard } from './ComputeProfileCard';
+import { NOT_A_LOGIN, credentialAutoComplete } from '@/lib/formAutofill';
 import { 
   useComputeProfiles, 
   useComputeProviders,
@@ -435,6 +436,8 @@ export function ComputeSettings() {
                               <Input
                                 id={field.key}
                                 type={field.secret && !showSecrets[field.key] ? 'password' : 'text'}
+                                autoComplete={credentialAutoComplete(!!field.secret)}
+                                {...NOT_A_LOGIN}
                                 placeholder={field.placeholder || `Enter ${field.label}`}
                                 value={(credentials[field.key as keyof ComputeCredentials] as string) || ''}
                                 onChange={(e) => setCredentials({ ...credentials, [field.key]: e.target.value })}

@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/ui/select';
 import { Textarea } from '@/components/ui/ui/textarea';
 import { Credentials, StorageBackend } from '@/types/storage';
+import { NOT_A_LOGIN, credentialAutoComplete } from '@/lib/formAutofill';
 
 /** Form state of the credential fields (shared by profile creation and credential rotation). */
 export type CredentialForm = Record<string, string>;
@@ -11,7 +12,7 @@ export const AZURE_AUTH_METHODS = [
   { value: 'account_key', label: 'Account key' },
   { value: 'connection_string', label: 'Connection string' },
   { value: 'service_principal', label: 'Service principal (short-lived URLs)' },
-  { value: 'sas_token', label: 'SAS token (served through Perceptra proxy)' },
+  { value: 'sas_token', label: 'SAS token (served through Malumetrix proxy)' },
 ];
 
 export function buildCredentials(backend: StorageBackend, form: CredentialForm): Credentials {
@@ -67,7 +68,8 @@ export function CredentialFields({ backend, form, onChange }: CredentialFieldsPr
       <Input
         id={id}
         type={secret ? 'password' : 'text'}
-        autoComplete="off"
+        autoComplete={credentialAutoComplete(secret)}
+        {...NOT_A_LOGIN}
         placeholder={placeholder}
         value={form[id] || ''}
         onChange={(e) => onChange(id, e.target.value)}
@@ -119,7 +121,7 @@ export function CredentialFields({ backend, form, onChange }: CredentialFieldsPr
               {field('sasToken', 'SAS Token *', 'sv=...&sp=rl&sig=...', true)}
               <p className="text-sm text-muted-foreground">
                 A read-only container SAS (sp=r, sr=c) is enough for external storage; list (l) is optional. Images
-                are streamed through Perceptra so the token never reaches the browser.
+                are streamed through Malumetrix so the token never reaches the browser.
               </p>
             </>
           )}

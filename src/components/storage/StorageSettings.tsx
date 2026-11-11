@@ -12,6 +12,7 @@ import { StorageAccessMode, StorageBackend, Credentials } from '@/types/storage'
 import { Database, Cloud, Server, HardDrive, CheckCircle2, XCircle, Loader2, Globe } from 'lucide-react';
 import { StorageProfileCard } from './StorageProfileCard';
 import { CredentialFields, buildCredentials as buildBackendCredentials } from './CredentialFields';
+import { NOT_A_LOGIN } from '@/lib/formAutofill';
 
 const storageOptions = [
   { value: 'azure', label: 'Azure Blob Storage', icon: Cloud },
@@ -24,7 +25,7 @@ const storageOptions = [
 const accessModeOptions: { value: StorageAccessMode; label: string; description: string }[] = [
   {
     value: 'managed',
-    label: 'Managed by Perceptra',
+    label: 'Managed by Malumetrix',
     description: 'Uploads, dataset exports and model artifacts are written here.',
   },
   {
@@ -146,6 +147,8 @@ export function StorageSettings() {
               <Label htmlFor="containerName">Container Name *</Label>
               <Input
                 id="containerName"
+                autoComplete="off"
+                {...NOT_A_LOGIN}
                 placeholder="my-container"
                 value={formData.containerName || ''}
                 onChange={(e) => handleInputChange('containerName', e.target.value)}
@@ -155,6 +158,8 @@ export function StorageSettings() {
               <Label htmlFor="accountName">Account Name *</Label>
               <Input
                 id="accountName"
+                autoComplete="off"
+                {...NOT_A_LOGIN}
                 placeholder="mystorageaccount"
                 value={formData.accountName || ''}
                 onChange={(e) => handleInputChange('accountName', e.target.value)}
@@ -171,6 +176,8 @@ export function StorageSettings() {
               <Label htmlFor="bucketName">Bucket Name *</Label>
               <Input
                 id="bucketName"
+                autoComplete="off"
+                {...NOT_A_LOGIN}
                 placeholder="my-bucket"
                 value={formData.bucketName || ''}
                 onChange={(e) => handleInputChange('bucketName', e.target.value)}
@@ -214,6 +221,8 @@ export function StorageSettings() {
               <Label htmlFor="endpointUrl">Endpoint URL *</Label>
               <Input
                 id="endpointUrl"
+                autoComplete="off"
+                {...NOT_A_LOGIN}
                 placeholder="https://minio.example.com:9000"
                 value={formData.endpointUrl || ''}
                 onChange={(e) => handleInputChange('endpointUrl', e.target.value)}
@@ -223,6 +232,8 @@ export function StorageSettings() {
               <Label htmlFor="bucketName">Bucket Name *</Label>
               <Input
                 id="bucketName"
+                autoComplete="off"
+                {...NOT_A_LOGIN}
                 placeholder="my-bucket"
                 value={formData.bucketName || ''}
                 onChange={(e) => handleInputChange('bucketName', e.target.value)}
@@ -240,6 +251,8 @@ export function StorageSettings() {
                 <Label htmlFor="bucketName">Bucket Name *</Label>
                 <Input
                   id="bucketName"
+                  autoComplete="off"
+                  {...NOT_A_LOGIN}
                   placeholder="my-bucket"
                   value={formData.bucketName || ''}
                   onChange={(e) => handleInputChange('bucketName', e.target.value)}
@@ -249,6 +262,8 @@ export function StorageSettings() {
                 <Label htmlFor="projectId">Project ID (optional)</Label>
                 <Input
                   id="projectId"
+                  autoComplete="off"
+                  {...NOT_A_LOGIN}
                   placeholder="my-gcp-project"
                   value={formData.projectId || ''}
                   onChange={(e) => handleInputChange('projectId', e.target.value)}
@@ -337,6 +352,8 @@ export function StorageSettings() {
             <Label htmlFor="name">Profile Name *</Label>
             <Input
               id="name"
+              autoComplete="off"
+              {...NOT_A_LOGIN}
               placeholder="Production Storage"
               value={formData.name || ''}
               onChange={(e) => handleInputChange('name', e.target.value)}

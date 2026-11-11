@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/ui/textarea';
 import { Badge } from '@/components/ui/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/ui/collapsible';
 import { ComputeProviderType } from '@/types/compute';
+import { NOT_A_LOGIN, credentialAutoComplete } from '@/lib/formAutofill';
 
 interface CredentialsSectionProps {
   providerType: ComputeProviderType;
@@ -142,6 +143,8 @@ export function CredentialsSection({ providerType, hasCredentials, onSave }: Cre
                 <Input
                   id={field.key}
                   type={field.type === 'password' && !showPasswords[field.key] ? 'password' : 'text'}
+                  autoComplete={credentialAutoComplete(field.type === 'password')}
+                  {...NOT_A_LOGIN}
                   placeholder={field.placeholder}
                   value={values[field.key] || ''}
                   onChange={(e) => setValues(prev => ({ ...prev, [field.key]: e.target.value }))}

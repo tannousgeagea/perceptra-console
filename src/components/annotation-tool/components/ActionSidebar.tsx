@@ -183,7 +183,7 @@ const ActionSidebar: React.FC<ActionSidebarProps> = ({
         <div className="px-4 py-3 text-center backdrop-blur-md">
           <p className="text-[11px] text-slate-300 tracking-wide">
             © {new Date().getFullYear()}{" "}
-            <span className="text-indigo-400 font-semibold">Perceptra Vision UI</span>
+            <span className="text-indigo-400 font-semibold">Malumetrix</span>
           </p>
         </div>
       </footer>

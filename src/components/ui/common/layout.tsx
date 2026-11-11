@@ -1,6 +1,7 @@
-import { FC } from 'react';
+import { FC, Suspense } from 'react';
 // import Navbar from './navbar';
 import Navbar from '@/components/layout/AppNavBar';
+import { PageFallback } from '@/components/layout/PageFallback';
 import './layout.css';
 import { Outlet } from 'react-router-dom';
 
@@ -12,7 +13,10 @@ const Layout: FC = () => {
       </div>
       <div className="flex-1 overflow-auto">
           <div className='layout-content'>
-            <Outlet />
+            {/* The next page loads here; the navbar stays. */}
+            <Suspense fallback={<PageFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
         </div>
     </div>
