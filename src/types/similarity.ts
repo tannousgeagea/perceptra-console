@@ -36,6 +36,8 @@ export interface ScanJob {
   clusters_found: number;
   progress: number;
   eta_seconds: number;
+  /** 0.50–1.00, the threshold the scan was run with. */
+  similarity_threshold: number;
 }
 
 export interface ScanConfig {

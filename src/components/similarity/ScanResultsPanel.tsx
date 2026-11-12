@@ -168,7 +168,7 @@ export function ScanResultsPanel({
             <div>
               <h2 className="text-lg font-semibold">Similarity Results</h2>
               <p className="text-xs text-muted-foreground">
-                {scan.total_images.toLocaleString()} images scanned · {totalClusters} groups · {totalDuplicates} duplicates · Threshold: {Math.round(scan.progress > 0 ? (useScanThreshold(scan)) : 80)}%
+                {scan.total_images.toLocaleString()} images scanned · {totalClusters} groups · {totalDuplicates} duplicates · Threshold: {Math.round(scan.similarity_threshold * 100)}%
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -344,7 +344,3 @@ export function ScanResultsPanel({
   );
 }
 
-// Helper — in production, the threshold would come from the scan config
-function useScanThreshold(_scan: ScanJob): number {
-  return 80;
-}

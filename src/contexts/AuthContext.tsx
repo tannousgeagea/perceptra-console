@@ -326,20 +326,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // OAuth
   // ---------------------------------------------------------------------------
 
+  // Errors propagate to the caller (the sign-in buttons show them).
   const loginWithOAuth = async (provider: OAuthProviderType, options: OAuthReturn = {}): Promise<void> => {
-    try {
-      const response = await authService.initiateOAuth(provider);
-      sessionStorage.setItem(OAUTH_STORAGE_KEYS.STATE, response.state);
-      sessionStorage.setItem(OAUTH_STORAGE_KEYS.PROVIDER, provider);
-      // Survive the round trip to the provider (same tab, so sessionStorage).
-      if (options.next) sessionStorage.setItem(OAUTH_STORAGE_KEYS.NEXT, options.next);
-      else sessionStorage.removeItem(OAUTH_STORAGE_KEYS.NEXT);
-      if (options.inviteToken) sessionStorage.setItem(OAUTH_STORAGE_KEYS.INVITE, options.inviteToken);
-      else sessionStorage.removeItem(OAUTH_STORAGE_KEYS.INVITE);
-      window.location.href = response.authorization_url;
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.initiateOAuth(provider);
+    sessionStorage.setItem(OAUTH_STORAGE_KEYS.STATE, response.state);
+    sessionStorage.setItem(OAUTH_STORAGE_KEYS.PROVIDER, provider);
+    // Survive the round trip to the provider (same tab, so sessionStorage).
+    if (options.next) sessionStorage.setItem(OAUTH_STORAGE_KEYS.NEXT, options.next);
+    else sessionStorage.removeItem(OAUTH_STORAGE_KEYS.NEXT);
+    if (options.inviteToken) sessionStorage.setItem(OAUTH_STORAGE_KEYS.INVITE, options.inviteToken);
+    else sessionStorage.removeItem(OAUTH_STORAGE_KEYS.INVITE);
+    window.location.href = response.authorization_url;
   };
 
   /**

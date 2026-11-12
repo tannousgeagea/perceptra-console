@@ -321,6 +321,12 @@ function toChartData(epochMetrics: EpochMetric[]) {
 const SessionDetail: React.FC<SessionDetailProps> = ({ session }) => {
   const { sessionId } = useParams<{ sessionId: string }>();
 
+  // Before the early return: hooks must run on every render.
+  const chartData = useMemo(
+    () => toChartData(session?.epochMetrics ?? []),
+    [session?.epochMetrics]
+  );
+
   if (!session) {
     return (
       <div className="text-center py-12">
@@ -331,11 +337,6 @@ const SessionDetail: React.FC<SessionDetailProps> = ({ session }) => {
       </div>
     );
   }
-
-  const chartData = useMemo(
-    () => toChartData(session.epochMetrics ?? []),
-    [session.epochMetrics]
-  );
 
   const hasEpochMetrics = (session.epochMetrics?.length ?? 0) > 0;
   const hasCurrentMetrics =

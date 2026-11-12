@@ -34,6 +34,7 @@ function adaptScanToJob(scan: ScanSummary): ScanJob {
     clusters_found: scan.clusters_found,
     progress: scan.progress,
     eta_seconds: scan.eta_seconds ?? 0,
+    similarity_threshold: scan.similarity_threshold,
   };
 }
 
@@ -147,6 +148,7 @@ export function useSimilarityScan() {
         clusters_found: 0,
         progress: 0,
         eta_seconds: 0,
+        similarity_threshold: config.threshold,
       });
 
       try {

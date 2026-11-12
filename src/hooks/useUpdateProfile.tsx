@@ -82,7 +82,7 @@ export const useUpdateProfile = (
     onSuccess: (data) => {
       // Update user in auth storage
       // setUser(data)
-      authStorage.set(AUTH_STORAGE_KEYS.USER, JSON.stringify(data), true);
+      authStorage.updateUser(data);
 
       // Invalidate queries to refetch with new data
       queryClient.invalidateQueries({ queryKey: ['user', currentOrganization?.id] });

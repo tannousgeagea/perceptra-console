@@ -344,7 +344,7 @@ export default function ScanResultsPage() {
               <StatCard
                 icon={BarChart3}
                 label="Progress"
-                value={`${Math.round(scan.progress * 100)}%`}
+                value={`${Math.round(scan.progress)}%`}
                 sub={
                   scan.completed_at
                     ? `Done ${format(new Date(scan.completed_at), 'MMM d, HH:mm')}`
