@@ -29,7 +29,12 @@ export function JobAnnotationTabs({
 }: JobAnnotationTabsProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b">
-      <div role="tablist" className="flex items-center gap-1 overflow-x-auto">
+      {/* Full width on phones and swipeable, with no scrollbar box (and no vertical
+          scrollbar from the tabs' -1px underline offset). */}
+      <div
+        role="tablist"
+        className="flex w-full min-w-0 items-center gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] sm:w-auto [&::-webkit-scrollbar]:hidden"
+      >
         {JOB_TABS.map((tab) => {
           const isActive = activeStatus === tab.id;
           return (
@@ -40,7 +45,7 @@ export function JobAnnotationTabs({
               title={tab.hint}
               onClick={() => onStatusChange(tab.id)}
               className={cn(
-                'relative -mb-px whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors',
+                'relative -mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors sm:px-4',
                 isActive
                   ? 'border-primary text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import {
   useOrganizationSummary, useOrganizationMembers,
   useUpdateMember, useRemoveMember,
@@ -25,9 +25,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/ui/alert-dialog';
 import {
-  Users, Search, UserPlus, ArrowLeft, MoreHorizontal, ShieldCheck,
+  Users, Search, UserPlus, MoreHorizontal, ShieldCheck,
   Mail, Crown, UserCog, Eye, Check, Loader2,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -329,26 +330,16 @@ export default function OrganizationMembersPage() {
     <div className="space-y-6 p-6 animate-fade-in w-full">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-            <Link to={`/organizations/${orgId}`}><ArrowLeft size={16} /></Link>
+      {/* The sidebar's Organization section links back to the organization page. */}
+      <PageHeader
+        title={loadingOrg ? <Skeleton className="h-8 w-48" /> : `${summary?.name ?? 'Organization'} Members`}
+        description="Manage access and roles for your team"
+        actions={
+          <Button onClick={() => setInviteOpen(true)} className="flex-shrink-0">
+            <UserPlus size={15} className="mr-1.5" />Invite people
           </Button>
-          <div>
-            {loadingOrg
-              ? <Skeleton className="h-7 w-48" />
-              : <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                  <Users size={22} className="text-primary" />
-                  {summary?.name ?? 'Organization'} Members
-                </h1>
-            }
-            <p className="text-sm text-muted-foreground mt-0.5">Manage access and roles for your team</p>
-          </div>
-        </div>
-        <Button onClick={() => setInviteOpen(true)} className="flex-shrink-0">
-          <UserPlus size={15} className="mr-1.5" />Invite people
-        </Button>
-      </div>
+        }
+      />
 
       {/* ── Role breakdown ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">

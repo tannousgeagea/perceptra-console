@@ -156,8 +156,11 @@ const AnnotationControls = memo(
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <span className="font-semibold text-sm min-w-[60px] text-center">
-            {current} / {total}
+          <span className="text-sm min-w-[60px] text-center tabular-nums">
+            <span className="text-muted-foreground">Image </span>
+            <span className="font-semibold">{current}</span>
+            <span className="text-muted-foreground"> of </span>
+            <span className="font-semibold">{total}</span>
           </span>
           <Button
             size="icon"

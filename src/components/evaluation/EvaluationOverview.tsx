@@ -136,6 +136,15 @@ export const EvaluationOverview = ({
             <CardDescription>How predictions are being modified</CardDescription>
           </CardHeader>
           <CardContent>
+            {editDistribution.length === 0 ? (
+              <div className="flex h-[280px] flex-col items-center justify-center gap-1 text-center">
+                <p className="text-sm font-medium">No edits to show yet</p>
+                <p className="max-w-xs text-sm text-muted-foreground">
+                  When reviewers change model predictions, this shows what kind of changes they make.
+                </p>
+              </div>
+            ) : (
+            <>
             <ChartContainer
               config={{
                 percentage: { label: "Percentage", color: "hsl(var(--primary))" },
@@ -169,6 +178,8 @@ export const EvaluationOverview = ({
                 </div>
               ))}
             </div>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>

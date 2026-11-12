@@ -92,9 +92,10 @@ export function PaginationControls({
   }
 
   return (
-    <div className="flex items-center justify-between">
+    // Phones: page size above, Previous / "Page x of y" / Next below.
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>Items per page:</span>
+        <span className="whitespace-nowrap">Items per page:</span>
         <Select
           value={itemsPerPage.toString()}
           onValueChange={(value) => onItemsPerPageChange(Number(value))}
@@ -110,7 +111,7 @@ export function PaginationControls({
             ))}
           </SelectContent>
         </Select>
-        <span>
+        <span className="whitespace-nowrap">
           {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}-
           {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
         </span>
@@ -125,8 +126,11 @@ export function PaginationControls({
             />
           </PaginationItem>
 
+          <PaginationItem className="px-2 text-sm text-muted-foreground sm:hidden">
+            Page {currentPage} of {totalPages}
+          </PaginationItem>
           {getPageNumbers().map((page, index) => (
-            <PaginationItem key={index}>
+            <PaginationItem key={index} className="hidden sm:list-item">
               {page === 'ellipsis' ? (
                 <PaginationEllipsis />
               ) : (

@@ -205,6 +205,20 @@ export const useEvaluationData = (projectId?: string) => {
     []
   );
 
+  // ── Reload everything on this page ───────────────────────────────────────
+  const refresh = useCallback(() => {
+    queryClient.invalidateQueries({
+      predicate: (q) =>
+        String(q.queryKey[0]).startsWith("evaluation-") && q.queryKey[1] === projectId,
+    });
+  }, [queryClient, projectId]);
+
+  const isFetching =
+    summaryQuery.isFetching ||
+    classMetricsQuery.isFetching ||
+    trendsQuery.isFetching ||
+    alertsQuery.isFetching;
+
   // ── Combined loading state ───────────────────────────────────────────────
   const isLoading =
     summaryQuery.isLoading ||
@@ -214,6 +228,8 @@ export const useEvaluationData = (projectId?: string) => {
 
   return {
     isLoading,
+    isFetching,
+    refresh,
     summary: summaryQuery.data ?? EMPTY_SUMMARY,
     classMetrics: classMetricsQuery.data ?? [],
     editDistribution: [] as EditTypeDistribution[],

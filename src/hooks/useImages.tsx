@@ -159,8 +159,10 @@ export const buildImageQuery = (filters: ParsedQuery): string => {
   if (filters.maxHeight) parts.push(`max-height:${filters.maxHeight}`);
 
   // Annotations
-  if (filters.minAnnotations) parts.push(`min-annotations:${filters.minAnnotations}`);
-  if (filters.maxAnnotations) parts.push(`max-annotations:${filters.maxAnnotations}`);
+  // A count of 0 is a real filter ("max-annotations:0" = no annotations), so test for a number.
+  const isCount = (n?: number) => typeof n === 'number' && !Number.isNaN(n);
+  if (isCount(filters.minAnnotations)) parts.push(`min-annotations:${filters.minAnnotations}`);
+  if (isCount(filters.maxAnnotations)) parts.push(`max-annotations:${filters.maxAnnotations}`);
 
   // Job
   if (filters.job) parts.push(`job:${filters.job}`);
@@ -168,7 +170,7 @@ export const buildImageQuery = (filters: ParsedQuery): string => {
   // Sort
   if (filters.sort) parts.push(`sort:${filters.sort}`);
   if (filters.status) parts.push(`status:${filters.status}`);
-  if (filters.backend) parts.push(`backend:${filters.status}`);
+  if (filters.backend) parts.push(`backend:${filters.backend}`);
   if (filters.job_status) parts.push(`job_status:${filters.job_status}`);
 
   return parts.join(' ');

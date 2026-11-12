@@ -155,25 +155,15 @@ export function AccountSettings() {
           <CardDescription>Your account details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="user_id">User ID</Label>
-              <Input
-                id="user_id"
-                value={userData.userId}
-                disabled
-                className="bg-muted font-mono text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={userData.username}
-                disabled
-                className="bg-muted"
-              />
-            </div>
+          {/* The internal user ID meant nothing to people; the username is what others see. */}
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={userData.username}
+              disabled
+              className="bg-muted"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -198,7 +188,7 @@ export function AccountSettings() {
           <CardDescription>Update your personal details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="first_name">First Name</Label>
               <Input

@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
-import { ArrowLeft, RefreshCw, Search, List, Sparkle } from 'lucide-react';
+import { ChevronRight, RefreshCw, Search, List, Sparkle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface JobAnnotationHeaderProps {
   jobName: string;
@@ -32,27 +33,25 @@ export function JobAnnotationHeader({
   const location = useLocation();
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="shrink-0"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{jobName}</h1>
-          <p className="text-sm text-muted-foreground">{subtitle ?? `Created at ${createdAt}`}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="space-y-2">
+      {/* Breadcrumb: one level up is the job list ("Back to Projects" leaves the project). */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-muted-foreground">
+        <button type="button" onClick={onBack} className="rounded hover:text-foreground hover:underline">
+          Annotate
+        </button>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="truncate text-foreground">{jobName}</span>
+      </nav>
+    <PageHeader
+      title={jobName}
+      description={subtitle ?? `Created at ${createdAt}`}
+      actions={
+      <>
         <Button
           variant="outline"
           size="icon"
           onClick={onRefresh}
+          aria-label="Refresh"
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -80,7 +79,9 @@ export function JobAnnotationHeader({
             </Button>
           </>
         )}
-      </div>
+      </>
+      }
+    />
     </div>
   );
 }

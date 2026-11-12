@@ -37,7 +37,7 @@ export const projectNavItems = (projectId: string): ProjectNavItem[] => [
   { section: 'Insights', label: 'Analysis', path: `/projects/${projectId}/analysis`, icon: BarChart },
   { section: 'Insights', label: 'Analytics', path: `/projects/${projectId}/analytics`, icon: LineChart, keywords: ['stats', 'charts'] },
   { section: 'Insights', label: 'Activity', path: `/projects/${projectId}/activity`, icon: Activity, keywords: ['history', 'log'] },
-  { section: 'Models', label: 'Version', path: `/projects/${projectId}/versions`, icon: Layers, keywords: ['dataset versions', 'export', 'download'] },
+  { section: 'Models', label: 'Versions', path: `/projects/${projectId}/versions`, icon: Layers, keywords: ['dataset versions', 'export', 'download'] },
   { section: 'Models', label: 'Models', path: `/projects/${projectId}/models`, icon: Brain },
   { section: 'Models', label: 'Training', path: `/projects/${projectId}/sessions`, icon: ActivitySquare, keywords: ['sessions', 'train'] },
   { section: 'Models', label: 'Evaluation', path: `/projects/${projectId}/evaluation`, icon: ChartCandlestick, keywords: ['metrics', 'map'] },

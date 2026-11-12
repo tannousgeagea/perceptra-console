@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
 import { Skeleton } from "@/components/ui/ui/skeleton";
-import { BarChart3, ClipboardCheck, Database, Image, Tag, TrendingUp, GitCompare } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ClipboardCheck, Database, Image, Tag, TrendingUp, GitCompare } from "lucide-react";
 import { ReviewInsightsPanel } from "@/components/analytics/ReviewInsightsPanel";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 import { ImageStatsChart } from "@/components/analytics/AnalyticsImageStatsChart";
@@ -65,13 +66,10 @@ const Analytics = () => {
     <div className="min-h-screen bg-background w-full">
       <div className="border-b bg-card/50 backdrop-blur-sm">
         <div className="mx-auto px-6 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <BarChart3 className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Dataset Analytics</h1>
-          </div>
-          <p className="text-muted-foreground">
-            {summary.project_name} • {summary.project_type.replace(/_/g, " ")}
-          </p>
+          <PageHeader
+            title="Dataset Analytics"
+            description={`${summary.project_name}, ${summary.project_type.replace(/_/g, " ")}`}
+          />
         </div>
       </div>
 
