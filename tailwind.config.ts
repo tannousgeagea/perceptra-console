@@ -186,7 +186,8 @@ export default {
 				"shimmer": "shimmer 2s linear infinite",
 			},
 			backgroundImage: {
-				'vision-gradient': 'linear-gradient(135deg, #9b87f5 0%, #F97316 100%)',
+				// Brand gradient (--mtx-accent → --mtx-primary → --mtx-secondary), as on the invite page.
+				'vision-gradient': 'linear-gradient(135deg, #2970FF 0%, #5A2DFF 50%, #8A3FFC 100%)',
 			}
 		}
 	},
