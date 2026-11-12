@@ -1,5 +1,5 @@
 import './App.css';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense } from 'react';
 import Layout from './components/ui/common/layout';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProjectLayout from './components/ui/common/project-layout';
@@ -11,7 +11,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TooltipProvider } from './components/ui/ui/tooltip';
 import { AuthLayout } from './components/auth/AuthLayout';
 import { ProjectProvider } from './contexts/ProjectContext';
-import { appFirstRender } from './lib/bootSplash';
+import { AppBoot } from './components/layout/AppBoot';
 import CommandPalette from './components/command-palette/CommandPalette';
 import { RealtimeProvider } from './contexts/RealtimeContext';
 import { SentBackWatcher } from './components/review/SentBackWatcher';
@@ -79,14 +79,10 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  // The start-up splash (index.html) fades once nothing is loading any more.
-  useEffect(() => {
-    appFirstRender();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
+        <AppBoot>
           <AuthProvider>
               <TooltipProvider delayDuration={100}>
                 <RealtimeProvider>
@@ -175,6 +171,7 @@ const App = () => {
               <Sonner />
               <CommandPalette />
           </AuthProvider>
+        </AppBoot>
       </Router>
     </QueryClientProvider>
   );

@@ -1,20 +1,11 @@
-import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { loadingFinished, loadingStarted } from '@/lib/bootSplash';
 
 /**
  * Shown while a page's code or the session is loading. Full screen at app
  * start; inside layouts it fills only the content area, so the sidebar and
  * header stay put while the next page loads.
  */
-export const PageFallback = ({ fullScreen = false }: { fullScreen?: boolean }) => {
-  // While any of these is on screen, the start-up splash stays up (lib/bootSplash).
-  useEffect(() => {
-    loadingStarted();
-    return loadingFinished;
-  }, []);
-
-  return (
+export const PageFallback = ({ fullScreen = false }: { fullScreen?: boolean }) => (
   <div
     role="status"
     className={cn(
@@ -28,5 +19,4 @@ export const PageFallback = ({ fullScreen = false }: { fullScreen?: boolean }) =
     />
     <span className="sr-only">Loading</span>
   </div>
-  );
-};
+);
