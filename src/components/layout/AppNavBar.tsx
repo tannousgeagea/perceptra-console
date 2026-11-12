@@ -307,7 +307,7 @@ const Navbar: FC = () => {
             )}
           >
             <div className={cn(isExpanded ? 'px-1' : 'flex justify-center')}>
-              <UserProfileMenu user={currentUser} isCollapsed={!isExpanded} />
+              {currentUser && <UserProfileMenu user={currentUser} isCollapsed={!isExpanded} />}
             </div>
           </div>
         </div>

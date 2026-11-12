@@ -1,8 +1,6 @@
-export function getCurrentUser() {
-    const user = localStorage.getItem("user") || sessionStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
-  }
+import { authStorage } from '@/services/authService';
 
-export function getCurrentUserOrg() {
-  const user = localStorage.getItem("user") || sessionStorage.getItem('user');
+/** The signed-in user of this tab (see authStorage for which storage that is). */
+export function getCurrentUser() {
+  return authStorage.getAuthData().user;
 }

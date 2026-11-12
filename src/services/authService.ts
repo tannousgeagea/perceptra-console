@@ -23,11 +23,18 @@ import {
  */
 class AuthStorage {
   /**
-   * Returns the storage backend that was chosen at login time.
-   * Falls back to sessionStorage if the marker is absent (e.g. first visit).
+   * Returns the storage backend this tab's sign-in uses.
+   * - A tab that signed in itself has its own marker (sessionStorage): that wins,
+   *   so a tab signed in without "remember me" never picks up someone's
+   *   remembered sign-in from localStorage.
+   * - A new tab without its own sign-in uses a remembered one (localStorage
+   *   marker 'local'), so "remember me" still works across tabs.
+   * - Otherwise sessionStorage (nothing stored: signed out).
    */
   private getStorage(): Storage {
-    return sessionStorage.getItem(AUTH_STORAGE_KEYS.STORAGE_TYPE) === 'local'
+    const tabChoice = sessionStorage.getItem(AUTH_STORAGE_KEYS.STORAGE_TYPE);
+    if (tabChoice) return tabChoice === 'local' ? localStorage : sessionStorage;
+    return localStorage.getItem(AUTH_STORAGE_KEYS.STORAGE_TYPE) === 'local'
       ? localStorage
       : sessionStorage;
   }
@@ -37,8 +44,14 @@ class AuthStorage {
     storage.setItem(key, value);
   }
 
+  /**
+   * Reads from this tab's sign-in storage (see getStorage), then from
+   * sessionStorage, where per-tab keys such as the active organization live.
+   * Never falls back to localStorage, so another person's remembered sign-in
+   * can't leak into a tab signed in without "remember me".
+   */
   get(key: string): string | null {
-    return localStorage.getItem(key) || sessionStorage.getItem(key);
+    return this.getStorage().getItem(key) || sessionStorage.getItem(key);
   }
 
   remove(key: string): void {
@@ -78,11 +91,13 @@ class AuthStorage {
     storage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(user));
     storage.setItem(AUTH_STORAGE_KEYS.TOKEN_EXPIRY, expiryDate.toISOString());
 
-    // Record the backend choice so getStorage() is deterministic on refresh
-    localStorage.setItem(
-      AUTH_STORAGE_KEYS.STORAGE_TYPE,
-      rememberMe ? 'local' : 'session'
-    );
+    // Record the choice for this tab (read first by getStorage()). Only a
+    // remembered sign-in is also recorded for other tabs; a session-only one
+    // stays in this tab and leaves any remembered sign-in alone.
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.STORAGE_TYPE, rememberMe ? 'local' : 'session');
+    if (rememberMe) {
+      localStorage.setItem(AUTH_STORAGE_KEYS.STORAGE_TYPE, 'local');
+    }
   }
 
   getAuthData(): {

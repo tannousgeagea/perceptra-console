@@ -31,7 +31,6 @@ const UserProgressCard = ({
   const handleClick = () => {
     if (onUserClick) {
       onUserClick(userProgress.userId);
-    } else {
     }
   };
 

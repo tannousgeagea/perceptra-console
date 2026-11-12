@@ -15,7 +15,6 @@ interface ValidationImagesProps {
 }
 
 const ValidationImages = ({ validationImages, modelVersionId, onValidationComplete }: ValidationImagesProps) => {
-  if (!modelVersionId) return null
   const [showPredictions, setShowPredictions] = useState(true);
   const [showGroundTruth, setShowGroundTruth] = useState(true);
 
@@ -36,6 +35,8 @@ const ValidationImages = ({ validationImages, modelVersionId, onValidationComple
     defaultItemsPerPage: 10
   });
 
+  // After the hooks: they must run on every render.
+  if (!modelVersionId) return null;
 
   if (validationImages.length == 0){
   return (

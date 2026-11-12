@@ -20,8 +20,8 @@ interface ScanRowKebabMenuProps {
 
 export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest }: ScanRowKebabMenuProps) {
   const { user } = useAuth();
-  if (!user) return null;
   const navigate = useNavigate();
+  if (!user) return null;
   const canCancel = (scan.status === 'pending' || scan.status === 'running') &&
     (user.role === 'admin' || user.role === 'owner');
 
