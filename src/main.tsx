@@ -3,6 +3,7 @@ import './index.css'
 import { enableMapSet } from "immer";
 import App from './App.tsx'
 import { ThemeProvider } from 'next-themes'
+import { hideBootSplash } from './lib/bootSplash'
 
 enableMapSet();
 
@@ -18,6 +19,10 @@ window.addEventListener('vite:preloadError', (event) => {
   try { sessionStorage.setItem(key, String(Date.now())); } catch { /* storage blocked */ }
   window.location.reload();
 });
+
+// Safety net: never leave the start-up splash over the app (or over an error).
+window.setTimeout(hideBootSplash, 10_000);
+window.addEventListener('error', hideBootSplash, { once: true });
 
 createRoot(document.getElementById('root')!).render(
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

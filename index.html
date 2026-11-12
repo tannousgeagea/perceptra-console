@@ -5,8 +5,85 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Malumetrix</title>
+    <!-- Font: fetched in parallel with the app instead of after its stylesheet. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" />
+    <style>
+      /* Start-up splash: plain HTML/CSS so it shows while the JavaScript
+         downloads. Removed by src/lib/bootSplash.ts once the first screen is
+         ready; invisible for the first 250 ms so fast loads never flash it. */
+      #boot-splash { position: fixed; inset: 0; z-index: 9999; transition: opacity .2s ease-out; }
+      #boot-splash.bs-hide { opacity: 0; pointer-events: none; }
+      /* Hidden before its fade-in finished: freeze it there, so it never brightens on the way out. */
+      #boot-splash.bs-hide .bs-inner { animation-play-state: paused; }
+      .bs-inner {
+        position: absolute; inset: 0; overflow: hidden;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+        background-color: #070C18;
+        background-image:
+          radial-gradient(ellipse 60% 50% at 50% 50%, rgba(90,45,255,.08) 0%, transparent 70%),
+          linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+        background-size: auto, 48px 48px, 48px 48px;
+        opacity: 0; animation: bs-in .3s ease-out .25s forwards;
+      }
+      .bs-badge { position: relative; width: 76px; height: 76px; }
+      .bs-badge::before {
+        content: ""; position: absolute; left: 50%; top: 45%; width: 220px; height: 220px;
+        transform: translate(-50%, -50%); border-radius: 50%; filter: blur(32px); pointer-events: none;
+        background: radial-gradient(circle, rgba(90,45,255,.3) 0%, rgba(41,112,255,.12) 45%, transparent 70%);
+      }
+      .bs-badge svg { position: relative; display: block; }
+      .bs-m { stroke-dasharray: 1; stroke-dashoffset: 1; animation: bs-draw .7s cubic-bezier(.4,0,.2,1) .35s forwards; }
+      .bs-word {
+        font-family: Outfit, system-ui, sans-serif; font-size: 30px; letter-spacing: -.025em; line-height: 1;
+        opacity: 0; animation: bs-in .5s ease-out .7s forwards;
+      }
+      .bs-word .light { font-weight: 300; color: rgba(255,255,255,.55); }
+      .bs-word .bold { font-weight: 600; color: #fff; }
+      .bs-rail { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.05); overflow: hidden; }
+      .bs-rail::after {
+        content: ""; position: absolute; top: 0; bottom: 0; width: 40%;
+        background: linear-gradient(90deg, #5A2DFF 0%, #8A3FFC 52%, #2970FF 100%);
+        animation: bs-slide 1.4s ease-in-out infinite;
+      }
+      @keyframes bs-in { to { opacity: 1; } }
+      @keyframes bs-draw { to { stroke-dashoffset: 0; } }
+      @keyframes bs-slide { from { left: -40%; } to { left: 100%; } }
+      @media (prefers-reduced-motion: reduce) {
+        .bs-m { animation: none; stroke-dashoffset: 0; }
+        .bs-word { animation-duration: .01s; }
+        .bs-rail::after { animation: none; left: 0; width: 100%; opacity: .5; }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-splash" role="status" aria-label="Loading Malumetrix">
+      <div class="bs-inner">
+        <div class="bs-badge">
+          <svg width="76" height="76" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="bs-grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#5A2DFF" />
+                <stop offset="55%" stop-color="#7C3AFF" />
+                <stop offset="100%" stop-color="#2970FF" />
+              </linearGradient>
+              <radialGradient id="bs-hl" cx="28%" cy="22%" r="55%">
+                <stop offset="0%" stop-color="#fff" stop-opacity="1" />
+                <stop offset="100%" stop-color="#fff" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <rect width="36" height="36" rx="9" fill="url(#bs-grad)" />
+            <rect width="36" height="36" rx="9" fill="url(#bs-hl)" opacity=".14" />
+            <path class="bs-m" pathLength="1" d="M7.5 27 L7.5 9.5 L18 19.5 L28.5 9.5 L28.5 27"
+              stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" fill="none" />
+          </svg>
+        </div>
+        <div class="bs-word"><span class="light">Malu</span><span class="bold">metrix</span></div>
+        <div class="bs-rail"></div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
