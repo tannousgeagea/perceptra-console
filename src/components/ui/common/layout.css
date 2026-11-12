@@ -2,10 +2,21 @@
 .layout {
   display: flex;
   flex-direction: row;
-  width: 100vw;
+  /* 100% (not 100vw, which counts the scrollbar and made pages scroll
+     sideways); dvh so phone browser bars don't hide the bottom. */
+  width: 100%;
   height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background-color: hsl(var(--background));
   }
+
+/* Phones: the menu becomes a top bar and drawers, so stack vertically. */
+@media (max-width: 767px) {
+  .layout {
+    flex-direction: column;
+  }
+}
   
 .layout-navbar {
   display: flex;

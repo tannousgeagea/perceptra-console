@@ -152,6 +152,8 @@ export default function ProjectDataset() {
           annotated={data?.annotated || 0}
           unannotated={data?.unannotated || 0}
           reviewed={data?.reviewed || 0}
+          rejected={data?.rejected || 0}
+          inDataset={data?.dataset || 0}
           selectedCount={selection.selectedCount}
           onRefresh={handleRefresh}
           onUpload={() => navigate(`/projects/${projectId}/upload`)}

@@ -60,6 +60,10 @@ export interface ProjectImagesResponse {
   annotated: number;
   unannotated: number;
   reviewed: number;
+  /** Sent back by a reviewer, waiting for fixes. */
+  rejected?: number;
+  /** Completed: moved to a dataset. */
+  dataset?: number;
   image_ids: string[];
   project_image_ids: string[];
   images: ProjectImage[];

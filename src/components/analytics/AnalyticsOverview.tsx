@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/ui/card";
-import { Database, Image, Tag, Briefcase, Package } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/ui/card";
+import { Image, Tag, Briefcase, Package } from "lucide-react";
 import type { ProjectSummary } from "@/types/analytics";
 
 interface AnalyticsOverviewProps {
@@ -38,24 +38,26 @@ export const AnalyticsOverview = ({ data }: AnalyticsOverviewProps) => {
     },
   ];
 
+  // Images that reached each stage (an image in the dataset was also annotated
+  // and reviewed). Labels and colours match the dataset page's status counts.
   const progressStats = [
     {
       label: "Annotated",
       value: data.annotated_images,
       total: data.total_images,
-      color: "bg-primary",
+      color: "bg-green-500",
     },
     {
       label: "Reviewed",
       value: data.reviewed_images,
       total: data.total_images,
-      color: "bg-green-500",
+      color: "bg-blue-500",
     },
     {
-      label: "Finalized",
+      label: "In dataset",
       value: data.finalized_images,
       total: data.total_images,
-      color: "bg-blue-500",
+      color: "bg-primary",
     },
   ];
 
@@ -89,10 +91,11 @@ export const AnalyticsOverview = ({ data }: AnalyticsOverviewProps) => {
       <Card>
         <CardHeader>
           <CardTitle>Image Progress</CardTitle>
+          <CardDescription>Images that have reached each stage</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {progressStats.map((stat) => {
-            const percentage = (stat.value / stat.total) * 100;
+            const percentage = stat.total > 0 ? (stat.value / stat.total) * 100 : 0;
             return (
               <div key={stat.label} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
@@ -101,7 +104,7 @@ export const AnalyticsOverview = ({ data }: AnalyticsOverviewProps) => {
                     {stat.value.toLocaleString()} / {stat.total.toLocaleString()} ({percentage.toFixed(1)}%)
                   </span>
                 </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full ${stat.color} transition-all duration-500`}
                     style={{ width: `${percentage}%` }}

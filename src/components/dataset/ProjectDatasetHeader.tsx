@@ -9,6 +9,8 @@ interface ProjectDatasetHeaderProps {
   annotated: number;
   unannotated: number;
   reviewed: number;
+  rejected: number;
+  inDataset: number;
   selectedCount: number;
   onRefresh: () => void;
   onUpload: () => void;
@@ -21,6 +23,8 @@ export function ProjectDatasetHeader({
   annotated,
   unannotated,
   reviewed,
+  rejected,
+  inDataset,
   selectedCount,
   onRefresh,
   onUpload,
@@ -82,18 +86,29 @@ export function ProjectDatasetHeader({
           <span className="text-sm text-muted-foreground">Total:</span>
           <Badge variant="secondary">{total}</Badge>
         </div>
+        {/* Every image is in exactly one of these, in pipeline order, so they add up to the total. */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Unannotated:</span>
+          <Badge className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border-yellow-500/20">{unannotated}</Badge>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Annotated:</span>
-          <Badge className="bg-green-500/10 text-green-500 border-green-500/20">{annotated}</Badge>
+          <Badge className="bg-green-500/10 text-green-600 dark:text-green-500 border-green-500/20">{annotated}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Reviewed:</span>
-          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">{reviewed}</Badge>
+          <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-500 border-blue-500/20">{reviewed}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Unannotated:</span>
-          <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">{unannotated}</Badge>
+          <span className="text-sm text-muted-foreground">In dataset:</span>
+          <Badge className="bg-primary/10 text-primary border-primary/20">{inDataset}</Badge>
         </div>
+        {rejected > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Needs fixes:</span>
+            <Badge className="bg-red-500/10 text-red-600 dark:text-red-500 border-red-500/20">{rejected}</Badge>
+          </div>
+        )}
       </div>
     </div>
   );

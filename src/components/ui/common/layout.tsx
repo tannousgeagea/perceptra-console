@@ -11,7 +11,7 @@ const Layout: FC = () => {
       <div className='layout-navbar'>
         <Navbar />
       </div>
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-w-0 min-h-0 overflow-auto">
           <div className='layout-content'>
             {/* The next page loads here; the navbar stays. */}
             <Suspense fallback={<PageFallback />}>

@@ -24,10 +24,19 @@ export const ImageStatsChart = ({ data }: ImageStatsChartProps) => {
     fill: COLORS[name as keyof typeof COLORS],
   }));
 
-  const statusData = Object.entries(data.by_status).map(([name, value]) => ({
-    name: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, " "),
-    value,
-  }));
+  // Same names and pipeline order as the dataset page's status counts.
+  const STATUS_ORDER = ['unannotated', 'in_progress', 'annotated', 'reviewed', 'approved', 'dataset', 'rejected'];
+  const STATUS_LABELS: Record<string, string> = { dataset: 'In dataset', rejected: 'Needs fixes', in_progress: 'In progress' };
+  const rank = (status: string) => {
+    const i = STATUS_ORDER.indexOf(status);
+    return i === -1 ? STATUS_ORDER.length : i;
+  };
+  const statusData = Object.entries(data.by_status)
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([name, value]) => ({
+      name: STATUS_LABELS[name] ?? name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, " "),
+      value,
+    }));
 
   return (
     <div className="grid gap-6 md:grid-cols-2">

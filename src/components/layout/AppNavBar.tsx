@@ -15,7 +15,10 @@ import {
   Search,
   Users,
   Bell,
+  PanelLeft,
 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useMobileNavStore } from '@/stores/mobileNavStore';
 import { useUserJobs } from '@/hooks/useUserJobs';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -36,8 +39,14 @@ interface NavbarItem {
 }
 
 const Navbar: FC = () => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [expandedPref, setIsExpanded] = useState<boolean>(true);
+  const isMobile = useIsMobile();
+  // On phones the menu is a drawer, always shown with labels.
+  const isExpanded = isMobile || expandedPref;
+  const panel = useMobileNavStore((s) => s.panel);
+  const setPanel = useMobileNavStore((s) => s.setPanel);
   const location = useLocation();
+  const inProject = /^\/projects\/[^/]+/.test(location.pathname);
   const helpers = useAuthHelpers();
   const openPalette = useCommandPaletteStore((s) => s.setOpen);
   const { hasAdminPermission } = useCurrentOrganization();
@@ -52,7 +61,9 @@ const Navbar: FC = () => {
     if (location.pathname.includes('/projects/')) {
       setIsExpanded(false);
     }
-  }, [location.pathname]);
+    // A link was followed: close the phone drawer.
+    setPanel(null);
+  }, [location.pathname, setPanel]);
 
   const organization = helpers.getPrimaryOrganization()
   const currentUser = getCurrentUser();
@@ -70,7 +81,11 @@ const Navbar: FC = () => {
   ];
 
   const toggleNavbar = (): void => {
-    setIsExpanded(!isExpanded);
+    if (isMobile) {
+      setPanel(null);
+      return;
+    }
+    setIsExpanded(!expandedPref);
   };
 
   const isActive = (path: string) => {
@@ -78,11 +93,44 @@ const Navbar: FC = () => {
   };
 
   return (
+    <>
+    {/* Phones: a top bar opens the menus as drawers. */}
+    <header className="flex h-12 w-full shrink-0 items-center gap-2 border-b border-[var(--mtx-border)] bg-[var(--mtx-bg)] px-2 text-[var(--mtx-text)] md:hidden">
+      <button
+        type="button"
+        onClick={() => setPanel('app')}
+        aria-label="Open menu"
+        className="rounded-lg p-2 text-[var(--mtx-text-muted)] hover:bg-[var(--mtx-surface)] hover:text-[var(--mtx-text)]"
+      >
+        <Menu size={22} />
+      </button>
+      <MTXLogo badgeClassName="w-7 h-7" />
+      {inProject && (
+        <button
+          type="button"
+          onClick={() => setPanel('project')}
+          className="ml-auto flex items-center gap-2 rounded-lg border border-[var(--mtx-border)] px-3 py-1.5 text-sm text-[var(--mtx-text-muted)] hover:bg-[var(--mtx-surface)] hover:text-[var(--mtx-text)]"
+        >
+          <PanelLeft size={16} />
+          Project menu
+        </button>
+      )}
+    </header>
+    {panel && (
+      <div
+        className="fixed inset-0 z-40 bg-black/50 md:hidden"
+        onClick={() => setPanel(null)}
+        aria-hidden="true"
+      />
+    )}
     <aside
       className={cn(
-        'flex h-screen flex-col justify-between border-r will-change-[width] transition-[width] duration-300 ease-in-out',
+        'flex h-[100dvh] flex-col justify-between overflow-y-auto border-r will-change-[width] transition-[width,transform] duration-300 ease-in-out',
         "bg-[var(--mtx-bg)] text-[var(--mtx-text)] border-[var(--mtx-border)]",
-        isExpanded ? 'w-[210px] px-3' : 'w-[68px] px-2'
+        isExpanded ? 'w-[210px] px-3' : 'w-[68px] px-2',
+        // Phones: a drawer that slides in from the left.
+        'fixed inset-y-0 left-0 z-50 shadow-xl md:static md:z-auto md:translate-x-0 md:shadow-none',
+        panel === 'app' ? 'translate-x-0' : '-translate-x-full'
       )}
     >
       <div>
@@ -265,6 +313,7 @@ const Navbar: FC = () => {
         </div>
       </div>
     </aside>
+    </>
   );
 };
 
