@@ -79,7 +79,6 @@ export default function DatasetVersions() {
   return (
     <div className="min-h-screen w-full bg-background">
       <DatasetVersionsHeader
-        projectId={projectId!}
         totalVersions={data?.total || 0}
         readyVersions={readyCount}
         processingVersions={processingCount}

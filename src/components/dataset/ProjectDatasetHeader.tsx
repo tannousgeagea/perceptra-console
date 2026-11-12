@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/ui/button';
 import { Badge } from '@/components/ui/ui/badge';
 import { Download, Upload, RefreshCw, GitBranch, Copy, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface ProjectDatasetHeaderProps {
   projectId:string;
@@ -33,25 +34,12 @@ export function ProjectDatasetHeader({
 
   const navigate = useNavigate();
   return (
-    <div className="flex flex-col gap-4 pb-6 border-b">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Data Lake
-          </Button> */}
-          <div>
-            <h1 className="text-3xl font-bold">Project Dataset</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your project images and annotations
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
+    <PageHeader
+      className="pb-6 border-b"
+      title="Project Dataset"
+      description="Manage your project images and annotations"
+      actions={
+        <>
           <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${projectId}/annotate`)}>
             <Pencil className="w-4 h-4 mr-2" />
             Annotate
@@ -78,8 +66,9 @@ export function ProjectDatasetHeader({
             <Download className="w-4 h-4 mr-2" />
             Export ({selectedCount})
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
 
       <div className="flex gap-4 flex-wrap">
         <div className="flex items-center gap-2">
@@ -110,6 +99,6 @@ export function ProjectDatasetHeader({
           </div>
         )}
       </div>
-    </div>
+    </PageHeader>
   );
 }

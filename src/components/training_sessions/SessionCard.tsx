@@ -117,17 +117,16 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onViewSession }) => 
           </div>
         </div>
 
-        {/* Error — displayed immediately when failed, full message visible */}
+        {/* Failure reason: a short excerpt (full text on hover and on the session page),
+            so a grid of failed runs doesn't turn into a wall of error logs. */}
         {isFailed && (
-          <div className="mb-3 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/25 overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 dark:bg-red-900/40 border-b border-red-200 dark:border-red-700">
-              <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
-              <span className="text-xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wide">
-                Training Failed
-              </span>
-            </div>
-            <p className="px-3 py-2 text-xs text-red-700 dark:text-red-400 leading-relaxed">
-              {session.errorMessage ?? 'An unexpected error occurred. Open session for details.'}
+          <div
+            className="mb-3 flex items-start gap-2 text-xs text-red-700 dark:text-red-400"
+            title={session.errorMessage ?? undefined}
+          >
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+            <p className="line-clamp-2 break-words leading-relaxed">
+              {session.errorMessage ?? 'Training failed. Open the session for details.'}
             </p>
           </div>
         )}

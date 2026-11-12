@@ -44,21 +44,24 @@ export const KPICard = ({
           <p className={cn("text-2xl font-bold", getMetricColor(value, isInverse))}>
             {displayValue}
           </p>
-          <div
-            className={cn(
-              "flex items-center text-sm font-medium",
-              isPositiveChange
-                ? "text-green-600 dark:text-green-400"
-                : "text-red-600 dark:text-red-400"
-            )}
-          >
-            {isPositiveChange ? (
-              <TrendingUp className="h-4 w-4 mr-1" />
-            ) : (
-              <TrendingDown className="h-4 w-4 mr-1" />
-            )}
-            {displayChange}
-          </div>
+          {/* No change, no arrow: a red "down 0.0%" read as a drop. */}
+          {change !== 0 && (
+            <div
+              className={cn(
+                "flex items-center text-sm font-medium",
+                isPositiveChange
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              )}
+            >
+              {isPositiveChange ? (
+                <TrendingUp className="h-4 w-4 mr-1" />
+              ) : (
+                <TrendingDown className="h-4 w-4 mr-1" />
+              )}
+              {displayChange}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

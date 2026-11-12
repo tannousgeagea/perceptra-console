@@ -70,23 +70,21 @@ const getStatusBadge = (status: JobStatus) => {
     <Card className="flex flex-col h-full animate-fade-in bg-white dark:bg-card hover:shadow-md transition-shadow duration-200">
       <CardContent className="flex-1 p-4">
         <div className="flex justify-between items-start gap-3">
-          <div className="max-w-[25%]">
-            <h3 className="font-medium text-sm text-slate-00 truncate">{job.name}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-medium text-sm truncate">{job.name}</h3>
             <CopyableId value={job.id} label="Job ID" prefix="ID:" className="text-slate-500" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
+            {/* The badge shows the current status; this menu only moves the job. */}
             {availableTransitions.length > 0 && onStatusChange && (
               <Select
-                value={job.status}
+                value=""
                 onValueChange={(value) => onStatusChange(job, value as JobStatus)}
               >
-                <SelectTrigger className="h-8 w-[125px]">
-                  <SelectValue placeholder="Change status" />
+                <SelectTrigger className="h-8 w-auto gap-1 px-2 text-xs" aria-label="Move job to another status">
+                  <SelectValue placeholder="Move to…" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={job.status}>
-                    Current: {job.status.replace(/_/g, ' ').toLowerCase()}
-                  </SelectItem>
                   {availableTransitions.map((status) => (
                     <SelectItem key={status} value={status}>
                       Move to: {status.replace(/_/g, ' ').toLowerCase()}

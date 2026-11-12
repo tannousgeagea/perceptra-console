@@ -254,7 +254,8 @@ export default function ProjectDataset() {
                 }}
               />
             )}
-            <div className="fixed w-full bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
+            {/* sticky (as on the Datalake): "fixed w-full" was as wide as the window and ran off its right edge */}
+            <div className="sticky bottom-0 z-10 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
               <PaginationControls
                 currentPage={currentPage}
                 totalItems={data?.total || 0}
@@ -266,7 +267,6 @@ export default function ProjectDataset() {
                 onItemsPerPageChange={(perPage) => {
                   setItemsPerPage(perPage);
                 }}
-                className='pr-[32rem]'
               />
             </div>
             

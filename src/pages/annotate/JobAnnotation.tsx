@@ -325,7 +325,8 @@ export default function JobAnnotation() {
             />
             </div>
 
-            <div className="fixed w-full bottom-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
+            {/* sticky, not "fixed w-full" (window-wide, ran off the right edge) */}
+            <div className="sticky bottom-0 z-10 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg py-4 -mx-6 px-6">
               <PaginationControls
                 currentPage={currentPage}
                 totalItems={data?.total ?? 0}
@@ -338,7 +339,6 @@ export default function JobAnnotation() {
                   setItemsPerPage(perPage);
                   setCurrentPage(1);
                 }}
-                className='pr-[32rem]'
               />
             </div>
           </>

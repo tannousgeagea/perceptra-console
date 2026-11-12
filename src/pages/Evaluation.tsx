@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
 import { Button } from "@/components/ui/ui/button";
 import { Badge } from "@/components/ui/ui/badge";
@@ -8,10 +8,9 @@ import {
   TrendingUp,
   Bell,
   Brain,
-  ArrowLeft,
-  Download,
   RefreshCw,
 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { EvaluationOverview } from "@/components/evaluation/EvaluationOverview";
 import { TemporalAnalysis } from "@/components/evaluation/TemporalAnalysis";
 import { AlertsManagement } from "@/components/evaluation/AlertsManagement";
@@ -20,12 +19,13 @@ import { useEvaluationData } from "@/hooks/useEvaluationData";
 import { cn } from "@/lib/utils";
 
 const Evaluation = () => {
-  const navigate = useNavigate();
   const { projectId } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
 
   const {
     isLoading,
+    isFetching,
+    refresh,
     summary,
     classMetrics,
     editDistribution,
@@ -44,41 +44,24 @@ const Evaluation = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header (full width, like the other project pages) */}
       <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(-1)}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Evaluation Dashboard</h1>
-                <p className="text-muted-foreground">
-                  Monitor model performance and manage reviews
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Report
-              </Button>
-              <Button variant="outline" size="sm">
-                <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+        <div className="p-6">
+          <PageHeader
+            title="Evaluation Dashboard"
+            description="Monitor model performance and manage reviews"
+            actions={
+              <Button variant="outline" size="sm" onClick={refresh} disabled={isFetching}>
+                <RefreshCw className={cn("h-4 w-4 mr-2", isFetching && "animate-spin")} />
                 Refresh
               </Button>
-            </div>
-          </div>
+            }
+          />
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">

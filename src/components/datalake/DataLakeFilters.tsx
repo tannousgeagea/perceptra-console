@@ -26,7 +26,7 @@ const FILTER_OPTIONS = [
   { value: 'split:', label: 'split:', description: 'Include images in the given split', example: 'split:train' },
   { value: 'tag:', label: 'tag:', description: 'Include images with the given tag', example: 'tag:car' },
   { value: 'filename:', label: 'filename:', description: 'Match filenames containing the given string', example: 'filename:IMG' },
-  { value: 'sort:', label: 'sort:', description: 'Sort images', example: 'sort:oldest' },
+  { value: 'sort:', label: 'sort:', description: 'Sort images by size, name, date, width, height or annotations', example: 'sort:annotations' },
   { value: 'min-annotations:', label: 'min-annotations:', description: 'Include images with at least the given number of annotations', example: 'min-annotations:5' },
   { value: 'max-annotations:', label: 'max-annotations:', description: 'Include images with at most the given number of annotations', example: 'max-annotations:5' },
   { value: 'min-height:', label: 'min-height:', description: 'Include images with a height of at least the given value', example: 'min-height:1080' },
@@ -76,11 +76,13 @@ export function DataLakeFilters({ searchText, onSearchChange }: DataLakeFiltersP
     inputRef.current?.focus();
   };
 
+  // Searches that mean something for any organization's images (no made-up tags).
   const quickFilters = [
-    { label: 'Cars', query: 'tag:car tag:vehicle' },
-    { label: 'People', query: 'tag:person tag:portrait' },
-    { label: 'Animals', query: 'tag:animal' },
-    { label: 'Buildings', query: 'tag:building tag:architecture' },
+    { label: 'Annotated', query: 'min-annotations:1' },
+    { label: 'Not annotated', query: 'max-annotations:0' },
+    { label: 'Most annotations', query: 'sort:annotations' },
+    { label: 'Training split', query: 'split:train' },
+    { label: 'Full HD and larger', query: 'min-width:1920' },
   ];
 
   return (

@@ -92,8 +92,11 @@ const JobProgress = ({ counts }: { counts: JobImageCounts }) => {
       <TooltipTrigger asChild>
         <div className="flex min-w-[150px] cursor-default flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3 text-xs">
-            <span className="font-medium tabular-nums text-foreground">
-              {done.toLocaleString()} / {counts.total.toLocaleString()}
+            <span className="tabular-nums">
+              <span className="font-medium text-foreground">
+                {done.toLocaleString()} / {counts.total.toLocaleString()}
+              </span>
+              <span className="text-muted-foreground"> done</span>
             </span>
             <span className="tabular-nums text-muted-foreground">
               {perHour ? `${perHour}/h${eta ? ` · ~${eta} left` : ''}` : `${pct}%`}

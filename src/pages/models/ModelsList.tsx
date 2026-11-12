@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { BadgePlus, Filter, Search } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/ui/button";
 import { Input } from "@/components/ui/ui/input";
 import {
@@ -212,19 +213,17 @@ const ModelsList: React.FC = () => {
 
   return (
     <div className="space-y-6 p-6 w-full">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Models</h1>
-          <p className="text-muted-foreground">
-            Manage and track models in your project
-          </p>
-        </div>
-        <Button asChild>
-          <Link to={`/projects/${projectId}/models/new`}>
-            <BadgePlus className="mr-2 h-4 w-4" /> Create Model
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Models"
+        description="Manage and track models in your project"
+        actions={
+          <Button asChild>
+            <Link to={`/projects/${projectId}/models/new`}>
+              <BadgePlus className="mr-2 h-4 w-4" /> Create Model
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div className="relative w-full md:max-w-sm">

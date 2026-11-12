@@ -7,10 +7,8 @@ import { ComputeSettings } from '@/components/compute/ComputeSettings';
 import { UserManagement } from '@/components/users/UserManagement';
 import { APIKeysManagement } from '@/components/api-keys/APIKeysManagement';
 import { useAuth } from '@/contexts/AuthContext';
-import { ThemeProvider } from 'next-themes';
 import { Loader2 } from 'lucide-react';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
-import { SidebarProvider } from '@/components/ui/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 
 export default function Settings() {
@@ -27,12 +25,11 @@ export default function Settings() {
   }
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
+    // (The theme provider lives in main.tsx; a second one here was redundant.)
+        <div className="flex min-h-full w-full flex-col bg-background md:flex-row">
           <AppSidebar />
-          <main className="flex-1 overflow-auto">
-            <div className="container py-8">
+          <main className="min-w-0 flex-1">
+            <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-8">
                 <Routes>
                   <Route path="/" element={<Navigate to="/settings/account" replace />} />
                   <Route path="/account" element={<AccountSettings />} />
@@ -80,7 +77,5 @@ export default function Settings() {
             </div>
           </main>
         </div>
-      </SidebarProvider>
-    </ThemeProvider>
   );
 }

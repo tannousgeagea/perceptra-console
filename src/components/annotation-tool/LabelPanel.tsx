@@ -102,7 +102,7 @@ const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
         */}
         <TabsContent
           value="classes"
-          className="data-[state=active]:flex flex-col flex-1 min-h-0 overflow-hidden"
+          className="data-[state=active]:flex flex-col flex-1 min-h-0 px-2 overflow-hidden"
         >
           {/* Scrollable list — grows to fill available space */}
           <div className="flex-1 min-h-0 overflow-y-auto">
@@ -128,7 +128,7 @@ const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
           {/* Unused classes — below the scroll area, does not scroll */}
           {unusedClasses.length > 0 && (
             <div className="border-t border-border pt-3 mt-3 shrink-0">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Unused Classes</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2 px-2">Unused classes</p>
               <div className="space-y-1">
                 {unusedClasses.map(cls => (
                   <div

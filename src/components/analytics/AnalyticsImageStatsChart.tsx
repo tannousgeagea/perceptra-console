@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/ui/chart";
-import { Bar, BarChart, Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { ImageStats } from "@/types/analytics";
 
 interface ImageStatsChartProps {
@@ -57,7 +57,9 @@ export const ImageStatsChart = ({ data }: ImageStatsChartProps) => {
             className="h-[300px]"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.upload_trend}>
+              {/* Bars, not a line: only days with uploads are listed, and a line
+                  between them would suggest a steady trend that never happened. */}
+              <BarChart data={data.upload_trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis
                   dataKey="date"
@@ -70,14 +72,8 @@ export const ImageStatsChart = ({ data }: ImageStatsChartProps) => {
                 />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                />
-              </LineChart>
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
+              </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
         </CardContent>

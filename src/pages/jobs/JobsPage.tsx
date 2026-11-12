@@ -183,7 +183,6 @@ const JobPage = () => {
   return (
     <div className="space-y-6 p-6 w-full">
       <JobsHeader 
-        projectId={projectId!}
         totalJobs={data.jobs.length}
         counts={{
           unassigned: data.jobs.filter((job) => job.status === JobStatus.UNASSIGNED).length,

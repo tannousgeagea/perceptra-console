@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/ui/button";
-import { Plus, RefreshCw, Download, ArrowLeft } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Badge } from '@/components/ui/ui/badge';
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/ui/input";
-import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 /** Jobs per status column (the server keeps statuses in step with the images). */
 export interface JobStatusCounts {
@@ -14,7 +14,6 @@ export interface JobStatusCounts {
 }
 
 interface JobsHeaderProps {
-  projectId: string;
   totalJobs: number;
   counts: JobStatusCounts;
   onRefresh: () => void;
@@ -23,40 +22,26 @@ interface JobsHeaderProps {
 }
 
 export function JobsHeader({
-  projectId,
   totalJobs,
   counts,
   onRefresh,
   searchQuery,
   setSearchQuery,
 }: JobsHeaderProps) {
-  const navigate = useNavigate();
-
   return (
     <div className="border-b bg-card">
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(`/projects/${projectId}/dataset`)}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Annotate</h1>
-              <p className="text-muted-foreground mt-1">
-                Manage and assign jobs before annotation
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
+        <PageHeader
+          className="mb-6"
+          title="Annotate"
+          description="Manage and assign jobs before annotation"
+          actions={
+          <>
             <Button variant="outline" onClick={onRefresh}>
               <RefreshCw className="h-4 w-4" />
               Refresh
             </Button>
-            <div className="relative w-full md:w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
               <Input
                 placeholder="Search jobs, users..."
@@ -65,8 +50,9 @@ export function JobsHeader({
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-          </div>
-        </div>
+          </>
+          }
+        />
 
         <div className="flex gap-4 flex-wrap">
           <div className="flex items-center gap-2">

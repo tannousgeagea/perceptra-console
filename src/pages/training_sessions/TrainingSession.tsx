@@ -6,6 +6,7 @@ import { projects, models } from '@/components/training_sessions/mockData';
 import { TrainingSession } from '@/types/training_session';
 import { useTrainingSessions } from '@/hooks/useTrainingSessions';
 import { Loader2, AlertTriangle } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const SessionsPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -41,16 +42,15 @@ const SessionsPage: React.FC = () => {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Training Sessions</h1>
-            {data?.total !== undefined && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {data.total} session{data.total !== 1 ? 's' : ''} total
-              </p>
-            )}
-          </div>
-        </div>
+        <PageHeader
+          className="mb-6"
+          title="Training Sessions"
+          description={
+            data?.total !== undefined
+              ? `${data.total} session${data.total !== 1 ? 's' : ''} total`
+              : undefined
+          }
+        />
         <SessionFilters
           projects={projects}
           models={models}

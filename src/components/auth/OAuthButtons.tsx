@@ -88,13 +88,11 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ className = '', next
       </Button>
 
       {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">Or continue with email</span>
-        </div>
+      {/* Lines either side of the text, so no background has to match the card. */}
+      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+        <div className="h-px flex-1 bg-gray-300 dark:bg-white/10" />
+        <span>Or continue with email</span>
+        <div className="h-px flex-1 bg-gray-300 dark:bg-white/10" />
       </div>
     </div>
   );
