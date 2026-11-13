@@ -201,6 +201,8 @@ export interface Model {
 
 export interface ModelVersion {
   id: string;
+  /** Internal numeric id, used by the validation-images endpoint. */
+  pk?: number;
   version_number: number;
   version_name?: string;
   status: string;

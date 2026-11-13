@@ -487,12 +487,14 @@ export default function ProjectMembersPage() {
         )}
       </div>
 
-      {/* ── Role breakdown ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard icon={Users}      label="Total"      count={members.length}              colorClass="bg-primary/10 text-primary" />
-        <StatCard icon={ShieldCheck} label="Admins"    count={roleCounts['admin'] ?? 0}    colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" />
-        <StatCard icon={UserCog}    label="Annotators" count={roleCounts['annotator'] ?? 0} colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" />
-        <StatCard icon={Eye}        label="Viewers"    count={roleCounts['viewer'] ?? 0}   colorClass="bg-muted text-muted-foreground" />
+      {/* ── Role breakdown: one card per project role, so the cards add up to Total ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <StatCard icon={Users}       label="Total"      count={members.length}                                         colorClass="bg-primary/10 text-primary" />
+        <StatCard icon={ShieldCheck} label="Admins"     count={(roleCounts['admin'] ?? 0) + (roleCounts['owner'] ?? 0)} colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" />
+        <StatCard icon={UserCog}     label="Editors"    count={roleCounts['editor'] ?? 0}                              colorClass="bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400" />
+        <StatCard icon={Crown}       label="Reviewers"  count={roleCounts['reviewer'] ?? 0}                            colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" />
+        <StatCard icon={UserCog}     label="Annotators" count={roleCounts['annotator'] ?? 0}                           colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" />
+        <StatCard icon={Eye}         label="Viewers"    count={roleCounts['viewer'] ?? 0}                              colorClass="bg-muted text-muted-foreground" />
       </div>
 
       {/* ── Filters ── */}

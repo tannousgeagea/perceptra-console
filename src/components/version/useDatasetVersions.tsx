@@ -1,38 +1,6 @@
-import { useState, useMemo } from 'react';
-import { ExportConfig, VersionStatistics } from '@/types/version';
+import { useState } from 'react';
+import { ExportConfig } from '@/types/version';
 import { toast } from '@/components/ui/ui/use-toast';
-
-export const useVersionStatistics = (versionId: string) => {
-  const [isLoading] = useState(false);
-  
-  const statistics = useMemo((): VersionStatistics => {
-    // Mock statistics for the version
-    return {
-      total_images: 650,
-      total_annotations: 3250,
-      splits: {
-        train: 455,
-        val: 130,
-        test: 65,
-      },
-      class_distribution: {
-        'person': 1200,
-        'car': 850,
-        'truck': 450,
-        'bicycle': 350,
-        'motorcycle': 250,
-        'bus': 150,
-      },
-      average_annotations_per_image: 5.0,
-    };
-  }, [versionId]);
-
-  return {
-    data: statistics,
-    isLoading,
-    error: null,
-  };
-};
 
 export const useRemoveImagesFromVersion = (versionId: string) => {
   const [isLoading, setIsLoading] = useState(false);

@@ -8,8 +8,6 @@ import {
   Folder,
   Database,
   Upload,
-  Brain,
-  Rocket,
   ScanEye,
   Scan,
   Search,
@@ -74,8 +72,8 @@ const Navbar: FC = () => {
     { item: "Similarity", ref: "/similarity", icon: <ScanEye size={20} /> },
     { item: "Upload", ref: "/upload", icon: <Upload size={20} /> },
     { item: "Inference", ref: "/inference", icon: <Scan size={20} /> },
-    { item: "Models", ref: "/models", icon: <Brain size={20} /> },
-    { item: "Deploy", ref: "/deploy", icon: <Rocket size={20} /> },
+    // Models and deployment live inside each project (project menu → Models,
+    // and a model's Deployment tab); there's no organization-wide page for them.
     // Team progress and analytics are org-admin only (the API enforces it too).
     ...(hasAdminPermission ? [{ item: "Team", ref: "/team", icon: <Users size={20} /> }] : []),
   ];
