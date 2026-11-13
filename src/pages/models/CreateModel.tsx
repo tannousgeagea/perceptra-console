@@ -132,10 +132,10 @@ const CreateModel: React.FC = () => {
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold tracking-tight">
                 Create New Model
               </h1>
-              <Sparkles className="h-6 w-6 text-accent animate-pulse" />
+              <Sparkles className="h-6 w-6 text-[var(--mtx-secondary)] animate-pulse" />
             </div>
             <p className="text-muted-foreground mt-1">
               Set up a new machine learning model for your project
@@ -147,7 +147,7 @@ const CreateModel: React.FC = () => {
         <div className="relative">
           <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted" />
           <div 
-            className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-500"
+            className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-primary to-[var(--mtx-secondary)] transition-all duration-500"
             style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
           />
           <div className="relative flex justify-between">
@@ -156,7 +156,7 @@ const CreateModel: React.FC = () => {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
                     currentStep > step.number
-                      ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg shadow-primary/25"
+                      ? "bg-gradient-to-r from-primary to-[var(--mtx-secondary)] text-primary-foreground shadow-lg shadow-primary/25"
                       : currentStep === step.number
                       ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
                       : "bg-muted text-muted-foreground"
@@ -205,7 +205,7 @@ const CreateModel: React.FC = () => {
                 <Button
                   onClick={handleSubmit}
                   disabled={!isStepValid() || isSubmitting}
-                  className="px-8 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                  className="px-8 bg-gradient-to-r from-primary to-[var(--mtx-secondary)] hover:opacity-90 transition-opacity"
                 >
                   {isSubmitting ? (
                     <>
@@ -223,7 +223,7 @@ const CreateModel: React.FC = () => {
                 <Button
                   onClick={handleNext}
                   disabled={!isStepValid()}
-                  className="px-8 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                  className="px-8 bg-gradient-to-r from-primary to-[var(--mtx-secondary)] hover:opacity-90 transition-opacity"
                 >
                   Continue
                 </Button>

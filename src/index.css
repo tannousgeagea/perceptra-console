@@ -67,8 +67,10 @@
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --accent: 173.4 80.4% 40.0%;
-    --accent-foreground: 210 40% 98%;
+    /* Neutral: the hover/selected background of menus, ghost buttons and list
+       items (shadcn's convention). Brand colour is --primary only. */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -153,9 +155,8 @@
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
 
-    --accent: 173.4 80.4% 40.0%;
+    --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --accent-hover: 180 70% 60%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;

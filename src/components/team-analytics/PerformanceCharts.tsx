@@ -111,8 +111,9 @@ export const PerformanceCharts = ({ jobData, imageData, timeFrame, isLoading, se
   // Generate more colors for better visualization
   const userColors = [
     'hsl(var(--primary))',
-    'hsl(var(--secondary))', 
-    'hsl(var(--accent))',
+    // --secondary and --accent are neutral greys (backgrounds), not series colours.
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
     'hsl(220, 70%, 50%)',   // Blue
     'hsl(140, 70%, 45%)',   // Green
     'hsl(280, 70%, 55%)',   // Purple

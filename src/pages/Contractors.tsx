@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, UserCheck, Plus, RefreshCw, DollarSign, Building2, Search } from "lucide-react";
+import { UserCheck, Plus, RefreshCw, DollarSign, Building2, Search } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { BillingBreadcrumb } from "@/components/billing/BillingBreadcrumb";
 import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
@@ -72,19 +74,17 @@ export default function Contractors() {
       <div className="px-4 py-8">
         <div className="flex flex-col gap-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/billing">
-                <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">External Contractors</h1>
-                <p className="text-muted-foreground mt-1">Manage billing for external annotators</p>
-              </div>
-            </div>
-            <Button onClick={() => setShowEnableDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />Add Contractor
-            </Button>
+          <div className="flex flex-col gap-2">
+            <BillingBreadcrumb current="Contractors" />
+            <PageHeader
+              title="External Contractors"
+              description="Manage billing for external annotators"
+              actions={
+                <Button onClick={() => setShowEnableDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />Add Contractor
+                </Button>
+              }
+            />
           </div>
 
           {/* Summary */}

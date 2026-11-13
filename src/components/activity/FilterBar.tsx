@@ -70,7 +70,7 @@ export const FilterBar = ({
 
   return (
     <div className="bg-card border-b border-border">
-      <div className="px-6 py-4">
+      <div className="px-4 sm:px-6 py-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Filters Toggle */}
           <Button
@@ -89,7 +89,7 @@ export const FilterBar = ({
           </Button>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
             {/* Auto-refresh Toggle */}
             <Button
               variant={autoRefreshEnabled ? "default" : "outline"}

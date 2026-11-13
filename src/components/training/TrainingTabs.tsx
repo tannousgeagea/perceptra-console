@@ -45,6 +45,8 @@ const TrainingTabs: React.FC<Props> = ({
   onSubmit,
   projectId
 }) => {
+  const datasetChosen = !!form.watch("datasetId");
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -104,9 +106,14 @@ const TrainingTabs: React.FC<Props> = ({
         <Button variant="outline" type="button" disabled={isTraining} onClick={() => location.href = `/projects/${projectId}/models/${model.id}`}>
           Cancel
         </Button>
-        <Button type="submit" form="training-form" disabled={isTraining}>
-          {isTraining ? "Training..." : "Start Training"}
-        </Button>
+        <div className="flex items-center gap-3">
+          {!datasetChosen && !isTraining && (
+            <span className="text-sm text-muted-foreground">Choose a training dataset first</span>
+          )}
+          <Button type="submit" form="training-form" disabled={isTraining || !datasetChosen}>
+            {isTraining ? "Training..." : "Start Training"}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

@@ -1,6 +1,6 @@
 // ProjectActivityPage.tsx
 import { useState } from "react";
-import { Activity } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { TabButton } from "@/components/activity/TabButton";
 import { OverviewTab } from "@/components/activity/tabs/OverviewTab";
 import { UserActivityTab } from "@/components/activity/tabs/UserActivityTab";
@@ -119,15 +119,11 @@ const ProjectActivityPage = () => {
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4">
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Activity className="w-7 h-7 text-primary" />
-              Activity Monitoring Dashboard
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Track team progress, quality metrics, and user contributions
-            </p>
-          </div>
+          <PageHeader
+            className="py-4"
+            title="Activity"
+            description="Team progress, quality metrics and contributions in this project"
+          />
 
           {/* Tabs */}
           <nav className="flex gap-1 overflow-x-auto" aria-label="Dashboard tabs">
@@ -135,37 +131,37 @@ const ProjectActivityPage = () => {
               active={activeTab === "overview"}
               onClick={() => setActiveTab("overview")}
             >
-              📊 Overview
+              Overview
             </TabButton>
             <TabButton
               active={activeTab === "user"}
               onClick={() => setActiveTab("user")}
             >
-              👤 User Activity
+              Users
             </TabButton>
             <TabButton
               active={activeTab === "leaderboard"}
               onClick={() => setActiveTab("leaderboard")}
             >
-              🏆 Leaderboard
+              Leaderboard
             </TabButton>
             <TabButton
               active={activeTab === "quality"}
               onClick={() => setActiveTab("quality")}
             >
-              🎯 Prediction Quality
+              Prediction quality
             </TabButton>
             <TabButton
               active={activeTab === "timeline"}
               onClick={() => setActiveTab("timeline")}
             >
-              📜 Timeline
+              Timeline
             </TabButton>
             <TabButton
               active={activeTab === "heatmap"}
               onClick={() => setActiveTab("heatmap")}
             >
-              🔥 Heatmap
+              Heatmap
             </TabButton>
           </nav>
         </div>
