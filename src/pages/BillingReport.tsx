@@ -4,7 +4,6 @@ import { ArrowLeft, Download, Calendar, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/ui/select";
-import { mockBillingReport } from "@/components/billing/mockBillingData";
 import { Input } from "@/components/ui/ui/input";
 import { useUserProjects } from "@/hooks/useUserProjects";
 import QueryState from "@/components/common/QueryState";
@@ -25,17 +24,17 @@ const actionTypeLabels: Record<string, string> = {
 
 export default function BillingReport() {
   const [filterProject, setFilterProject] = useState<string>("all");
-  const [startDate, setStartDate] = useState(mockBillingReport.period_start);
-  const [endDate, setEndDate] = useState(mockBillingReport.period_end);
+  // Empty = no limit: the report covers all billable actions.
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const { data: projects, isLoading, isError, refetch } = useUserProjects();
   // const report = mockBillingReport;
 
-const { data: report } = useBillingReport({
-  // project_id: 'project-uuid',
-  // user_id: 'user-uuid',
-  // start_date: '2024-01-01',
-  // end_date: '2024-01-31',
-});
+  const { data: report } = useBillingReport({
+    project_id: filterProject !== "all" ? filterProject : undefined,
+    start_date: startDate || undefined,
+    end_date: endDate || undefined,
+  });
 
   const handleExportCSV = () => {
     const headers = ["Action Type", "Quantity", "Unit Rate", "Total Amount"];
@@ -57,7 +56,7 @@ const { data: report } = useBillingReport({
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `billing-report-${startDate}-${endDate}.csv`;
+    a.download = `billing-report-${report?.period_start}-${report?.period_end}.csv`;
     a.click();
     
     toast.success("Report exported successfully");

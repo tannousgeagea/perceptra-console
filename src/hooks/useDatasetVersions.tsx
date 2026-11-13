@@ -14,7 +14,8 @@ import {
   AddVersionImagesResponse,
   DownloadDatasetResponse,
   ExportConfig,
-  ExportDatasetResponse
+  ExportDatasetResponse,
+  VersionStatistics
 } from "@/types/version";
 import { toast } from 'sonner';
 
@@ -306,6 +307,27 @@ export const useVersionImages = (
     },
     enabled: !!currentOrganization && !!projectId && !!versionId,
     staleTime: 60_000, // 1 minute caching
+  });
+};
+
+// ==================== VERSION STATISTICS ====================
+
+/**
+ * Image and annotation totals plus the per-class annotation counts of a
+ * dataset version (GET /projects/{id}/versions/{version_id}/statistics).
+ */
+export const useVersionStatistics = (projectId: string, versionId: string | undefined) => {
+  const { currentOrganization } = useCurrentOrganization();
+
+  return useQuery<VersionStatistics, Error>({
+    queryKey: ["versionStatistics", currentOrganization?.id, projectId, versionId],
+    queryFn: async () => {
+      const response = await apiFetch(`/api/v1/projects/${projectId}/versions/${versionId}/statistics`);
+      if (!response.ok) throw new Error("Failed to load version statistics");
+      return response.json();
+    },
+    enabled: !!currentOrganization && !!projectId && !!versionId,
+    staleTime: 60_000,
   });
 };
 

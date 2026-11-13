@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
 import { Download, FileText, Calendar, User, Package, Images, Settings } from "lucide-react";
 import { DatasetVersion } from "@/types/version";
-import { useVersionStatistics } from "./useDatasetVersions";
+import { useVersionStatistics } from "@/hooks/useDatasetVersions";
 import { Skeleton } from "@/components/ui/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { VersionImagesManager } from "./VersionImageManager";
@@ -26,7 +26,7 @@ interface VersionDetailSheetProps {
 }
 
 export function VersionDetailSheet({ open, onOpenChange, projectId, version, onDownload }: VersionDetailSheetProps) {
-  const { data: stats, isLoading } = useVersionStatistics(version?.id || '');
+  const { data: stats, isLoading } = useVersionStatistics(projectId, version?.version_id);
 
   if (!version) return null;
 
@@ -178,7 +178,7 @@ export function VersionDetailSheet({ open, onOpenChange, projectId, version, onD
             </div>
 
             {/* Class Distribution */}
-            {stats?.class_distribution && (
+            {stats && Object.keys(stats.class_distribution).length > 0 && (
               <div>
                 <h3 className="text-sm font-medium mb-3">Class Distribution</h3>
                 <div className="space-y-2">
