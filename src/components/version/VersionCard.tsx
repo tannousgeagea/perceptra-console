@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { exportContentsLabel, isExported, notExportedSummary, versionImagesLabel } from "./exportSummary";
 
 interface VersionCardProps {
   version: DatasetVersion;
@@ -129,6 +130,9 @@ export function VersionCard({ version, onViewDetails, onEdit, onDelete, isDeleti
           </div>
         </div>
 
+        {isExported(version) && (
+          <div className="text-xs text-muted-foreground mb-2">In export</div>
+        )}
         <div className="grid grid-cols-3 gap-3 mb-5">
           <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20 hover:bg-success/15 transition-colors">
             <div className="text-xs text-muted-foreground mb-1.5">Train</div>
@@ -144,13 +148,26 @@ export function VersionCard({ version, onViewDetails, onEdit, onDelete, isDeleti
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border/50">
-          <span className="text-xs font-medium text-muted-foreground">
-            {version.total_images} images • {version.total_annotations} annotations
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
-          </span>
+        <div className="pt-4 border-t border-border/50 space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              {versionImagesLabel(version)}
+            </span>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
+            </span>
+          </div>
+          {exportContentsLabel(version) && (
+            <p className="text-xs text-muted-foreground">{exportContentsLabel(version)}</p>
+          )}
+          {isExported(version) && notExportedSummary(version) && (
+            <p className="text-xs text-warning">
+              {notExportedSummary(version)!.total.toLocaleString()} {notExportedSummary(version)!.total === 1 ? "image isn't" : "images aren't"} exported: no ground-truth labels
+            </p>
+          )}
+          {version.changed_since_export && (
+            <p className="text-xs text-warning">Changed since last export: export again to update the file</p>
+          )}
         </div>
       </Card>
 
