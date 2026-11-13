@@ -16,6 +16,7 @@ import { useVersionStatistics } from "@/hooks/useDatasetVersions";
 import { Skeleton } from "@/components/ui/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { VersionImagesManager } from "./VersionImageManager";
+import { isExported, notExportedSummary, versionImagesLabel } from "./exportSummary";
 
 interface VersionDetailSheetProps {
   open: boolean;
@@ -27,6 +28,10 @@ interface VersionDetailSheetProps {
 
 export function VersionDetailSheet({ open, onOpenChange, projectId, version, onDownload }: VersionDetailSheetProps) {
   const { data: stats, isLoading } = useVersionStatistics(projectId, version?.version_id);
+  // Split bars are shares of the exported images (augmented copies are in no split).
+  const splitTotal = version ? version.train_count + version.val_count + version.test_count : 0;
+  const splitPct = (n: number) => (splitTotal > 0 ? (n / splitTotal) * 100 : 0);
+  const notExported = version ? notExportedSummary(version) : null;
 
   if (!version) return null;
 
@@ -125,28 +130,28 @@ export function VersionDetailSheet({ open, onOpenChange, projectId, version, onD
 
             {/* Split Distribution */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Split Distribution</h3>
+              <h3 className="text-sm font-medium mb-3">{isExported(version) ? "Export split" : "Split"}</h3>
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Train</span>
                     <span className="font-medium">{version.train_count} images</span>
                   </div>
-                  <Progress value={(version.train_count / version.total_images) * 100} className="h-2" />
+                  <Progress value={splitPct(version.train_count)} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Validation</span>
                     <span className="font-medium">{version.val_count} images</span>
                   </div>
-                  <Progress value={(version.val_count / version.total_images) * 100} className="h-2" />
+                  <Progress value={splitPct(version.val_count)} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Test</span>
                     <span className="font-medium">{version.test_count} images</span>
                   </div>
-                  <Progress value={(version.test_count / version.total_images) * 100} className="h-2" />
+                  <Progress value={splitPct(version.test_count)} className="h-2" />
                 </div>
               </div>
             </div>
@@ -162,25 +167,52 @@ export function VersionDetailSheet({ open, onOpenChange, projectId, version, onD
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 border rounded-lg">
-                    <div className="text-xs text-muted-foreground mb-1">Total Images</div>
-                    <div className="text-xl font-bold">{stats?.total_images || 0}</div>
+                    <div className="text-xs text-muted-foreground mb-1">Images in version</div>
+                    <div className="text-xl font-bold">{version.images_in_version ?? stats?.total_images ?? 0}</div>
                   </div>
                   <div className="p-3 border rounded-lg">
-                    <div className="text-xs text-muted-foreground mb-1">Total Annotations</div>
+                    <div className="text-xs text-muted-foreground mb-1">{isExported(version) ? "Images exported" : "Images"}</div>
+                    <div className="text-xl font-bold">{stats?.total_images || 0}</div>
+                    {(version.augmented_images ?? 0) > 0 && (
+                      <div className="text-xs text-muted-foreground mt-0.5">incl. {version.augmented_images} augmented</div>
+                    )}
+                  </div>
+                  <div className="p-3 border rounded-lg">
+                    <div className="text-xs text-muted-foreground mb-1">{isExported(version) ? "Annotations exported" : "Annotations"}</div>
                     <div className="text-xl font-bold">{stats?.total_annotations || 0}</div>
                   </div>
-                  <div className="p-3 border rounded-lg col-span-2">
-                    <div className="text-xs text-muted-foreground mb-1">Avg Annotations/Image</div>
+                  <div className="p-3 border rounded-lg">
+                    <div className="text-xs text-muted-foreground mb-1">Avg annotations per image</div>
                     <div className="text-xl font-bold">{stats?.average_annotations_per_image.toFixed(1) || 0}</div>
                   </div>
                 </div>
+              )}
+              {isExported(version) && notExported && (
+                <div className="mt-3 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm space-y-1">
+                  <p className="font-medium">
+                    {notExported.total.toLocaleString()} of {versionImagesLabel(version).replace(" in version", "")} {notExported.total === 1 ? "isn't" : "aren't"} exported: only images with ground-truth labels are.
+                  </p>
+                  {notExported.reasons.map((reason) => (
+                    <p key={reason} className="text-muted-foreground">{reason}</p>
+                  ))}
+                </div>
+              )}
+              {version.changed_since_export && (
+                <p className="mt-3 text-sm text-warning">
+                  Images were added or removed since the last export. Export again to update the file; the numbers above describe the last export.
+                </p>
               )}
             </div>
 
             {/* Class Distribution */}
             {stats && Object.keys(stats.class_distribution).length > 0 && (
               <div>
-                <h3 className="text-sm font-medium mb-3">Class Distribution</h3>
+                <h3 className="text-sm font-medium mb-3">
+                  Class Distribution
+                  {(version.augmented_images ?? 0) > 0 && (
+                    <span className="font-normal text-muted-foreground"> (before augmentation)</span>
+                  )}
+                </h3>
                 <div className="space-y-2">
                   {Object.entries(stats.class_distribution)
                     .sort(([, a], [, b]) => b - a)

@@ -45,6 +45,17 @@ export interface DatasetVersion {
   created_at: string;
   exported_at: string | null;
   created_by: string | null;
+  // The counts above (total_images … test_count) describe the last export
+  // file; these describe the version itself.
+  images_in_version?: number | null;
+  /** Augmented copies in the export: in total_images, in no split. */
+  augmented_images?: number;
+  /** Images the export leaves out: no labels at all. */
+  not_exported_no_labels?: number;
+  /** Images the export leaves out: only model predictions (include_predictions off). */
+  not_exported_predictions_only?: number;
+  /** Images were added or removed after the last export. */
+  changed_since_export?: boolean;
 }
 
 /**
