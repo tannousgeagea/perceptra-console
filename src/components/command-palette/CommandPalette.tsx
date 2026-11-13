@@ -101,7 +101,7 @@ const PaletteBody = ({ close }: { close: () => void }) => {
   const navigate = useNavigate();
   const { pathname, search: pageSearch } = useLocation();
   const { setTheme } = useTheme();
-  const { currentOrganization, hasAdminPermission } = useCurrentOrganization();
+  const { currentOrganization, hasAdminPermission, hasEditPermission } = useCurrentOrganization();
   const currentProjectId = useCurrentProjectId();
   const canReview = useCanReview(currentProjectId ?? undefined);
   const [search, setSearch] = useState('');
@@ -134,7 +134,8 @@ const PaletteBody = ({ close }: { close: () => void }) => {
     { label: 'Projects', to: '/projects', icon: Folder },
     { label: 'New project', to: '/projects/add', icon: FolderPlus, keywords: ['create', 'add'] },
     { label: 'Datalake', to: '/datalake', icon: Database, keywords: ['images', 'all images'] },
-    { label: 'Upload', to: '/upload', icon: Upload, keywords: ['import'] },
+    // Datalake upload: org editors and up, as in the main menu.
+    ...(hasEditPermission ? [{ label: 'Upload', to: '/upload', icon: Upload, keywords: ['import'] }] : []),
     { label: 'Link from storage', to: '/link', icon: Link2, keywords: ['register', 's3', 'bucket'] },
     { label: 'Similarity scans', to: '/similarity/scans', icon: ScanEye, keywords: ['duplicates'] },
     { label: 'Inference', to: '/inference', icon: Scan, keywords: ['predict', 'test model'] },

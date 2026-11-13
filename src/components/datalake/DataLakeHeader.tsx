@@ -2,6 +2,7 @@ import { ViewMode } from '@/types/image';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/ui/button';
 import { Grid3x3, Table2, Database, Upload, Copy, Link2 } from 'lucide-react';
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 
 interface DataLakeHeaderProps {
   viewMode: ViewMode;
@@ -12,6 +13,8 @@ interface DataLakeHeaderProps {
 
 export function DataLakeHeader({ viewMode, onViewModeChange, totalImages, onFindDuplicates }: DataLakeHeaderProps) {
   const navigate = useNavigate();
+  // Datalake upload: org editors and up (the API enforces it).
+  const { hasEditPermission } = useCurrentOrganization();
 
   return (
     <div className="flex items-center justify-between">
@@ -35,15 +38,17 @@ export function DataLakeHeader({ viewMode, onViewModeChange, totalImages, onFind
           <Copy className="w-4 h-4" />
           Find Duplicates
         </Button>
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => navigate("/upload")}
-          className="gap-2"
-        >
-          <Upload className="w-4 h-4" />
-          Upload
-        </Button>
+        {hasEditPermission && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => navigate("/upload")}
+            className="gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Upload
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"

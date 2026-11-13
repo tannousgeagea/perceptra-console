@@ -95,6 +95,8 @@ export const useCurrentOrganization = () => {
     switchOrganization,
     hasOwnerPermission: currentOrg ? hasPermission(currentOrg.id, 'owner') : false,
     hasAdminPermission: currentOrg ? hasPermission(currentOrg.id, 'admin') : false,
+    /** Org editor, admin or owner: may change images org-wide (e.g. upload to the datalake). */
+    hasEditPermission: ['editor', 'admin', 'owner'].includes(currentOrg?.role ?? ''),
     isOwner: currentOrg?.role === 'owner',
     isAdmin: currentOrg?.role === 'admin',
     isMember: currentOrg?.role === 'member',

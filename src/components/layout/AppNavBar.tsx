@@ -48,7 +48,7 @@ const Navbar: FC = () => {
   const inProject = /^\/projects\/[^/]+/.test(location.pathname);
   const helpers = useAuthHelpers();
   const openPalette = useCommandPaletteStore((s) => s.setOpen);
-  const { hasAdminPermission } = useCurrentOrganization();
+  const { hasAdminPermission, hasEditPermission } = useCurrentOrganization();
   const openNotifications = useNotificationStore((s) => s.setOpen);
   const { data: noticePage } = useNotifications();
   const unreadCount = noticePage?.unread ?? 0;
@@ -71,7 +71,9 @@ const Navbar: FC = () => {
     { item: "Projects", ref: "/projects", icon: <Folder size={20} /> },
     { item: "Datalake", ref: "/datalake", icon: <Database size={20} /> },
     { item: "Similarity", ref: "/similarity", icon: <ScanEye size={20} /> },
-    { item: "Upload", ref: "/upload", icon: <Upload size={20} /> },
+    // Datalake upload: org editors and up (the API enforces it). Project
+    // editors upload from the project menu instead.
+    ...(hasEditPermission ? [{ item: "Upload", ref: "/upload", icon: <Upload size={20} /> }] : []),
     { item: "Inference", ref: "/inference", icon: <Scan size={20} /> },
     // Models and deployment live inside each project (project menu → Models,
     // and a model's Deployment tab); there's no organization-wide page for them.
