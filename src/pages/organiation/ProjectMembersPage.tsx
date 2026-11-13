@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useProjectMembers, useAddProjectMember, useUpdateProjectMember, useRemoveProjectMember } from '@/hooks/useProjectMembers';
 import { useOrganizationMembers } from '@/hooks/useOrganization';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
@@ -23,9 +23,10 @@ import {
 } from '@/components/ui/ui/alert-dialog';
 import { Label } from '@/components/ui/ui/label';
 import {
-  Users, Search, UserPlus, ArrowLeft, MoreHorizontal,
-  ShieldCheck, Crown, UserCog, Eye, Check, Loader2, FolderKanban,
+  Users, Search, UserPlus, MoreHorizontal,
+  ShieldCheck, Crown, UserCog, Eye, Check, Loader2,
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -467,25 +468,15 @@ export default function ProjectMembersPage() {
     <div className="space-y-6 p-6 animate-fade-in w-full">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-            <Link to={`/projects/${projectId}/dataset`}><ArrowLeft size={16} /></Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <FolderKanban size={20} className="text-primary" />
-              Project Members
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Manage who has access to this project</p>
-          </div>
-        </div>
-        {canManage && (
+      <PageHeader
+        title="Project Members"
+        description="Manage who has access to this project"
+        actions={canManage && (
           <Button onClick={() => setAddOpen(true)} className="flex-shrink-0">
             <UserPlus size={15} className="mr-1.5" />Add Member
           </Button>
         )}
-      </div>
+      />
 
       {/* ── Role breakdown: one card per project role, so the cards add up to Total ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">

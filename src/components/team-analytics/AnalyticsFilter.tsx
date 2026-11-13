@@ -78,13 +78,15 @@ export const AnalyticsFiltersComponent = ({ filters, onFiltersChange, availableU
                   onFiltersChange({ ...filters, timeFrame: value })
                 }
               >
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-44">
                   <SelectValue />
                 </SelectTrigger>
+                {/* The period each option covers (backend get_date_range), so an
+                    empty chart reads as "no work in this period", not as broken. */}
                 <SelectContent>
-                  <SelectItem value="day">Daily</SelectItem>
-                  <SelectItem value="week">Weekly</SelectItem>
-                  <SelectItem value="month">Monthly</SelectItem>
+                  <SelectItem value="day">Last 7 days, by day</SelectItem>
+                  <SelectItem value="week">Last 6 weeks, by week</SelectItem>
+                  <SelectItem value="month">Last 5 months, by month</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Plus, Filter, Eye, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { FileText, Plus, Filter, Eye, CheckCircle, XCircle } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { BillingBreadcrumb } from "@/components/billing/BillingBreadcrumb";
 import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/ui/card";
 import { Badge } from "@/components/ui/ui/badge";
@@ -81,19 +83,17 @@ export default function Invoices() {
       <div className="px-4 py-8">
         <div className="flex flex-col gap-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/billing">
-                <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Invoices</h1>
-                <p className="text-muted-foreground mt-1">Generate and manage invoices for billing periods</p>
-              </div>
-            </div>
-            <Button onClick={() => setShowGenerateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />Generate Invoice
-            </Button>
+          <div className="flex flex-col gap-2">
+            <BillingBreadcrumb current="Invoices" />
+            <PageHeader
+              title="Invoices"
+              description="Generate and manage invoices for billing periods"
+              actions={
+                <Button onClick={() => setShowGenerateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />Generate Invoice
+                </Button>
+              }
+            />
           </div>
 
           {/* Summary Cards */}

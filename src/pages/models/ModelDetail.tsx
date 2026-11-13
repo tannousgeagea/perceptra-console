@@ -2,6 +2,7 @@ import React from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft,
+  ChevronRight,
   BarChart4,
   Clock,
   Code,
@@ -145,14 +146,14 @@ const ModelDetail: React.FC = () => {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6 mx-auto">
 
-      {/* Back link */}
-      <Link
-        to={`/projects/${projectId}/models`}
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to models
-      </Link>
+      {/* Breadcrumb (the project layout already has "Back to Projects") */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link to={`/projects/${projectId}/models`} className="hover:text-foreground transition-colors">
+          Models
+        </Link>
+        <ChevronRight className="h-4 w-4" aria-hidden />
+        <span className="text-foreground truncate">{model.name}</span>
+      </nav>
 
       {/* Hero header */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">

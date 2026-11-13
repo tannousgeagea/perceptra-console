@@ -46,7 +46,8 @@ const Inference = () => {
         setIsComparisonMode={setIsComparisonMode}
       />
 
-      <div className="flex h-[calc(100vh-4rem)]">
+      {/* Phones: settings above the upload area; from md: side by side, full height. */}
+      <div className="flex flex-col md:flex-row md:h-[calc(100vh-4rem)]">
         <Sidebar>
           <div className="px-1 pb-3">
             <label className="text-sm font-medium text-muted-foreground block mb-1">
@@ -86,7 +87,7 @@ const Inference = () => {
           />
         </Sidebar>
 
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 min-w-0 md:overflow-hidden">
           <div className="h-full flex flex-col">
             <FileUpload
               uploadedFile={uploadedFile}

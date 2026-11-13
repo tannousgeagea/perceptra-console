@@ -2,7 +2,7 @@ import { StatCard } from "../StatCard";
 import { Users, FolderKanban, Activity, Award, TrendingUp } from "lucide-react";
 import { OrganizationSummary, ActivityTrend } from "@/types/activity";
 import { Card } from "@/components/ui/ui/card";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 interface OrgOverviewTabProps {
   orgSummary: OrganizationSummary;
@@ -141,22 +141,15 @@ export const OrgOverviewTab = ({ orgSummary, activityTrend }: OrgOverviewTabProp
           <TrendingUp className="w-5 h-5 text-primary" />
           Organization Activity Trend
         </h3>
+        {/* Bars per day: counts are per day, and the API sends every day of
+            the window (zeros included), so nothing is drawn between days. */}
         <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={activityTrend}>
-            <defs>
-              <linearGradient id="colorAnnotations" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="colorReviews" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} />
-            <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} />
+          <BarChart data={activityTrend} barGap={2}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} minTickGap={16} />
+            <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} allowDecimals={false} />
             <Tooltip
+              cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
@@ -164,31 +157,10 @@ export const OrgOverviewTab = ({ orgSummary, activityTrend }: OrgOverviewTabProp
               }}
             />
             <Legend />
-            <Area
-              type="monotone"
-              dataKey="annotations"
-              stroke="hsl(var(--primary))"
-              fillOpacity={1}
-              fill="url(#colorAnnotations)"
-              name="Annotations"
-            />
-            <Area
-              type="monotone"
-              dataKey="reviews"
-              stroke="hsl(var(--success))"
-              fillOpacity={1}
-              fill="url(#colorReviews)"
-              name="Reviews"
-            />
-            <Area
-              type="monotone"
-              dataKey="uploads"
-              stroke="hsl(var(--chart-3))"
-              fill="hsl(var(--chart-3))"
-              fillOpacity={0.1}
-              name="Uploads"
-            />
-          </AreaChart>
+            <Bar dataKey="annotations" fill="hsl(var(--primary))" name="Annotations" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="reviews" fill="hsl(var(--success))" name="Reviews" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="uploads" fill="hsl(var(--chart-3))" name="Uploads" radius={[3, 3, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       </Card>
     </div>

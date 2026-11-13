@@ -28,10 +28,12 @@ export const getSplitColor = (split: SplitType) => {
 export const getModeBadge = (split: SplitType) => {
   if (!split) return null;
 
+  // Same split colours as getSplitColor and the version cards: train green,
+  // val brand purple, test amber.
   const modeConfig = {
-    train: { label: 'Train', className: 'bg-blue-500', icon: Bike },
-    val: { label: 'Val', className: 'bg-purple-500', icon: ChartCandlestick },
-    test: { label: 'Test', className: 'bg-orange-500', icon: FlaskConical },
+    train: { label: 'Train', className: 'bg-success text-success-foreground hover:bg-success/90', icon: Bike },
+    val: { label: 'Val', className: 'bg-primary text-primary-foreground hover:bg-primary/90', icon: ChartCandlestick },
+    test: { label: 'Test', className: 'bg-warning text-warning-foreground hover:bg-warning/90', icon: FlaskConical },
   };
 
   const config = modeConfig[split];

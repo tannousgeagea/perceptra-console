@@ -62,6 +62,12 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ model, projectId }) => {
   };
 
   const onSubmit = (formValues: any) => {
+    // The dataset defaults to empty (datasets load after the form is set up).
+    if (!formValues.datasetId) {
+      setActiveTab("basic");
+      toast.error("Choose a training dataset", { description: "Pick one on the Dataset tab, then start training." });
+      return;
+    }
     triggerTraining({
       ...formValues,
       modelId: model.id,

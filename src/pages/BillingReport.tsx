@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Download, Calendar, DollarSign } from "lucide-react";
+import { Download, Calendar, DollarSign } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { BillingBreadcrumb } from "@/components/billing/BillingBreadcrumb";
 import { Button } from "@/components/ui/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/ui/select";
@@ -42,7 +43,7 @@ export default function BillingReport() {
       actionTypeLabels[item.action_type] || item.action_type,
       item.quantity.toString(),
       `$${item.unit_rate.toFixed(2)}`,
-      `$${item.total_amount.toFixed(2)}`
+      `$${Number(item.total_amount).toFixed(2)}`
     ]);
 
     if (!rows) return
@@ -83,28 +84,24 @@ export default function BillingReport() {
       <div className="px-4 py-8">
         <div className="flex flex-col gap-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/billing">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Billing Report</h1>
-                <p className="text-muted-foreground mt-1">View detailed billing breakdown and export invoices</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExportCSV}>
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-              <Button variant="outline" onClick={handleExportPDF}>
-                <Download className="h-4 w-4 mr-2" />
-                Export PDF
-              </Button>
-            </div>
+          <div className="flex flex-col gap-2">
+            <BillingBreadcrumb current="Report" />
+            <PageHeader
+              title="Billing Report"
+              description="Billable actions by type for a project and period, ready to export"
+              actions={
+                <>
+                  <Button variant="outline" onClick={handleExportCSV}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button variant="outline" onClick={handleExportPDF}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </Button>
+                </>
+              }
+            />
           </div>
 
           {/* Filters */}
@@ -116,7 +113,7 @@ export default function BillingReport() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Project</label>
                   <Select value={filterProject} onValueChange={setFilterProject}>
@@ -154,7 +151,7 @@ export default function BillingReport() {
           </Card>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Actions</CardTitle>
@@ -173,7 +170,7 @@ export default function BillingReport() {
               <CardContent>
                 <div className="text-3xl font-bold flex items-center gap-1">
                   <DollarSign className="h-6 w-6" />
-                  {report.total_amount}
+                  {Number(report.total_amount).toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Currency: {report?.currency}</p>
               </CardContent>
@@ -218,7 +215,8 @@ export default function BillingReport() {
                         <td className="text-right py-3 px-4">{item.quantity.toLocaleString()}</td>
                         <td className="text-right py-3 px-4">${item.unit_rate.toFixed(2)}</td>
                         <td className="text-right py-3 px-4 font-semibold">
-                          ${item.total_amount}
+                          {/* The API sends row amounts as strings ("1.75"). */}
+                          ${Number(item.total_amount).toFixed(2)}
                         </td>
                         <td className="text-right py-3 px-4 text-muted-foreground">
                           {((item.total_amount / report?.total_amount) * 100).toFixed(1)}%

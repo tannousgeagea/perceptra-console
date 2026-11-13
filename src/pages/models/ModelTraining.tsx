@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { Skeleton } from "@/components/ui/ui/skeleton";
 import { useModelById } from "@/hooks/useModelById";
@@ -40,16 +40,17 @@ const ModelTraining: React.FC = () => {
   return (
     <div className="space-y-6 p-6 w-full">
       <div>
-        <Button 
-          variant="ghost" 
-          className="pl-0 mb-2" 
-          asChild
-        >
-          <Link to={`/projects/${projectId}/models/${modelId}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> 
-            Back to Model
+        <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-sm text-muted-foreground">
+          <Link to={`/projects/${projectId}/models`} className="hover:text-foreground transition-colors">
+            Models
           </Link>
-        </Button>
+          <ChevronRight className="h-4 w-4" aria-hidden />
+          <Link to={`/projects/${projectId}/models/${modelId}`} className="hover:text-foreground transition-colors truncate">
+            {model.name}
+          </Link>
+          <ChevronRight className="h-4 w-4" aria-hidden />
+          <span className="text-foreground">Train</span>
+        </nav>
         <h1 className="text-2xl font-bold tracking-tight mb-2">Train New Version</h1>
         <p className="text-muted-foreground">
           Configure and start training a new version of {model.name}

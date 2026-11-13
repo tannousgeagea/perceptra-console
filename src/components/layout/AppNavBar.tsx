@@ -14,6 +14,7 @@ import {
   Users,
   Bell,
   PanelLeft,
+  CreditCard,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMobileNavStore } from '@/stores/mobileNavStore';
@@ -76,6 +77,8 @@ const Navbar: FC = () => {
     // and a model's Deployment tab); there's no organization-wide page for them.
     // Team progress and analytics are org-admin only (the API enforces it too).
     ...(hasAdminPermission ? [{ item: "Team", ref: "/team", icon: <Users size={20} /> }] : []),
+    // Rates, invoices and contractor billing: org admins only, like Team.
+    ...(hasAdminPermission ? [{ item: "Billing", ref: "/billing", icon: <CreditCard size={20} /> }] : []),
   ];
 
   const toggleNavbar = (): void => {

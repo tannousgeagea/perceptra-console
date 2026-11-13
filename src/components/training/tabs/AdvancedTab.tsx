@@ -70,11 +70,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({ isTraining }) => {
           placeholder={`# YAML configuration
 epochs: 10
 batch_size: 32
-learning_rate: 0.001
-model_config:
-  architecture: resnet50
-  pretrained: true
-  freeze_layers: 5`}
+learning_rate: 0.001`}
           className="font-mono text-sm"
           rows={10}
           disabled={isTraining}
