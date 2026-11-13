@@ -6,7 +6,6 @@ import { CreateVersionDialog } from "@/components/version/CreateVersionDialog";
 import { VersionDetailSheet } from "@/components/version/VersionDetailSheet";
 import { ExportConfigDialog } from "@/components/version/ExportConfigDialog";
 import { useProjectVersions, useDeleteProjectVersion, useDownloadDataset, downloadDataset } from "@/hooks/useDatasetVersions";
-import { useExportVersion } from "@/components/version/useDatasetVersions";
 import { useExportDataset } from "@/hooks/useDatasetVersions";
 import { ExportConfig } from "@/types/version";
 import { DatasetVersion } from "@/types/version";

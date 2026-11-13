@@ -233,7 +233,7 @@ export default function OrganizationPage() {
           label="Images"
           value={stats.total_images.toLocaleString()}
           icon={ImageIcon}
-          sub="across all projects"
+          sub="in the organization, including the datalake"
         />
       </div>
 

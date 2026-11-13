@@ -38,13 +38,6 @@ const UserProgressCard = ({
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600";
-    if (percentage >= 60) return "text-blue-600";
-    if (percentage >= 40) return "text-yellow-600";
-    return "text-red-600";
-  };
-
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleClick}>
       <CardContent className="p-4">
@@ -59,7 +52,8 @@ const UserProgressCard = ({
               <p className="text-xs text-muted-foreground">{userProgress.userRole}</p>
             </div>
           </div>
-          <Badge variant="outline" className={getProgressColor(userProgress.progressPercentage)}>
+          {/* Neutral: early progress isn't a problem; red stays for "to fix". */}
+          <Badge variant="outline" className="text-foreground">
             {userProgress.progressPercentage.toFixed(1)}%
           </Badge>
         </div>
@@ -175,7 +169,8 @@ const ProgressSummaryCards = ({
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <Clock className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium">In Progress</span>
+            {/* Sum of every member's assigned images (useUserProgress). */}
+            <span className="text-sm font-medium">Assigned images</span>
           </div>
           <div className="text-2xl font-bold">{summary.totalImagesInProgress.toLocaleString()}</div>
         </CardContent>

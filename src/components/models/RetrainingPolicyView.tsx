@@ -286,7 +286,7 @@ const RetrainingPolicyView: React.FC<{ model: ModelDetail }> = ({ model }) => {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            Policies are evaluated every hour by the Beat scheduler.
+            Policies are checked every hour.
           </p>
         </div>
         <CreatePolicyDialog modelId={model.id} />

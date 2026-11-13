@@ -43,7 +43,7 @@ export default function BillingReport() {
       actionTypeLabels[item.action_type] || item.action_type,
       item.quantity.toString(),
       `$${item.unit_rate.toFixed(2)}`,
-      `$${item.total_amount.toFixed(2)}`
+      `$${Number(item.total_amount).toFixed(2)}`
     ]);
 
     if (!rows) return
@@ -170,7 +170,7 @@ export default function BillingReport() {
               <CardContent>
                 <div className="text-3xl font-bold flex items-center gap-1">
                   <DollarSign className="h-6 w-6" />
-                  {report.total_amount}
+                  {Number(report.total_amount).toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Currency: {report?.currency}</p>
               </CardContent>
@@ -215,7 +215,8 @@ export default function BillingReport() {
                         <td className="text-right py-3 px-4">{item.quantity.toLocaleString()}</td>
                         <td className="text-right py-3 px-4">${item.unit_rate.toFixed(2)}</td>
                         <td className="text-right py-3 px-4 font-semibold">
-                          ${item.total_amount}
+                          {/* The API sends row amounts as strings ("1.75"). */}
+                          ${Number(item.total_amount).toFixed(2)}
                         </td>
                         <td className="text-right py-3 px-4 text-muted-foreground">
                           {((item.total_amount / report?.total_amount) * 100).toFixed(1)}%
