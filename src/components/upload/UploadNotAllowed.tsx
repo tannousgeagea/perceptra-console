@@ -9,6 +9,8 @@ interface UploadNotAllowedProps {
   role: string;
   /** Project admins who can change their project role. */
   projectAdmins?: string[];
+  /** What the page does: upload files, or link files already in storage. */
+  action?: 'upload' | 'link';
 }
 
 const listNames = (names: string[]) => {
@@ -17,14 +19,17 @@ const listNames = (names: string[]) => {
   return `${shown.slice(0, -1).join(', ')} or ${shown[shown.length - 1]}`;
 };
 
-/** Shown on the Upload page instead of the form when the person can't upload. */
+/** Shown on the Upload and Link pages instead of the form when the person can't add images. */
 export const UploadNotAllowed: React.FC<UploadNotAllowedProps> = ({
   inProject,
   projectName,
   role,
   projectAdmins = [],
+  action = 'upload',
 }) => {
   const roleText = role && role !== 'member' ? `Your role is ${role}. ` : '';
+  const verb = action === 'link' ? 'link' : 'upload';
+  const Verb = action === 'link' ? 'Linking' : 'Uploading';
 
   const whoToAsk = inProject
     ? projectAdmins.length > 0
@@ -41,16 +46,16 @@ export const UploadNotAllowed: React.FC<UploadNotAllowedProps> = ({
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">
             {inProject
-              ? `You can't upload images to ${projectName || 'this project'}`
-              : "You can't upload images to the datalake"}
+              ? `You can't ${verb} images to ${projectName || 'this project'}`
+              : `You can't ${verb} images to the datalake`}
           </h2>
           <p className="text-sm text-muted-foreground">
             {roleText}
-            Uploading needs the editor role or above. To upload, {whoToAsk}.
+            {Verb} needs the editor role or above. To {verb}, {whoToAsk}.
           </p>
           {!inProject && (
             <p className="text-sm text-muted-foreground">
-              You can still upload to projects where you're an editor, from the project's dataset page.
+              You can still {verb} images to projects where you're an editor, from the project's menu.
             </p>
           )}
         </div>

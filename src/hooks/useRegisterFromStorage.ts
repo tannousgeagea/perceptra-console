@@ -91,6 +91,7 @@ export async function browseStorage(
   prefix: string,
   token?: string | null,
   imagesOnly = true,
+  projectId?: string,
 ): Promise<BrowseResponse> {
   const response = await apiFetch(
     withQuery(`/api/v1/storage/profiles/${storageProfileId}/browse`, {
@@ -98,6 +99,8 @@ export async function browseStorage(
       token: token || undefined,
       images_only: imagesOnly,
       page_size: 200,
+      // Linking into a project: lets that project's editors browse too.
+      project_id: projectId || undefined,
     }),
   );
   if (!response.ok) {
@@ -239,11 +242,12 @@ export const useBrowseStorage = (
   prefix: string,
   token: string | null,
   imagesOnly: boolean,
+  projectId?: string,
 ) => {
   const { currentOrganization } = useCurrentOrganization();
   return useQuery({
-    queryKey: ['storageBrowse', currentOrganization?.id, storageProfileId, prefix, token, imagesOnly],
-    queryFn: () => browseStorage(storageProfileId!, prefix, token, imagesOnly),
+    queryKey: ['storageBrowse', currentOrganization?.id, storageProfileId, prefix, token, imagesOnly, projectId],
+    queryFn: () => browseStorage(storageProfileId!, prefix, token, imagesOnly, projectId),
     enabled: !!currentOrganization && !!storageProfileId,
     retry: (count, error: HttpError) => error?.status !== 403 && count < 2,
     staleTime: 30 * 1000,
