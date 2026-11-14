@@ -28,7 +28,7 @@ import { useSimilarityStore } from '@/stores/similarityStore';
 export default function ProjectDataset() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const { canEdit } = useImageEditPermission(projectId);
+  const { canTag } = useImageEditPermission(projectId);
   // The server's project permissions: why an action is unavailable, or undefined.
   const permissions = useProjectPermissions(projectId);
   const lacks = (permission: ProjectPermission, reason: string) =>
@@ -207,7 +207,7 @@ export default function ProjectDataset() {
           onCancelOperation={cancelOperation}
           onOperationComplete={clearOperation}
           onBulkTag={handleBulkTag}
-          tagDisabledReason={canEdit ? undefined : 'Tagging needs the editor role in this project'}
+          tagDisabledReason={canTag ? undefined : 'Tagging needs the editor role in this project'}
         />
 
         <SelectAllMatchingBanner

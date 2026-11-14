@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function JobAnnotation() {
   const { projectId = '', jobId = '' } = useParams<{ projectId: string, jobId: string }>();
-  const { canEdit } = useImageEditPermission(projectId);
+  const { canTag } = useImageEditPermission(projectId);
   // The server's project permissions: why an action is unavailable, or undefined.
   const permissions = useProjectPermissions(projectId);
   const lacks = (permission: ProjectPermission, reason: string) =>
@@ -279,7 +279,7 @@ export default function JobAnnotation() {
           onCancelOperation={cancelOperation}
           onOperationComplete={clearOperation}
           onBulkTag={handleBulkTag}
-          tagDisabledReason={canEdit ? undefined : 'Tagging needs the editor role in this project'}
+          tagDisabledReason={canTag ? undefined : 'Tagging needs the editor role in this project'}
         />
 
         <SelectAllMatchingBanner
