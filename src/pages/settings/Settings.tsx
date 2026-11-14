@@ -13,10 +13,12 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 
 export default function Settings() {
   const { isLoading: loading } = useAuth();
-  const { currentOrganization } = useCurrentOrganization();
+  const { hasAdminPermission, permissionsLoading } = useCurrentOrganization();
 
-  const role = currentOrganization?.role
-  if (loading) {
+  // Admin pages: the server's org "admin" permission. Wait for it before
+  // deciding, so admins aren't bounced to Account while roles load.
+  const isAdmin = hasAdminPermission;
+  if (loading || permissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -36,7 +38,7 @@ export default function Settings() {
                   <Route 
                       path="/organization" 
                       element={
-                      role === 'owner' || role === 'admin' 
+                      isAdmin
                           ? <OrganizationSettings />
                           : <Navigate to="/settings/account" replace />
                       } 
@@ -44,7 +46,7 @@ export default function Settings() {
                   <Route 
                       path="/storage" 
                       element={
-                      role === 'owner' || role === 'admin'
+                      isAdmin
                           ? <StorageSettings />
                           : <Navigate to="/settings/account" replace />
                       } 
@@ -52,7 +54,7 @@ export default function Settings() {
                   <Route 
                     path="/compute" 
                     element={
-                      role === 'owner' || role === 'admin'
+                      isAdmin
                         ? <ComputeSettings />
                         : <Navigate to="/settings/account" replace />
                     } 
@@ -60,7 +62,7 @@ export default function Settings() {
                   <Route 
                       path="/users" 
                       element={
-                      role === 'owner' || role === 'admin'
+                      isAdmin
                           ? <UserManagement />
                           : <Navigate to="/settings/account" replace />
                       } 
@@ -68,7 +70,7 @@ export default function Settings() {
                   <Route 
                     path="/api-keys" 
                     element={
-                      role === 'owner' || role === 'admin'
+                      isAdmin
                         ? <APIKeysManagement />
                         : <Navigate to="/settings/account" replace />
                     } 

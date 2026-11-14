@@ -7,6 +7,7 @@ import {
 import { InviteMemberDialog } from '@/components/invitations/InviteMemberDialog';
 import { PendingInvitations } from '@/components/invitations/PendingInvitations';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
+import { useAssignableRoles } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrgMember } from '@/types/organization';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/ui/card';
@@ -34,8 +35,8 @@ import { toast } from 'sonner';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-// Organization roles as stored by the API ("annotator" is a project-level role only).
-const ROLES = ['owner', 'admin', 'editor', 'viewer'] as const;
+// Organization roles come from the API (useAssignableRoles('org')), so they
+// always match the server. Annotator and reviewer are project-only roles.
 
 function roleMeta(role: string): { label: string; classes: string; icon: React.ElementType } {
   switch (role.toLowerCase()) {
@@ -46,7 +47,8 @@ function roleMeta(role: string): { label: string; classes: string; icon: React.E
     case 'editor':
       return { label: 'Editor',   classes: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',             icon: UserCog };
     default:
-      return { label: 'Viewer',   classes: 'bg-muted text-muted-foreground',                                           icon: Eye };
+      // viewer, and any other role the server defines (e.g. operator)
+      return { label: role.charAt(0).toUpperCase() + role.slice(1), classes: 'bg-muted text-muted-foreground', icon: Eye };
   }
 }
 
@@ -99,6 +101,7 @@ interface MemberRowProps {
 }
 
 function MemberTableRow({ member, isSelf, onRoleChange, onRemove, isUpdating, isRemoving }: MemberRowProps) {
+  const roles = useAssignableRoles('org');
   const hue   = avatarHue(member.id);
   const role  = roleMeta(member.role);
   const st    = statusMeta(member.status);
@@ -166,7 +169,7 @@ function MemberTableRow({ member, isSelf, onRoleChange, onRemove, isUpdating, is
                   <UserCog size={14} className="mr-2" />Change role
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
-                  {ROLES.map(r => (
+                  {roles.map(r => (
                     <DropdownMenuItem
                       key={r}
                       onClick={() => onRoleChange(r)}
@@ -267,6 +270,7 @@ export default function OrganizationMembersPage() {
 
   const [search,        setSearch]        = useState('');
   const [roleFilter,    setRoleFilter]    = useState('all');
+  const orgRoles = useAssignableRoles('org');
   const [statusFilter,  setStatusFilter]  = useState('all');
   const [page,          setPage]          = useState(1);
   const [inviteOpen,    setInviteOpen]    = useState(false);
@@ -365,10 +369,9 @@ export default function OrganizationMembersPage() {
           <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="All roles" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All roles</SelectItem>
-            <SelectItem value="owner">Owner</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="editor">Editor</SelectItem>
-            <SelectItem value="viewer">Viewer</SelectItem>
+            {orgRoles.map(r => (
+              <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(1); }}>

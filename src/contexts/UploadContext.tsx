@@ -135,7 +135,8 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         source_of_origin?: string;
         storage_profile_id?: string;
       }
-    ): Promise<boolean> => {
+    ): Promise<string | null> => {
+      // Returns null on success, otherwise the message to show on the image.
       try {
         const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
         const organizationId = currentOrganization?.id;
@@ -154,11 +155,12 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (options?.storage_profile_id) formData.append('storage_profile_id', options.storage_profile_id);
 
         const result = await apiUpload('/api/v1/images/upload', formData, onProgress);
+        if (result.status === 403) return "You don't have permission to upload here";
         if (!result.ok) throw new Error(`Upload failed: ${result.status} ${result.statusText}`);
-        return true;
+        return null;
       } catch (err) {
         console.error('Error uploading image:', err);
-        return false;
+        return 'Upload failed';
       }
     },
     [currentOrganization]
@@ -191,7 +193,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           uploadedImages.map(async (image) => {
             updateFileStatus(image.id, 'uploading', 0);
 
-            const success = await uploadImageToAPI(
+            const error = await uploadImageToAPI(
               image,
               (pct) => updateFileStatus(image.id, 'uploading', pct),
               {
@@ -202,7 +204,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
               }
             );
 
-            updateFileStatus(image.id, success ? 'success' : 'error', success ? 100 : 0, success ? undefined : 'Upload failed');
+            updateFileStatus(image.id, error ? 'error' : 'success', error ? 0 : 100, error ?? undefined);
             overall += perImage;
             setUploadProgress(Math.min(Math.round(overall), 100));
           })

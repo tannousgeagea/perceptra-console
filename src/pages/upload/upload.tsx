@@ -5,10 +5,13 @@ import { FileUploader } from '@/components/upload/FileUploader';
 import { ImageGrid } from '@/components/upload/ImageGrid';
 import Header from '@/components/ui/header/Header';
 import { TagInput } from '@/components/upload/TagInput';
+import { UploadNotAllowed } from '@/components/upload/UploadNotAllowed';
+import { useImageEditPermission } from '@/hooks/useImageEditPermission';
 
 export const UploadPage: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const { projectId } = useParams<{ projectId: string }>();
+  const permission = useImageEditPermission(projectId);
 
   const description = projectId
     ? "Add images. Uploaded images will be automatically associated with this project."
@@ -21,6 +24,14 @@ export const UploadPage: React.FC = () => {
         title="Upload Images"
         description={description}
       />
+      {permission.isLoading ? null : !permission.canEdit ? (
+        <UploadNotAllowed
+          inProject={!!projectId}
+          projectName={permission.projectName}
+          role={projectId ? permission.projectRole : permission.orgRole}
+          projectAdmins={permission.projectAdmins}
+        />
+      ) : (
       <div className="space-y-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
           <h2 className="text-lg font-semibold">Select Images</h2>
@@ -39,6 +50,7 @@ export const UploadPage: React.FC = () => {
           <ImageGrid tags={tags} />
         </div>
       </div>
+      )}
     </div>
   );
 }; 

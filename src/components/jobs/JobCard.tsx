@@ -14,6 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/ui/select";
 import { formatDistanceToNow } from "date-fns";
+import { useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +34,18 @@ interface JobCardProps {
   onDeleteJob?: (job: Job) => void;
 }
 
+const MANAGE_HINT = 'Needs the admin role in this project';
+
 const JobCard = ({ job, onAssignJob, onViewJob, onSplitJob, onStatusChange, onEditJob, onDeleteJob }: JobCardProps) => {
+  // What the person may do comes from the server's project permissions: admins
+  // manage jobs; reviewers, or the job's own assignee, may move its status.
+  const { projectId } = useParams<{ projectId: string }>();
+  const permissions = useProjectPermissions(projectId);
+  const myId = useAuth().user?.id;
+  const canManage = permissions.can('manage');
+  const isMine = !!myId && String(job.assignedUser?.id ?? '') === String(myId);
+  const canMove = permissions.can('review') || (permissions.can('annotate') && isMine);
+
   // Get available status transitions for current job
   const availableTransitions = allowedStatusTransitions
     .find(transition => transition.from === job.status)
@@ -80,8 +94,13 @@ const getStatusBadge = (status: JobStatus) => {
               <Select
                 value=""
                 onValueChange={(value) => onStatusChange(job, value as JobStatus)}
+                disabled={!canMove}
               >
-                <SelectTrigger className="h-8 w-auto gap-1 px-2 text-xs" aria-label="Move job to another status">
+                <SelectTrigger
+                  className="h-8 w-auto gap-1 px-2 text-xs"
+                  aria-label="Move job to another status"
+                  title={canMove ? undefined : "Only the job's assignee or a reviewer can move it"}
+                >
                   <SelectValue placeholder="Move to…" />
                 </SelectTrigger>
                 <SelectContent>
@@ -152,6 +171,8 @@ const getStatusBadge = (status: JobStatus) => {
                       size="icon" 
                       className="h-8 w-8"
                       onClick={() => onSplitJob(job)}
+                      disabled={!canManage}
+                      title={canManage ? undefined : MANAGE_HINT}
                     >
                       <Scissors size={16} className="text-slate-700" />
                     </Button>
@@ -171,13 +192,15 @@ const getStatusBadge = (status: JobStatus) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
                   {onEditJob && (
-                    <DropdownMenuItem onClick={() => onEditJob(job)}>
+                    <DropdownMenuItem onClick={() => onEditJob(job)} disabled={!canManage} title={canManage ? undefined : MANAGE_HINT}>
                       Edit Job
                     </DropdownMenuItem>
                   )}
                   {onDeleteJob && (
                     <DropdownMenuItem 
                       onClick={() => onDeleteJob(job)}
+                      disabled={!canManage}
+                      title={canManage ? undefined : MANAGE_HINT}
                       className="text-red-600 focus:text-red-600"
                     >
                       Delete Job
@@ -196,6 +219,8 @@ const getStatusBadge = (status: JobStatus) => {
                   size="sm" 
                   className="h-8"
                   onClick={() => onAssignJob(job)}
+                  disabled={!canManage}
+                  title={canManage ? undefined : MANAGE_HINT}
                 >
                   {job.assignedUser ? (
                     <>

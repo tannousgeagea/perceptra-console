@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { getCurrentUser } from '@/utils/user'
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 
 interface ScanRowKebabMenuProps {
   scan: ScanSummary;
@@ -21,9 +22,9 @@ interface ScanRowKebabMenuProps {
 export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest }: ScanRowKebabMenuProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { hasAdminPermission } = useCurrentOrganization();
   if (!user) return null;
-  const canCancel = (scan.status === 'pending' || scan.status === 'running') &&
-    (user.role === 'admin' || user.role === 'owner');
+  const canCancel = (scan.status === 'pending' || scan.status === 'running') && hasAdminPermission;
 
   const copyId = () => {
     navigator.clipboard.writeText(scan.scan_id);

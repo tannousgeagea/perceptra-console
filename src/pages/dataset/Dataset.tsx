@@ -16,6 +16,9 @@ import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
 import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
 import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
 import { useBulkOperations } from '@/hooks/useBulkOperation';
+import { useImageEditPermission } from '@/hooks/useImageEditPermission';
+import { useProjectPermissions } from '@/hooks/usePermissions';
+import type { ProjectPermission } from '@/types/permissions';
 import { useToast } from '@/hooks/use-toast';
 import { ScanConfigDrawer } from '@/components/similarity/ScanConfigDrawer';
 import { ScanResultsPanel } from '@/components/similarity/ScanResultsPanel';
@@ -25,6 +28,11 @@ import { useSimilarityStore } from '@/stores/similarityStore';
 export default function ProjectDataset() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
+  const { canEdit } = useImageEditPermission(projectId);
+  // The server's project permissions: why an action is unavailable, or undefined.
+  const permissions = useProjectPermissions(projectId);
+  const lacks = (permission: ProjectPermission, reason: string) =>
+    !permissions.isLoading && !permissions.can(permission) ? reason : undefined;
   // Search, page, page size and view live in the URL, so coming back from the
   // annotator (returnTo) or sharing a link restores exactly this view.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -180,6 +188,7 @@ export default function ProjectDataset() {
               label: 'Review',
               icon: <CheckCircle2 className="w-4 h-4" />,
               variant: 'secondary',
+              disabledReason: lacks('annotate', 'Approving needs the annotator role or above in this project'),
               onClick: handleBulkReview,
             },
             {
@@ -190,6 +199,7 @@ export default function ProjectDataset() {
               requiresConfirm: true,
               confirmTitle: `Delete ${selection.selectedCount} images?`,
               confirmDescription: 'This action cannot be undone. The selected images and all their annotations will be permanently removed.',
+              disabledReason: lacks('manage', 'Removing images needs the admin role in this project'),
               onClick: handleBulkDelete,
             },
           ]}
@@ -197,6 +207,7 @@ export default function ProjectDataset() {
           onCancelOperation={cancelOperation}
           onOperationComplete={clearOperation}
           onBulkTag={handleBulkTag}
+          tagDisabledReason={canEdit ? undefined : 'Tagging needs the editor role in this project'}
         />
 
         <SelectAllMatchingBanner
