@@ -8,6 +8,7 @@ import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { cn } from '@/lib/utils';
 import { useAnnotationPaceStore } from '@/stores/annotationPaceStore';
 import { isTypingTarget } from '../hotkeys';
+import { useProjectPermissions } from '@/hooks/usePermissions';
 
 interface MarkAsNullButtonProps {
   projectId: string;
@@ -28,8 +29,12 @@ const MarkAsNullButton: React.FC<MarkAsNullButtonProps> = ({ currentImage, proje
   const { setAllBoxes } = useAnnotationGeometry();
   const recordFinished = useAnnotationPaceStore((s) => s.recordFinished);
   const isNull = !!currentImage.marked_as_null;
+  // The server's "annotate" permission for this project.
+  const permissions = useProjectPermissions(projectId);
+  const blocked = !permissions.isLoading && !permissions.can('annotate');
 
   const handleClick = () => {
+    if (blocked) return;
     if (isNull) {
       markNull({ projectImageId: Number(currentImage.id), payload: { is_null: false } });
       return;
@@ -65,9 +70,11 @@ const MarkAsNullButton: React.FC<MarkAsNullButtonProps> = ({ currentImage, proje
   return (
     <Button
       onClick={handleClick}
-      disabled={isPending}
+      disabled={isPending || blocked}
       variant="ghost"
-      title={isNull
+      title={blocked
+        ? 'Marking images empty needs the annotator role or above in this project'
+        : isNull
         ? 'Restore: remove the empty flag and bring back any annotations it removed'
         : 'Mark as empty: no objects of interest (negative sample)'}
       className={cn(className, isNull && 'text-sky-400 hover:bg-sky-500/10 hover:text-sky-300')}

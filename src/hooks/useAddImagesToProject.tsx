@@ -10,12 +10,14 @@ interface AddImagesRequest {
 export const useAddImagesToProject = () => {
   return useMutation({
     mutationFn: async ({ project_id, image_ids }: AddImagesRequest) => {
-      const response = await apiFetch(`/api/v1/projects/${project_id}/add-images`, {
+      // POST /projects/:projectId/images (project UUID, image UUIDs). The old
+      // /add-images route is archived and no longer served.
+      const response = await apiFetch(`/api/v1/projects/${project_id}/images`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ project_id, image_ids }),
+        body: JSON.stringify({ image_ids }),
       });
 
       if (!response.ok) {

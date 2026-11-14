@@ -8,6 +8,7 @@ import { useAnnotationGeometry } from '@/contexts/AnnotationGeometryContext';
 import { useAnnotationState } from '@/contexts/AnnotationStateContext';
 import { useAnnotationPaceStore } from '@/stores/annotationPaceStore';
 import { isTypingTarget } from '../hotkeys';
+import { useProjectPermissions } from '@/hooks/usePermissions';
 
 interface ApproveButtonProps {
   currentImage: ProjectImageOut;
@@ -18,12 +19,16 @@ interface ApproveButtonProps {
 
 const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, goToNextImage, className} ) => {
   const { mutate: reviewImage, isPending } = useReviewProjectImage(projectId!);
+  // Approving is the annotator's "done" step: the server's "annotate" permission.
+  const permissions = useProjectPermissions(projectId);
+  const blocked = !permissions.isLoading && !permissions.can('annotate');
   const { getBoxesArray } = useAnnotationGeometry();
   const { selectedBox } = useAnnotationState();
   const recordFinished = useAnnotationPaceStore((s) => s.recordFinished);
   const boxes = getBoxesArray();
 
   const handleApprove = async () => {
+    if (blocked) return;
     if (boxes.length === 0) {
       toast({
         title: "No annotations",
@@ -69,7 +74,8 @@ const ApproveButton:React.FC<ApproveButtonProps> = ( {currentImage, projectId, g
   return (
     <Button
       onClick={handleApprove}
-      disabled={isPending}
+      disabled={isPending || blocked}
+      title={blocked ? 'Approving needs the annotator role or above in this project' : undefined}
       className={className}
       variant="ghost"
     >

@@ -11,6 +11,7 @@ import { useSearchParser } from '@/hooks/useSearchParser';
 import { DataLakeHeader } from '@/components/datalake/DataLakeHeader';
 import { DataLakeFilters } from '@/components/datalake/DataLakeFilters';
 import { useBulkOperations } from '@/hooks/useBulkOperation';
+import { useImageEditPermission } from '@/hooks/useImageEditPermission';
 import { useUserProjects } from '@/hooks/useUserProjects';
 import { PaginationControls } from "@/components/ui/ui/pagination-control";
 import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
@@ -36,6 +37,7 @@ const DataLake: React.FC = () => {
   const { toast } = useToast();
 
   const { operation, runBulkDeleteImages, runBulkTag, cancelOperation, clearOperation } = useBulkOperations();
+  const { canEdit } = useImageEditPermission();
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchText, setSearchText] = useState('');
@@ -185,6 +187,7 @@ const DataLake: React.FC = () => {
         onCancelOperation={cancelOperation}
         onOperationComplete={clearOperation}
         onBulkTag={handleBulkTag}
+        tagDisabledReason={canEdit ? undefined : 'Tagging in the datalake needs the editor role in the organization'}
         extraContent={
           <div className="flex items-center gap-2">
             <Select onValueChange={handleAddToProject}>

@@ -34,6 +34,8 @@ interface BulkAction {
   requiresConfirm?: boolean;
   confirmTitle?: string;
   confirmDescription?: string;
+  /** If set, the action is shown greyed out with this explanation. */
+  disabledReason?: string;
   onClick: () => void;
 }
 interface BulkOperationBarProps {
@@ -46,6 +48,8 @@ interface BulkOperationBarProps {
   onCancelOperation: () => void;
   /** If provided, shows a "Tag" button that opens a tag dialog */
   onBulkTag?: (tags: string[]) => void;
+  /** If set, the Tag button is shown greyed out with this explanation. */
+  tagDisabledReason?: string;
   extraContent?: ReactNode;
   /** Called when done status should be auto-cleared */
   onOperationComplete?: () => void;
@@ -59,6 +63,7 @@ export function BulkOperationBar({
   bulkOperation,
   onCancelOperation,
   onBulkTag,
+  tagDisabledReason,
   extraContent,
   onOperationComplete
 }: BulkOperationBarProps) {
@@ -126,26 +131,42 @@ export function BulkOperationBar({
 
           <div className="flex items-center gap-2">
             {onBulkTag && (
-              <Button size="sm" variant="secondary" onClick={() => setShowTagDialog(true)} className="gap-2" disabled={isRunning}>
-                <Tag className="w-4 h-4" />
-                Tag
-              </Button>
+              // A disabled button gets no hover events, so the wrapper carries the hint.
+              <span title={tagDisabledReason} className={tagDisabledReason ? 'cursor-not-allowed' : undefined}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setShowTagDialog(true)}
+                  className="gap-2"
+                  disabled={isRunning || !!tagDisabledReason}
+                  aria-label={tagDisabledReason ? `Tag (${tagDisabledReason})` : undefined}
+                >
+                  <Tag className="w-4 h-4" />
+                  Tag
+                </Button>
+              </span>
             )}
             {actions.map((action) => (
-              <Button
+              <span
                 key={action.id}
-                size="sm"
-                variant={action.variant || 'secondary'}
-                onClick={() => {
-                  if (action.requiresConfirm) setConfirmAction(action);
-                  else action.onClick();
-                }}
-                className="gap-2"
-                disabled={isRunning}
+                title={action.disabledReason}
+                className={action.disabledReason ? 'cursor-not-allowed' : undefined}
               >
-                {action.icon}
-                {action.label}
-              </Button>
+                <Button
+                  size="sm"
+                  variant={action.variant || 'secondary'}
+                  onClick={() => {
+                    if (action.requiresConfirm) setConfirmAction(action);
+                    else action.onClick();
+                  }}
+                  className="gap-2"
+                  disabled={isRunning || !!action.disabledReason}
+                  aria-label={action.disabledReason ? `${action.label} (${action.disabledReason})` : undefined}
+                >
+                  {action.icon}
+                  {action.label}
+                </Button>
+              </span>
             ))}
             {extraContent}
           </div>

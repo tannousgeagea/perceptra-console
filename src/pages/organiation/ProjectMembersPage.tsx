@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useProjectMembers, useAddProjectMember, useUpdateProjectMember, useRemoveProjectMember } from '@/hooks/useProjectMembers';
 import { useOrganizationMembers } from '@/hooks/useOrganization';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
+import { useAssignableRoles, useProjectPermissions, useRoleCatalog } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProjectMember, OrgMember } from '@/types/organization';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/ui/card';
@@ -32,7 +33,8 @@ import { toast } from 'sonner';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-const PROJECT_ROLES = ['viewer', 'annotator', 'reviewer', 'editor', 'admin'] as const;
+// Project roles come from the API (useAssignableRoles('project')), so they
+// always match the server.
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -48,7 +50,8 @@ function roleMeta(role: string): { label: string; classes: string; icon: React.E
     case 'annotator':
       return { label: 'Annotator', classes: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', icon: UserCog };
     default:
-      return { label: 'Viewer',   classes: 'bg-muted text-muted-foreground',                                        icon: Eye };
+      // viewer, and any other role the server defines
+      return { label: role.charAt(0).toUpperCase() + role.slice(1), classes: 'bg-muted text-muted-foreground', icon: Eye };
   }
 }
 
@@ -97,6 +100,7 @@ interface MemberRowProps {
 }
 
 function MemberTableRow({ member, isSelf, canManage, onRoleChange, onRemove, isUpdating, isRemoving }: MemberRowProps) {
+  const roles = useAssignableRoles('project');
   const hue   = avatarHue(member.id);
   const role  = roleMeta(member.role);
   const RIcon = role.icon;
@@ -154,7 +158,7 @@ function MemberTableRow({ member, isSelf, canManage, onRoleChange, onRemove, isU
                   <UserCog size={14} className="mr-2" />Change role
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
-                  {PROJECT_ROLES.map(r => (
+                  {roles.map(r => (
                     <DropdownMenuItem
                       key={r}
                       onClick={() => onRoleChange(r)}
@@ -199,6 +203,10 @@ function AddMemberDialog({ open, onClose, onAdd, isPending, orgMembers, projectM
   const [search,   setSearch]   = useState('');
   const [selected, setSelected] = useState<OrgMember | null>(null);
   const [role,     setRole]     = useState('viewer');
+  // Roles and their descriptions come from the server's role catalog.
+  const { data: catalog } = useRoleCatalog();
+  const assignable = useAssignableRoles('project');
+  const roleOptions = (catalog?.project_roles ?? []).filter(r => assignable.includes(r.name));
   const [error,    setError]    = useState('');
 
   const reset = () => { setSearch(''); setSelected(null); setRole('viewer'); setError(''); };
@@ -308,11 +316,12 @@ function AddMemberDialog({ open, onClose, onAdd, isPending, orgMembers, projectM
             <Select value={role} onValueChange={setRole} disabled={isPending}>
               <SelectTrigger id="proj-role"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="viewer">Viewer — read-only</SelectItem>
-                <SelectItem value="annotator">Annotator — can label data</SelectItem>
-                <SelectItem value="reviewer">Reviewer — can review annotations</SelectItem>
-                <SelectItem value="editor">Editor — full data access</SelectItem>
-                <SelectItem value="admin">Admin — manage project members</SelectItem>
+                {roleOptions.map(r => (
+                  <SelectItem key={r.name} value={r.name}>
+                    <span className="capitalize">{r.name}</span>
+                    {r.description && <span className="text-muted-foreground">: {r.description.toLowerCase()}</span>}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -392,11 +401,13 @@ function TableSkeleton() {
 
 export default function ProjectMembersPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { isOwner, isAdmin, currentOrganization } = useCurrentOrganization();
+  const { currentOrganization } = useCurrentOrganization();
   const { user: currentUser } = useAuth();
   const orgId = currentOrganization?.id;
 
-  const canManage = isOwner || isAdmin;
+  // Org admins and project admins (the server's "manage" permission).
+  const canManage = useProjectPermissions(projectId).can('manage');
+  const assignableRoles = useAssignableRoles('project');
 
   const [search,         setSearch]         = useState('');
   const [roleFilter,     setRoleFilter]      = useState('all');
@@ -503,7 +514,7 @@ export default function ProjectMembersPage() {
           <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="All roles" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All roles</SelectItem>
-            {PROJECT_ROLES.map(r => (
+            {assignableRoles.map(r => (
               <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>
             ))}
           </SelectContent>

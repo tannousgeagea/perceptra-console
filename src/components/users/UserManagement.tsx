@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/ui/select';
 import { UserRole } from '@/types/auth';
+import { useAssignableRoles, useRoleCatalog } from '@/hooks/usePermissions';
 import { UserPlus, Search, MoreVertical, Shield, Eye, Pencil, Crown, Loader2 } from 'lucide-react';
 import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
 import { InviteMemberDialog } from '@/components/invitations/InviteMemberDialog';
@@ -87,6 +88,10 @@ const getRoleConfig = (role?: string): RoleConfig => {
 
 export function UserManagement() {
   const [searchQuery, setSearchQuery] = useState('');
+  // Org roles from the server, without owner-level ones (ownership isn't handed out here).
+  const { data: catalog } = useRoleCatalog();
+  const owners = new Set(catalog?.org_permissions.own ?? []);
+  const roleChoices = useAssignableRoles('org').filter((r) => !owners.has(r));
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const { data, isLoading, error, refetch } = useOrganizationUsers();
   const { updateUser, isLoading: isUpdating } = useUpdateOrganizationUser();
@@ -234,24 +239,18 @@ export function UserManagement() {
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Admin">
-                                <div className="flex items-center gap-2">
-                                  <Shield className="h-4 w-4" />
-                                  <span>Admin</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="Editor">
-                                <div className="flex items-center gap-2">
-                                  <Pencil className="h-4 w-4" />
-                                  <span>Editor</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="Viewer">
-                                <div className="flex items-center gap-2">
-                                  <Eye className="h-4 w-4" />
-                                  <span>Viewer</span>
-                                </div>
-                              </SelectItem>
+                              {roleChoices.map((r) => {
+                                const choice = getRoleConfig(r);
+                                const ChoiceIcon = choice.icon;
+                                return (
+                                  <SelectItem key={r} value={r}>
+                                    <div className="flex items-center gap-2">
+                                      <ChoiceIcon className="h-4 w-4" />
+                                      <span className="capitalize">{choice.label}</span>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                         </TableCell>

@@ -80,6 +80,9 @@ export const ImageCard: React.FC<ImageCardProps> = ({ file, onRemove }) => {
               {new Date().toLocaleDateString()}
             </p>
           </div>
+          {file.status === 'error' && file.error && (
+            <p className="mt-1 text-xs text-destructive">{file.error}</p>
+          )}
         </div>
       </div>
     </div>

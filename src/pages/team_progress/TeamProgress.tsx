@@ -7,8 +7,10 @@ import UserProgressSection from "@/components/jobs/UserProgressSection";
 
 /** Team page: per-member job progress and activity analytics for the current organization (admins and owners). */
 const TeamProgress: FC = () => {
-  const { currentOrganization, hasAdminPermission } = useCurrentOrganization();
+  const { currentOrganization, hasAdminPermission, permissionsLoading } = useCurrentOrganization();
   const orgId = currentOrganization?.id;
+
+  if (permissionsLoading) return null;
 
   if (currentOrganization && !hasAdminPermission) {
     return (

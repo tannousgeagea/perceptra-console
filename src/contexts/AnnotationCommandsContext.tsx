@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/services/apiClient';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import { invalidateJobImages } from '@/hooks/useJobImages';
+import { useProjectPermissions } from '@/hooks/usePermissions';
 import { useAnnotationGeometry } from './AnnotationGeometryContext';
 import { useAnnotationState } from './AnnotationStateContext';
 import type { Box } from '@/types/annotation';
@@ -138,6 +139,12 @@ export const AnnotationCommandsProvider: React.FC<{
   const imageRef = useRef(image);
   imageRef.current = image;
 
+  // The server's "annotate" permission for this project. Allowed while it loads;
+  // the API still refuses a write from someone without it.
+  const permissions = useProjectPermissions(projectId);
+  const canAnnotateRef = useRef(true);
+  canAnnotateRef.current = permissions.isLoading || permissions.can('annotate');
+
   /** Last state of each box the server has been asked to store. */
   const savedRef = useRef(new Map<string, Box>());
   const pastRef = useRef<Step[]>([]);
@@ -257,11 +264,20 @@ export const AnnotationCommandsProvider: React.FC<{
     }
   }, [addBox, deleteBox]);
 
-  const apply = useCallback((op: Op, meta?: { timeSeconds?: number | null }) => {
+  /** Returns false (and changes nothing) when the person can't annotate here. */
+  const apply = useCallback((op: Op, meta?: { timeSeconds?: number | null }): boolean => {
+    // Read-only for people who can't annotate here (the API would refuse anyway).
+    if (!canAnnotateRef.current) {
+      toast.info("You can view this project but not annotate. Ask a project admin for the annotator role.", {
+        id: 'annotation-read-only',
+      });
+      return false;
+    }
     const saves = new Map<string, Box>();
     const deletes = new Set<string>();
     applyLocal(op, saves, deletes);
     persist([...saves.values()], [...deletes], meta);
+    return true;
   }, [applyLocal, persist]);
 
   const record = useCallback((op: Op) => {
@@ -275,9 +291,14 @@ export const AnnotationCommandsProvider: React.FC<{
     const before = savedRef.current.get(box.id);
     if (before && sameBox(before, box)) return;
     const op: Op = before ? { kind: 'update', before, after: { ...box } } : { kind: 'create', box: { ...box } };
-    apply(op, meta);
+    if (!apply(op, meta)) {
+      // Not allowed: put the canvas back to what's saved (drop a new box).
+      if (before) addBox({ ...before });
+      else deleteBox(box.id);
+      return;
+    }
     record(op);
-  }, [apply, record]);
+  }, [apply, record, addBox, deleteBox]);
 
   const commit = useCallback<AnnotationCommands['commit']>((id, patch, meta) => {
     const box = boxesRef.current.get(id);
@@ -311,7 +332,7 @@ export const AnnotationCommandsProvider: React.FC<{
       return;
     }
     const op: Op = { kind: 'delete', box: saved };
-    apply(op);
+    if (!apply(op)) return;
     record(op);
     toast(`Deleted ${saved.label}`, {
       id: 'annotation-history',
@@ -333,7 +354,7 @@ export const AnnotationCommandsProvider: React.FC<{
       .map((b) => ({ ...b, id: newId() }));
     if (copies.length === 0) return 0;
     const op: Op = { kind: 'batch', ops: copies.map((box) => ({ kind: 'create', box })) };
-    apply(op);
+    if (!apply(op)) return 0;
     record(op);
     return copies.length;
   }, [apply, record]);

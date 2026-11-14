@@ -9,6 +9,9 @@ import { JobAnnotationTabs } from '@/components/job-annotation/JobAnnotationTabs
 import { JobImageGrid } from '@/components/job-annotation/JobImageGrid';
 import { BulkOperationBar } from '@/components/ui/ui/bulk-operation-bar';
 import { useBulkOperations } from '@/hooks/useBulkOperation';
+import { useImageEditPermission } from '@/hooks/useImageEditPermission';
+import { useProjectPermissions } from '@/hooks/usePermissions';
+import type { ProjectPermission } from '@/types/permissions';
 import { SelectAllMatchingBanner } from '@/components/ui/ui/select-all-matching-banner';
 import { useSelectAllMatching } from '@/hooks/useSelectAllMatching';
 import { DatasetBuilder } from '@/components/dataset-builder/DatasetBuilder';
@@ -24,6 +27,11 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function JobAnnotation() {
   const { projectId = '', jobId = '' } = useParams<{ projectId: string, jobId: string }>();
+  const { canTag } = useImageEditPermission(projectId);
+  // The server's project permissions: why an action is unavailable, or undefined.
+  const permissions = useProjectPermissions(projectId);
+  const lacks = (permission: ProjectPermission, reason: string) =>
+    !permissions.isLoading && !permissions.can(permission) ? reason : undefined;
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const statusParam = query.get("status");
@@ -233,6 +241,7 @@ export default function JobAnnotation() {
               label: 'Review',
               icon: <CheckCircle2 className="w-4 h-4" />,
               variant: 'secondary',
+              disabledReason: lacks('annotate', 'Approving needs the annotator role or above in this project'),
               onClick: handleBulkReview,
             },
             {
@@ -243,6 +252,7 @@ export default function JobAnnotation() {
               requiresConfirm: true,
               confirmTitle: `Mark ${selection.selectedCount} images as empty?`,
               confirmDescription: 'Their annotations are removed and they become negative samples. You can restore them later, which brings the annotations back.',
+              disabledReason: lacks('annotate', 'Marking images empty needs the annotator role or above in this project'),
               onClick: () => handleBulkNull(true),
             },
             {
@@ -250,6 +260,7 @@ export default function JobAnnotation() {
               label: 'Restore',
               icon: <RotateCcw className="w-4 h-4" />,
               variant: 'secondary',
+              disabledReason: lacks('annotate', 'Restoring images needs the annotator role or above in this project'),
               onClick: () => handleBulkNull(false),
             },
             {
@@ -260,6 +271,7 @@ export default function JobAnnotation() {
               requiresConfirm: true,
               confirmTitle: `Delete ${selection.selectedCount} images?`,
               confirmDescription: 'This action cannot be undone. The selected images and all their annotations will be permanently removed.',
+              disabledReason: lacks('manage', 'Removing images needs the admin role in this project'),
               onClick: handleBulkDelete,
             },
           ]}
@@ -267,6 +279,7 @@ export default function JobAnnotation() {
           onCancelOperation={cancelOperation}
           onOperationComplete={clearOperation}
           onBulkTag={handleBulkTag}
+          tagDisabledReason={canTag ? undefined : 'Tagging needs the editor role in this project'}
         />
 
         <SelectAllMatchingBanner

@@ -14,6 +14,8 @@ import {
   OrganizationRole 
 } from '@/types/auth';
 import { authStorage } from '@/services/authService';
+import { useRoleCatalog } from '@/hooks/usePermissions';
+import type { OrgPermission } from '@/types/permissions';
 
 /**
  * Hook for common auth helper functions
@@ -87,14 +89,22 @@ export const getAccessToken = () => {
  * Hook for organization-specific operations
  */
 export const useCurrentOrganization = () => {
-  const { getCurrentOrganization, switchOrganization, hasPermission } = useAuth();
+  const { getCurrentOrganization, switchOrganization } = useAuth();
+  // Which roles hold which permission comes from the server (memberships/roles.py).
+  const catalog = useRoleCatalog();
 
   const currentOrg = getCurrentOrganization();
+  const orgCan = (permission: OrgPermission) =>
+    !!currentOrg && !!catalog.data?.org_permissions[permission]?.includes(currentOrg.role);
   return {
     currentOrganization: currentOrg,
     switchOrganization,
-    hasOwnerPermission: currentOrg ? hasPermission(currentOrg.id, 'owner') : false,
-    hasAdminPermission: currentOrg ? hasPermission(currentOrg.id, 'admin') : false,
+    hasOwnerPermission: orgCan('own'),
+    hasAdminPermission: orgCan('admin'),
+    /** May change images org-wide. See useImageEditPermission for projects. */
+    hasEditPermission: orgCan('write'),
+    /** True until the role catalog has loaded; the flags above are false meanwhile. */
+    permissionsLoading: catalog.isLoading,
     isOwner: currentOrg?.role === 'owner',
     isAdmin: currentOrg?.role === 'admin',
     isMember: currentOrg?.role === 'member',

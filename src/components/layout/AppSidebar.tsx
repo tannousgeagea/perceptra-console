@@ -8,46 +8,46 @@ const navigationItems = [
     title: 'Account',
     url: '/settings/account',
     icon: User,
-    roles: ['owner', 'admin', 'editor', 'annotator', 'viewer']
+    adminOnly: false,
   },
   {
     title: 'Organization',
     url: '/settings/organization',
     icon: Building2,
-    roles: ['owner', 'admin']
+    adminOnly: true,
   },
   {
     title: 'Storage',
     url: '/settings/storage',
     icon: Database,
-    roles: ['owner', 'admin']
+    adminOnly: true,
   },
   {
     title: 'Compute',
     url: '/settings/compute',
     icon: Cpu,
-    roles: ['owner', 'admin']
+    adminOnly: true,
   },
   {
     title: 'Users',
     url: '/settings/users',
     icon: Users,
-    roles: ['owner', 'admin']
+    adminOnly: true,
   },
   {
     title: 'API Keys',
     url: '/settings/api-keys',
     icon: Key,
-    roles: ['owner', 'admin']
+    adminOnly: true,
   },
 ];
 
 export function AppSidebar() {
-  const { currentOrganization } = useCurrentOrganization();
+  // "Admin" means the server's org "admin" permission (see usePermissions).
+  const { currentOrganization, hasAdminPermission } = useCurrentOrganization();
 
-  const role = currentOrganization?.role
-  const filteredItems = navigationItems.filter(item => 
-    role && item.roles.includes(role)
+  const filteredItems = navigationItems.filter(item =>
+    !!currentOrganization && (!item.adminOnly || hasAdminPermission)
   );
 
   // Desktop: a list beside the page. Phones: a row of tabs above it that scrolls sideways.
