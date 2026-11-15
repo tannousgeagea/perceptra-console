@@ -14,6 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/ui/alert-dialog';
 import type { SAMModel, DeviceType, PrecisionType, ModelConfig } from '@/types/sam';
+import { useParams } from 'react-router-dom';
+import { useProjectPermissions } from '@/hooks/usePermissions';
 
 interface SessionControlsProps {
   isActive: boolean;
@@ -36,6 +38,10 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
   const [model, setModel] = useState<SAMModel>('sam_v2');
   const [device, setDevice] = useState<DeviceType>('cuda');
   const [precision, setPrecision] = useState<PrecisionType>('fp16');
+  // AI suggestions are part of annotating: the annotator role or above (server rule).
+  const { projectId } = useParams<{ projectId: string }>();
+  const permissions = useProjectPermissions(projectId);
+  const cannotAnnotate = !permissions.isLoading && !permissions.can('annotate');
 
   const handleStart = () => {
     onStartSession({ model, device, precision });
@@ -121,7 +127,8 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
 
           <Button
             onClick={handleStart}
-            disabled={isLoading}
+            disabled={isLoading || cannotAnnotate}
+            title={cannotAnnotate ? 'AI suggestions need the annotator role or above in this project' : undefined}
             className="w-full bg-gradient-to-r from-primary to-primary/80"
           >
             <Power className="h-4 w-4 mr-2" />

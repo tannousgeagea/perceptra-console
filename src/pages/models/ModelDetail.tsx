@@ -32,6 +32,7 @@ import RetrainingPolicyView from "@/components/models/RetrainingPolicyView";
 import ModelTrainingSessions from "@/components/models/ModelTrainingSessions";
 import { useModelDetail } from "@/hooks/useModels";
 import { useTrainingSessions } from "@/hooks/useTrainingSessions";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,9 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, sub }) => (
 const ModelDetail: React.FC = () => {
   const { projectId, modelId } = useParams<{ projectId: string; modelId: string }>();
   const { data: model, isLoading, error } = useModelDetail(modelId!);
+  // Training a new version: the editor role in the project (server rule).
+  const permissions = useProjectPermissions(projectId);
+  const cannotTrain = !permissions.isLoading && !permissions.can('edit');
 
   // Pre-fetch sessions so the Versions tab can show session links immediately
   const { data: sessionsData } = useTrainingSessions({
@@ -192,15 +196,26 @@ const ModelDetail: React.FC = () => {
               )}
             </div>
 
-            <Button
-              asChild
-              className="flex-shrink-0 bg-white text-indigo-700 hover:bg-blue-50 border-0 shadow-sm font-semibold"
-            >
-              <Link to={`/projects/${projectId}/models/${modelId}/train`}>
+            {cannotTrain ? (
+              <Button
+                disabled
+                title="Training needs the editor role in this project"
+                className="flex-shrink-0 bg-white text-indigo-700 border-0 shadow-sm font-semibold"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Train New Version
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button
+                asChild
+                className="flex-shrink-0 bg-white text-indigo-700 hover:bg-blue-50 border-0 shadow-sm font-semibold"
+              >
+                <Link to={`/projects/${projectId}/models/${modelId}/train`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Train New Version
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 

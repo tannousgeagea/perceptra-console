@@ -1,5 +1,7 @@
 import React from "react";
 import { useModelEvaluations, usePromoteChallenger } from "@/hooks/useModelDeploy";
+import { useParams } from "react-router-dom";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import { ModelDetail } from "@/types/models";
 import { ModelEvaluation } from "@/types/models";
 import {
@@ -54,6 +56,9 @@ const EvaluationCard: React.FC<{
   onPromote: (id: string) => void;
   promoting: boolean;
 }> = ({ evaluation, onPromote, promoting }) => {
+  // Promoting puts a model in production: the admin role in the project.
+  const { projectId } = useParams<{ projectId: string }>();
+  const canManage = useProjectPermissions(projectId).can('manage');
   const rec = recommendationLabel(evaluation.recommendation);
   const cm = evaluation.challenger_metrics;
   const chm = evaluation.champion_metrics;
@@ -118,7 +123,8 @@ const EvaluationCard: React.FC<{
               size="sm"
               className="mt-4"
               onClick={() => onPromote(evaluation.evaluation_id)}
-              disabled={promoting}
+              disabled={promoting || !canManage}
+              title={canManage ? undefined : 'Needs the admin role in this project'}
             >
               <ArrowUpRight className="h-4 w-4 mr-1" />
               {promoting ? "Promoting…" : "Promote to Production"}

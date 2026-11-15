@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/ui/badge";
 import { ModelDetail } from "@/types/models";
 import { toast } from "sonner";
 import { useDeployVersion, useUndeployVersion } from "@/hooks/useModelDeploy";
+import { useParams } from "react-router-dom";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import { Layers, Settings, ArrowUpRight, ArrowDownLeft, Copy } from "lucide-react";
 
 const deploymentBadge = (status: string) => {
@@ -25,6 +27,10 @@ const deploymentBadge = (status: string) => {
 const ModelDeploymentView: React.FC<{ model: ModelDetail }> = ({ model }) => {
   const deployMutation = useDeployVersion();
   const undeployMutation = useUndeployVersion();
+  // Deploying and undeploying: the admin role in the project (server rule).
+  const { projectId } = useParams<{ projectId: string }>();
+  const canManage = useProjectPermissions(projectId).can('manage');
+  const manageHint = canManage ? undefined : 'Needs the admin role in this project';
 
   const productionVersion = model.versions.find(
     (v) => v.deployment_status === "production"
@@ -163,7 +169,8 @@ const ModelDeploymentView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={deployMutation.isPending}
+                            disabled={deployMutation.isPending || !canManage}
+                            title={manageHint}
                             onClick={() =>
                               deployMutation.mutate({ versionId: version.id, targetEnv: "production" })
                             }
@@ -176,7 +183,8 @@ const ModelDeploymentView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                           <Button
                             size="sm"
                             variant="ghost"
-                            disabled={deployMutation.isPending}
+                            disabled={deployMutation.isPending || !canManage}
+                            title={manageHint}
                             onClick={() =>
                               deployMutation.mutate({ versionId: version.id, targetEnv: "staging" })
                             }
@@ -189,7 +197,8 @@ const ModelDeploymentView: React.FC<{ model: ModelDetail }> = ({ model }) => {
                             size="sm"
                             variant="ghost"
                             className="text-muted-foreground"
-                            disabled={undeployMutation.isPending}
+                            disabled={undeployMutation.isPending || !canManage}
+                            title={manageHint}
                             onClick={() => undeployMutation.mutate(version.id)}
                           >
                             <ArrowDownLeft className="h-3.5 w-3.5 mr-1" />

@@ -8,6 +8,7 @@ import { Agent, AgentJob, RegisterAgentResponse, AgentStatus } from '@/types/age
 import { Plus, Search, Server, RefreshCw, Loader2, Radio, Pause, Play } from 'lucide-react';
 import { AgentCard } from './AgentCard';
 import { AgentRegistrationModal } from './AgentRegistrationModal';
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,9 @@ export function AgentManagement() {
   const [statusFilter, setStatusFilter] = useState<AgentStatus | 'all'>('all');
   const [isPolling, setIsPolling] = useState(true);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  // Registering an agent hands out a key that receives jobs and datasets: org admins only.
+  const { hasAdminPermission } = useCurrentOrganization();
+  const registerHint = hasAdminPermission ? undefined : 'Registering an agent needs the admin role in the organization';
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const [regenerateResult, setRegenerateResult] = useState<RegisterAgentResponse | null>(null);
   const deleteAgentMutation = useDeleteAgent({
@@ -141,7 +145,7 @@ export function AgentManagement() {
             Manage your connected training agents
           </p>
         </div>
-        <Button onClick={() => setShowRegisterModal(true)}>
+        <Button onClick={() => setShowRegisterModal(true)} disabled={!hasAdminPermission} title={registerHint}>
           <Plus className="mr-2 h-4 w-4" />
           Register Agent
         </Button>
@@ -294,7 +298,7 @@ export function AgentManagement() {
               }
             </p>
             {agents.length === 0 && (
-              <Button className="mt-4" onClick={() => setShowRegisterModal(true)}>
+              <Button className="mt-4" onClick={() => setShowRegisterModal(true)} disabled={!hasAdminPermission} title={registerHint}>
                 <Plus className="mr-2 h-4 w-4" />
                 Register Agent
               </Button>

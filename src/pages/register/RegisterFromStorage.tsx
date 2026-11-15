@@ -8,6 +8,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useImageEditPermission } from '@/hooks/useImageEditPermission';
+import { UploadNotAllowed } from '@/components/upload/UploadNotAllowed';
 import { toast } from 'sonner';
 import {
   ArrowLeft, CheckCircle2, ChevronRight, FileUp, Folder, FolderOpen, HardDrive, ImageIcon, Loader2, Lock, XCircle,
@@ -60,7 +62,8 @@ const StorageBrowser: React.FC<BrowserProps> = ({ profileId, selected, onToggle 
   const [tokens, setTokens] = useState<(string | null)[]>([null]); // page history of the current folder
   const [imagesOnly, setImagesOnly] = useState(true);
   const token = tokens[tokens.length - 1];
-  const { data, isLoading, error } = useBrowseStorage(profileId, prefix, token, imagesOnly);
+  const { projectId } = useParams<{ projectId: string }>();
+  const { data, isLoading, error } = useBrowseStorage(profileId, prefix, token, imagesOnly, projectId);
 
   const open = (next: string) => { setPrefix(next); setTokens([null]); };
   const crumbs = prefix.split('/').filter(Boolean);
@@ -151,6 +154,7 @@ const StorageBrowser: React.FC<BrowserProps> = ({ profileId, selected, onToggle 
 
 export const RegisterFromStorage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const permission = useImageEditPermission(projectId);
   const navigate = useNavigate();
   const invalidate = useInvalidateImageLists();
   const { data: profilesData, isLoading: profilesLoading } = useStorageProfiles();
@@ -228,6 +232,24 @@ export const RegisterFromStorage: React.FC = () => {
   const description = projectId
     ? 'Link images from connected storage to this project — they stay where they are, nothing is uploaded or copied.'
     : "Link images from connected storage to your organization's data lake — they stay where they are, nothing is uploaded or copied.";
+
+  // Same rule as upload: org editors for the datalake, project editors for a project.
+  if (permission.isLoading || !permission.canEdit) {
+    return (
+      <div className="space-y-6 p-6 w-full">
+        <Header title="Link Data" description={description} />
+        {!permission.isLoading && (
+          <UploadNotAllowed
+            action="link"
+            inProject={!!projectId}
+            projectName={permission.projectName}
+            role={projectId ? permission.projectRole : permission.orgRole}
+            projectAdmins={permission.projectAdmins}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6 w-full">
