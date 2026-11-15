@@ -9,6 +9,8 @@ import { AlertCircle, AlertTriangle, Check, ChevronDown, Save } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import type { Alert, AlertThreshold } from "@/types/evaluation";
+import { useParams } from "react-router-dom";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 
 interface AlertsManagementProps {
   alerts: Alert[];
@@ -25,6 +27,10 @@ export const AlertsManagement = ({
 }: AlertsManagementProps) => {
   const [showAcknowledged, setShowAcknowledged] = useState(false);
   const [editedThresholds, setEditedThresholds] = useState<AlertThreshold[]>(thresholds);
+  // Acknowledging an alert: the reviewer role or above in the project (server rule).
+  const { projectId } = useParams<{ projectId: string }>();
+  const permissions = useProjectPermissions(projectId);
+  const cannotAcknowledge = !permissions.isLoading && !permissions.can('review');
 
   const activeAlerts = alerts.filter((a) => !a.is_acknowledged);
   const acknowledgedAlerts = alerts.filter((a) => a.is_acknowledged);
@@ -123,6 +129,8 @@ export const AlertsManagement = ({
                     variant="outline"
                     size="sm"
                     onClick={() => onAcknowledge(alert.id)}
+                    disabled={cannotAcknowledge}
+                    title={cannotAcknowledge ? "Acknowledging alerts needs the reviewer role in this project" : undefined}
                   >
                     Acknowledge
                   </Button>
