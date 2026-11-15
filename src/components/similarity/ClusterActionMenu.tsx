@@ -17,6 +17,10 @@ interface ClusterActionMenuProps {
   onDeleteDuplicates?: () => void;
   onMarkReviewed?: () => void;
   onAddToDataset?: () => void;
+  /** Set when the person may not act on this scan's results (archive, review). */
+  actionDisabledReason?: string;
+  /** Set when the person may not delete images (org admins only). */
+  deleteDisabledReason?: string;
 }
 
 export function ClusterActionMenu({
@@ -28,6 +32,8 @@ export function ClusterActionMenu({
   onDeleteDuplicates,
   onMarkReviewed,
   onAddToDataset,
+  actionDisabledReason,
+  deleteDisabledReason,
 }: ClusterActionMenuProps) {
   return (
     <DropdownMenu>
@@ -57,11 +63,11 @@ export function ClusterActionMenu({
 
         {context === 'datalake' && (
           <>
-            <DropdownMenuItem onClick={onArchiveDuplicates}>
+            <DropdownMenuItem onClick={onArchiveDuplicates} disabled={!!actionDisabledReason} title={actionDisabledReason}>
               <Shield className="w-4 h-4 mr-2" />
               Archive duplicates
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onMarkReviewed}>
+            <DropdownMenuItem onClick={onMarkReviewed} disabled={!!actionDisabledReason} title={actionDisabledReason}>
               <CheckCircle className="w-4 h-4 mr-2" />
               Mark as reviewed
             </DropdownMenuItem>
@@ -72,7 +78,12 @@ export function ClusterActionMenu({
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDeleteDuplicates} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              onClick={onDeleteDuplicates}
+              disabled={!!deleteDisabledReason}
+              title={deleteDisabledReason}
+              className="text-destructive focus:text-destructive"
+            >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete duplicates
             </DropdownMenuItem>

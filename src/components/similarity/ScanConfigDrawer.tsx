@@ -20,6 +20,7 @@ import {
 import { HASH_ALGORITHMS } from '@/types/similarity';
 import type { ScanConfig, ScanJob, HashAlgorithm, ScanScope } from '@/types/similarity';
 import { Search, Info } from 'lucide-react';
+import { useScanPermissions } from '@/hooks/useScanPermissions';
 
 interface ScanConfigDrawerProps {
   open: boolean;
@@ -30,6 +31,8 @@ interface ScanConfigDrawerProps {
   onStartScan: () => void;
   onCancelScan: () => void;
   showScopeToggle?: boolean;
+  /** Set for a project scan (Dataset page); omitted for the datalake. */
+  projectId?: string;
 }
 
 export function ScanConfigDrawer({
@@ -41,7 +44,9 @@ export function ScanConfigDrawer({
   onStartScan,
   onCancelScan,
   showScopeToggle = false,
+  projectId,
 }: ScanConfigDrawerProps) {
+  const { cannotWrite, writeReason } = useScanPermissions(projectId);
   const isScanning = activeScan && (
     activeScan.status === 'running' ||
     activeScan.status === 'queued' ||
@@ -62,7 +67,7 @@ export function ScanConfigDrawer({
         </SheetHeader>
 
         {isScanning ? (
-          <ScanProgressView scan={activeScan!} onCancel={onCancelScan} />
+          <ScanProgressView scan={activeScan!} onCancel={onCancelScan} cancelDisabledReason={writeReason} />
         ) : (
           <div className="flex-1 space-y-6 py-4">
             {/* Threshold */}
@@ -140,7 +145,12 @@ export function ScanConfigDrawer({
         {/* Actions */}
         {!isScanning && (
           <div className="flex flex-col gap-2 pt-4 border-t mt-auto">
-            <Button onClick={onStartScan} className="w-full gap-2">
+            {cannotWrite && (
+              <p className="text-xs text-muted-foreground text-center">
+                Running a scan {writeReason?.replace(/^Needs/, 'needs')}.
+              </p>
+            )}
+            <Button onClick={onStartScan} disabled={cannotWrite} title={writeReason} className="w-full gap-2">
               <Search className="w-4 h-4" />
               Run Scan
             </Button>

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { getCurrentUser } from '@/utils/user'
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
+import { useScanPermissions } from '@/hooks/useScanPermissions';
 
 interface ScanRowKebabMenuProps {
   scan: ScanSummary;
@@ -22,9 +22,10 @@ interface ScanRowKebabMenuProps {
 export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest }: ScanRowKebabMenuProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { hasAdminPermission } = useCurrentOrganization();
+  // Editor where the scan looked: in its project, or in the organization for the datalake.
+  const { writeReason } = useScanPermissions(scan.project_id);
   if (!user) return null;
-  const canCancel = (scan.status === 'pending' || scan.status === 'running') && hasAdminPermission;
+  const canCancel = scan.status === 'pending' || scan.status === 'running';
 
   const copyId = () => {
     navigator.clipboard.writeText(scan.scan_id);
@@ -57,14 +58,17 @@ export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest }: Scan
           <Copy className="mr-2 h-4 w-4" />
           Copy Scan ID
         </DropdownMenuItem>
-        {(user.role !== 'viewer') && (
-          <DropdownMenuItem onClick={rerun}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Re-run with same settings
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem onClick={rerun} disabled={!!writeReason} title={writeReason}>
+          <RotateCcw className="mr-2 h-4 w-4" />
+          Re-run with same settings
+        </DropdownMenuItem>
         {canCancel && (
-          <DropdownMenuItem onClick={onCancelRequest} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem
+            onClick={onCancelRequest}
+            disabled={!!writeReason}
+            title={writeReason}
+            className="text-destructive focus:text-destructive"
+          >
             <Ban className="mr-2 h-4 w-4" />
             Cancel Scan
           </DropdownMenuItem>
