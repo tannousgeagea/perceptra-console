@@ -33,6 +33,8 @@ interface ScanConfigDrawerProps {
   showScopeToggle?: boolean;
   /** Set for a project scan (Dataset page); omitted for the datalake. */
   projectId?: string;
+  /** True while the start request is in flight; disables Run Scan. */
+  starting?: boolean;
 }
 
 export function ScanConfigDrawer({
@@ -45,6 +47,7 @@ export function ScanConfigDrawer({
   onCancelScan,
   showScopeToggle = false,
   projectId,
+  starting = false,
 }: ScanConfigDrawerProps) {
   const { cannotWrite, writeReason } = useScanPermissions(projectId);
   const isScanning = activeScan && (
@@ -63,6 +66,7 @@ export function ScanConfigDrawer({
           </SheetTitle>
           <SheetDescription>
             Find duplicate and near-duplicate images
+            {projectId ? ' in this project' : ' across the datalake'}
           </SheetDescription>
         </SheetHeader>
 
@@ -150,7 +154,7 @@ export function ScanConfigDrawer({
                 Running a scan {writeReason?.replace(/^Needs/, 'needs')}.
               </p>
             )}
-            <Button onClick={onStartScan} disabled={cannotWrite} title={writeReason} className="w-full gap-2">
+            <Button onClick={onStartScan} disabled={cannotWrite || starting} title={writeReason} className="w-full gap-2">
               <Search className="w-4 h-4" />
               Run Scan
             </Button>

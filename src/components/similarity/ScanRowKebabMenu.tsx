@@ -10,18 +10,18 @@ import type { ScanSummary } from '@/types/similarity';
 import { toast } from 'sonner';
 import { getCurrentUser } from '@/utils/user'
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { useScanPermissions } from '@/hooks/useScanPermissions';
 
 interface ScanRowKebabMenuProps {
   scan: ScanSummary;
   onToggleExpand: () => void;
   onCancelRequest: () => void;
+  /** Opens the scan settings with this scan's settings filled in. */
+  onRerun: (scan: ScanSummary) => void;
 }
 
-export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest }: ScanRowKebabMenuProps) {
+export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest, onRerun }: ScanRowKebabMenuProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   // Editor where the scan looked: in its project, or in the organization for the datalake.
   const { writeReason } = useScanPermissions(scan.project_id);
   if (!user) return null;
@@ -30,16 +30,6 @@ export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest }: Scan
   const copyId = () => {
     navigator.clipboard.writeText(scan.scan_id);
     toast.success('Scan ID copied');
-  };
-
-  const rerun = () => {
-    const params = new URLSearchParams({
-      algorithm: scan.algorithm,
-      threshold: String(scan.similarity_threshold),
-      scope: scan.scope,
-    });
-    if (scan.project_id) params.set('project_id', scan.project_id);
-    navigate(`/similarity?${params.toString()}`);
   };
 
   return (
@@ -58,7 +48,7 @@ export function ScanRowKebabMenu({ scan, onToggleExpand, onCancelRequest }: Scan
           <Copy className="mr-2 h-4 w-4" />
           Copy Scan ID
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={rerun} disabled={!!writeReason} title={writeReason}>
+        <DropdownMenuItem onClick={() => onRerun(scan)} disabled={!!writeReason} title={writeReason}>
           <RotateCcw className="mr-2 h-4 w-4" />
           Re-run with same settings
         </DropdownMenuItem>

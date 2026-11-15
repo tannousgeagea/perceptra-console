@@ -40,9 +40,11 @@ function formatDuration(startedAt: string | null, completedAt: string | null): s
 interface ScanRowProps {
   scan: ScanSummary;
   autoExpand?: boolean;
+  /** Opens the scan settings with this scan's settings filled in. */
+  onRerun: (scan: ScanSummary) => void;
 }
 
-export function ScanRow({ scan: initialScan, autoExpand = false }: ScanRowProps) {
+export function ScanRow({ scan: initialScan, autoExpand = false, onRerun }: ScanRowProps) {
   const [expanded, setExpanded] = useState(autoExpand);
   const [cancelOpen, setCancelOpen] = useState(false);
   const navigate = useNavigate();
@@ -121,6 +123,7 @@ export function ScanRow({ scan: initialScan, autoExpand = false }: ScanRowProps)
                 scan={scan}
                 onToggleExpand={() => setExpanded((p) => !p)}
                 onCancelRequest={() => setCancelOpen(true)}
+                onRerun={onRerun}
               />
             </div>
           </div>
