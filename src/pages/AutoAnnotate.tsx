@@ -10,11 +10,15 @@ import { CompletionSummary } from '@/components/auto-annotate/CompletionSummary'
 import { ActivityLog } from '@/components/auto-annotate/ActivityLog';
 import { Badge } from '@/components/ui/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
-import { Wand2, ScrollText } from 'lucide-react';
+import { Wand2, ScrollText, Lock } from 'lucide-react';
+import { useProjectPermissions } from '@/hooks/usePermissions';
 
 export default function AutoAnnotate() {
   const { projectId, jobId } = useParams<{ projectId: string, jobId: string }>();
   const state = useAutoAnnotate(projectId!, jobId);
+  // Auto-annotating: the editor role in the project (server rule).
+  const permissions = useProjectPermissions(projectId);
+  const cannotRun = !permissions.isLoading && !permissions.can('edit');
 
   const stepLabel: Record<string, string> = {
     select: 'Select Images',
@@ -50,6 +54,22 @@ export default function AutoAnnotate() {
           </TabsList>
 
           <TabsContent value="annotate" className="mt-4">
+            {cannotRun ? (
+              <div className="rounded-lg border border-border bg-card p-6 max-w-2xl">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                    <Lock className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-lg font-semibold">You can't auto-annotate in this project</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Auto-annotating writes model predictions to many images, so it needs the editor role
+                      or above. Ask a project admin for the editor role.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (<>
             {/* Step indicator */}
             <div className="flex items-center gap-2 mb-6">
               {['select', 'configure', 'confirm', 'processing', 'complete'].map((s, i) => {
@@ -149,6 +169,7 @@ export default function AutoAnnotate() {
                 onNewSession={state.reset}
               />
             )}
+            </>)}
           </TabsContent>
 
           <TabsContent value="log" className="mt-4">

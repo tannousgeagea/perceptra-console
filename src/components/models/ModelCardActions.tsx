@@ -1,6 +1,8 @@
 import React from "react";
 import { MoreHorizontal, Pencil, Trash2, Copy, Play } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
+import { useParams } from "react-router-dom";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +24,14 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
   onDuplicate,
   onTrain,
 }) => {
+  // The server's project permissions: editors edit, duplicate and train;
+  // deleting is for project admins.
+  const { projectId } = useParams<{ projectId: string }>();
+  const permissions = useProjectPermissions(projectId);
+  const canEdit = permissions.can('edit');
+  const canManage = permissions.can('manage');
+  const EDIT_HINT = 'Needs the editor role in this project';
+  const MANAGE_HINT = 'Needs the admin role in this project';
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -41,6 +51,8 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
             e.preventDefault();
             onEdit();
           }}
+          disabled={!canEdit}
+          title={canEdit ? undefined : EDIT_HINT}
           className="cursor-pointer"
         >
           <Pencil className="h-4 w-4 mr-2" />
@@ -51,6 +63,8 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
             e.preventDefault();
             onDuplicate();
           }}
+          disabled={!canEdit}
+          title={canEdit ? undefined : EDIT_HINT}
           className="cursor-pointer"
         >
           <Copy className="h-4 w-4 mr-2" />
@@ -61,6 +75,8 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
             e.preventDefault();
             onTrain();
           }}
+          disabled={!canEdit}
+          title={canEdit ? undefined : EDIT_HINT}
           className="cursor-pointer"
         >
           <Play className="h-4 w-4 mr-2" />
@@ -72,6 +88,8 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
             e.preventDefault();
             onDelete();
           }}
+          disabled={!canManage}
+          title={canManage ? undefined : MANAGE_HINT}
           className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
         >
           <Trash2 className="h-4 w-4 mr-2" />

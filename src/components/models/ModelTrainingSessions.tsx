@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/ui/button";
 import { useTrainingSessions } from "@/hooks/useTrainingSessions";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import { TrainingSession, Status } from "@/types/training_session";
 
 interface ModelTrainingSessionsProps {
@@ -182,6 +183,10 @@ const ModelTrainingSessions: React.FC<ModelTrainingSessionsProps> = ({
   modelName,
 }) => {
   const navigate = useNavigate();
+  // Training a new version: the editor role in the project (server rule).
+  const permissions = useProjectPermissions(projectId);
+  const cannotTrain = !permissions.isLoading && !permissions.can('edit');
+  const trainHint = cannotTrain ? "Training needs the editor role in this project" : undefined;
 
   const { data, isLoading, isError, error } = useTrainingSessions({
     projectId,
@@ -234,6 +239,8 @@ const ModelTrainingSessions: React.FC<ModelTrainingSessionsProps> = ({
           <Button
             size="sm"
             className="gap-1.5 text-xs"
+            disabled={cannotTrain}
+            title={trainHint}
             onClick={() =>
               navigate(`/projects/${projectId}/models/${modelId}/train`)
             }
@@ -270,6 +277,8 @@ const ModelTrainingSessions: React.FC<ModelTrainingSessionsProps> = ({
             </p>
             <Button
               size="sm"
+              disabled={cannotTrain}
+              title={trainHint}
               onClick={() =>
                 navigate(`/projects/${projectId}/models/${modelId}/train`)
               }

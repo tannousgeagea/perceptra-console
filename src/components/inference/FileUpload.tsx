@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/ui/progress';
 import { Upload, Image, Video, X, Play } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useInference } from '@/hooks/useInference';
+import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
 
 interface FileUploadProps {
   uploadedFile: File | null;
@@ -27,6 +28,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const [isDragging, setIsDragging] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  // Running models: the org "operate" permission (operator and up).
+  const { hasOperatePermission, permissionsLoading } = useCurrentOrganization();
+  const cannotRun = !permissionsLoading && !hasOperatePermission;
   const { runInference: runInferenceTest, isProcessing: isProcessing, progress: progress, results: results } = useInference({
     confidenceThreshold: 0.25,
   });
@@ -193,7 +197,8 @@ const handleRunInference = () => {
         <div className="flex justify-center">
           <Button
             onClick={handleRunInference}
-            disabled={!selectedModel || !uploadedFile || isProcessing}
+            disabled={!selectedModel || !uploadedFile || isProcessing || cannotRun}
+            title={cannotRun ? 'Running models needs the operator role or above in the organization' : undefined}
             size="lg"
             className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8"
           >

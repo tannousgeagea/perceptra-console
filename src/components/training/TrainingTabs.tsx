@@ -7,6 +7,7 @@ import ParametersTab from "./tabs/ParametersTab";
 import ComputeTab from "./tabs/ComputeTab";
 import AdvancedTab from "./tabs/AdvancedTab";
 import { Button } from "@/components/ui/ui/button";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import { Form } from "@/components/ui/ui/form";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/ui/card";
 import { Model, Dataset } from "@/types/models";
@@ -46,6 +47,9 @@ const TrainingTabs: React.FC<Props> = ({
   projectId
 }) => {
   const datasetChosen = !!form.watch("datasetId");
+  // Training: the editor role in the project (server rule).
+  const permissions = useProjectPermissions(projectId);
+  const cannotTrain = !permissions.isLoading && !permissions.can('edit');
 
   return (
     <Card>
@@ -107,10 +111,12 @@ const TrainingTabs: React.FC<Props> = ({
           Cancel
         </Button>
         <div className="flex items-center gap-3">
-          {!datasetChosen && !isTraining && (
+          {cannotTrain ? (
+            <span className="text-sm text-muted-foreground">Training needs the editor role in this project</span>
+          ) : !datasetChosen && !isTraining && (
             <span className="text-sm text-muted-foreground">Choose a training dataset first</span>
           )}
-          <Button type="submit" form="training-form" disabled={isTraining || !datasetChosen}>
+          <Button type="submit" form="training-form" disabled={isTraining || !datasetChosen || cannotTrain}>
             {isTraining ? "Training..." : "Start Training"}
           </Button>
         </div>

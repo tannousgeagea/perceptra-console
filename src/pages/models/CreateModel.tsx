@@ -10,10 +10,14 @@ import ModelSizeSelection from "@/components/models/create/ModelSizeSelection";
 import ModelAdvancedConfig from "@/components/models/create/ModelAdvancedConfig";
 import ModelReview from "@/components/models/create/ModelReview";
 import { ModelFormData, useCreateModel } from "@/hooks/useModels";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 
 const CreateModel: React.FC = () => {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
+  // Creating a model: the editor role in the project (server rule).
+  const permissions = useProjectPermissions(projectId);
+  const cannotCreate = !permissions.isLoading && !permissions.can('edit');
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createModel = useCreateModel({
@@ -204,7 +208,8 @@ const CreateModel: React.FC = () => {
               {currentStep === steps.length ? (
                 <Button
                   onClick={handleSubmit}
-                  disabled={!isStepValid() || isSubmitting}
+                  disabled={!isStepValid() || isSubmitting || cannotCreate}
+                  title={cannotCreate ? "Creating a model needs the editor role in this project" : undefined}
                   className="px-8 bg-gradient-to-r from-primary to-[var(--mtx-secondary)] hover:opacity-90 transition-opacity"
                 >
                   {isSubmitting ? (

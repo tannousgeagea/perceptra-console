@@ -7,6 +7,7 @@ import { VersionTag } from "@/types/models";
 import { ModelArtifact, ModelDetail, ModelVersion } from "@/types/models";
 import { TrainingSession } from "@/types/training_session";
 import { apiFetch } from "@/services/apiClient";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/ui/button";
 import {
   Table,
@@ -42,6 +43,9 @@ interface ModelVersionsListProps {
 const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId, sessions = [] }) => {
   const queryClient = useQueryClient();
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
+  // Tagging a version is editing the model: the editor role in the project (server rule).
+  const permissions = useProjectPermissions(projectId);
+  const cannotTag = !permissions.isLoading && !permissions.can('edit');
 
   // Build a map: version_name → session for quick lookup
   const sessionByVersion = React.useMemo(() => {
@@ -278,7 +282,12 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
                       {version.status === "trained" && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={cannotTag}
+                              title={cannotTag ? "Tagging needs the editor role in this project" : undefined}
+                            >
                               <TagIcon className="h-4 w-4" />
                               <span className="sr-only">Tag version</span>
                             </Button>

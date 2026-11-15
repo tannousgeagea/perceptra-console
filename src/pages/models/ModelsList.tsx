@@ -37,9 +37,14 @@ import DeleteModelDialog from "@/components/models/DeleteModelDialog";
 import DuplicateModelDialog from "@/components/models/DuplicateModelDialog";
 import StartTrainingDialog from "@/components/models/StartTrainingDialog";
 import ModelCardActions from "@/components/models/ModelCardActions";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 
 const ModelsList: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  // Creating a model: the editor role in the project (server rule).
+  const permissions = useProjectPermissions(projectId);
+  const cannotCreate = !permissions.isLoading && !permissions.can('edit');
+  const createHint = "Creating a model needs the editor role in this project";
   const [searchQuery, setSearchQuery] = useState("");
   const [modelTypeFilter, setModelTypeFilter] = useState<string>("all");
   // Dialog states
@@ -217,11 +222,17 @@ const ModelsList: React.FC = () => {
         title="Models"
         description="Manage and track models in your project"
         actions={
-          <Button asChild>
-            <Link to={`/projects/${projectId}/models/new`}>
+          cannotCreate ? (
+            <Button disabled title={createHint}>
               <BadgePlus className="mr-2 h-4 w-4" /> Create Model
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link to={`/projects/${projectId}/models/new`}>
+                <BadgePlus className="mr-2 h-4 w-4" /> Create Model
+              </Link>
+            </Button>
+          )
         }
       />
 
@@ -288,13 +299,15 @@ const ModelsList: React.FC = () => {
               ? "Try adjusting your filters"
               : "Get started by creating your first model"}
           </p>
-          {!searchQuery && modelTypeFilter === "all" && (
+          {!searchQuery && modelTypeFilter === "all" && (cannotCreate ? (
+            <Button disabled title={createHint}>Create New Model</Button>
+          ) : (
             <Button asChild>
               <Link to={`/projects/${projectId}/models/new`}>
                 Create New Model
               </Link>
             </Button>
-          )}
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

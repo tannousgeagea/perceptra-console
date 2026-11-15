@@ -103,6 +103,8 @@ export const useCurrentOrganization = () => {
     hasAdminPermission: orgCan('admin'),
     /** May change images org-wide. See useImageEditPermission for projects. */
     hasEditPermission: orgCan('write'),
+    /** May run models (Inference page): the org "operate" permission. */
+    hasOperatePermission: orgCan('operate'),
     /** True until the role catalog has loaded; the flags above are false meanwhile. */
     permissionsLoading: catalog.isLoading,
     isOwner: currentOrg?.role === 'owner',

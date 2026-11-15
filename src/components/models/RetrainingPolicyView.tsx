@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useProjectPermissions } from "@/hooks/usePermissions";
 import {
   useRetrainingPolicies,
   useCreateRetrainingPolicy,
@@ -43,7 +45,9 @@ const PolicyCard: React.FC<{
   onToggle: (id: string, active: boolean) => void;
   onTrigger: (id: string) => void;
   busy: boolean;
-}> = ({ policy, modelId, onDelete, onToggle, onTrigger, busy }) => (
+  /** Why the person can't change policies, if they can't. */
+  lockedReason?: string;
+}> = ({ policy, modelId, onDelete, onToggle, onTrigger, busy, lockedReason }) => (
   <Card className="border">
     <CardHeader className="pb-3">
       <div className="flex items-start justify-between gap-3">
@@ -57,6 +61,8 @@ const PolicyCard: React.FC<{
           <Switch
             checked={policy.is_active}
             onCheckedChange={(v) => onToggle(policy.policy_id, v)}
+            disabled={!!lockedReason}
+            title={lockedReason}
             aria-label="Active"
           />
           <Badge
@@ -112,7 +118,8 @@ const PolicyCard: React.FC<{
           size="sm"
           variant="outline"
           onClick={() => onTrigger(policy.policy_id)}
-          disabled={busy || !policy.is_active}
+          disabled={busy || !policy.is_active || !!lockedReason}
+          title={lockedReason}
         >
           <Play className="h-3.5 w-3.5 mr-1" />
           Trigger now
@@ -122,7 +129,8 @@ const PolicyCard: React.FC<{
           variant="ghost"
           className="text-destructive hover:text-destructive"
           onClick={() => onDelete(policy.policy_id)}
-          disabled={busy}
+          disabled={busy || !!lockedReason}
+          title={lockedReason}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
@@ -131,7 +139,7 @@ const PolicyCard: React.FC<{
   </Card>
 );
 
-const CreatePolicyDialog: React.FC<{ modelId: string }> = ({ modelId }) => {
+const CreatePolicyDialog: React.FC<{ modelId: string; lockedReason?: string }> = ({ modelId, lockedReason }) => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<RetrainingPolicyCreate>({
     trigger_type: "annotation_count",
@@ -155,7 +163,7 @@ const CreatePolicyDialog: React.FC<{ modelId: string }> = ({ modelId }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" disabled={!!lockedReason} title={lockedReason}>
           <Plus className="h-4 w-4 mr-1" /> Add Policy
         </Button>
       </DialogTrigger>
@@ -268,6 +276,10 @@ const RetrainingPolicyView: React.FC<{ model: ModelDetail }> = ({ model }) => {
   const updatePolicy = useUpdateRetrainingPolicy(model.id);
   const deletePolicy = useDeleteRetrainingPolicy(model.id);
   const triggerPolicy = useTriggerRetrainingPolicy(model.id);
+  // Retraining policies: the editor role in the project (server rule).
+  const { projectId } = useParams<{ projectId: string }>();
+  const canEdit = useProjectPermissions(projectId).can('edit');
+  const lockedReason = canEdit ? undefined : 'Needs the editor role in this project';
 
   if (isLoading) {
     return (
@@ -289,7 +301,7 @@ const RetrainingPolicyView: React.FC<{ model: ModelDetail }> = ({ model }) => {
             Policies are checked every hour.
           </p>
         </div>
-        <CreatePolicyDialog modelId={model.id} />
+        <CreatePolicyDialog modelId={model.id} lockedReason={lockedReason} />
       </div>
 
       {policies.length === 0 ? (
@@ -311,6 +323,7 @@ const RetrainingPolicyView: React.FC<{ model: ModelDetail }> = ({ model }) => {
               onToggle={(id, active) => updatePolicy.mutate({ policyId: id, data: { is_active: active } })}
               onTrigger={(id) => triggerPolicy.mutate(id)}
               busy={busy}
+              lockedReason={lockedReason}
             />
           ))}
         </div>
