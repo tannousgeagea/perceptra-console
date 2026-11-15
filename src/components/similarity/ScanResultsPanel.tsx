@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import type { SimilarityCluster, ScanJob, ScanFilter, ScanSort } from '@/types/similarity';
 import { X, Shield, Trash2, CheckCircle, Settings2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useScanPermissions } from '@/hooks/useScanPermissions';
 
 interface ScanResultsPanelProps {
   open: boolean;
@@ -50,6 +51,8 @@ interface ScanResultsPanelProps {
   onSetRepresentative: (clusterId: string, imageId: string) => void;
   onBulkAction: (action: 'archive_duplicates' | 'delete_duplicates' | 'mark_reviewed') => void;
   onRerunScan: () => void;
+  /** Set for a project scan (Dataset page); omitted for the datalake. */
+  projectId?: string;
 }
 
 export function ScanResultsPanel({
@@ -74,8 +77,10 @@ export function ScanResultsPanel({
   onSetRepresentative,
   onBulkAction,
   onRerunScan,
+  projectId,
 }: ScanResultsPanelProps) {
   const { toast } = useToast();
+  const { writeReason, deleteReason } = useScanPermissions(projectId);
   const [lightboxCluster, setLightboxCluster] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single' | 'bulk'; clusterId?: string; count: number } | null>(null);
@@ -172,7 +177,14 @@ export function ScanResultsPanel({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={onRerunScan}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={onRerunScan}
+                disabled={!!writeReason}
+                title={writeReason}
+              >
                 <Settings2 className="w-3.5 h-3.5" />
                 Re-run with different settings
               </Button>
@@ -229,11 +241,25 @@ export function ScanResultsPanel({
               {selectedClusterIds.size} {selectedClusterIds.size === 1 ? 'group' : 'groups'} selected
             </span>
             <div className="flex items-center gap-2 ml-auto">
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => onBulkAction('archive_duplicates')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={() => onBulkAction('archive_duplicates')}
+                disabled={!!writeReason}
+                title={writeReason}
+              >
                 <Shield className="w-3.5 h-3.5" />
                 Archive duplicates
               </Button>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => onBulkAction('mark_reviewed')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={() => onBulkAction('mark_reviewed')}
+                disabled={!!writeReason}
+                title={writeReason}
+              >
                 <CheckCircle className="w-3.5 h-3.5" />
                 Mark reviewed
               </Button>
@@ -242,6 +268,8 @@ export function ScanResultsPanel({
                 size="sm"
                 className="h-7 text-xs gap-1 text-destructive hover:text-destructive border-destructive/30"
                 onClick={() => handleDeleteRequest('bulk')}
+                disabled={!!deleteReason}
+                title={deleteReason}
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Delete duplicates
@@ -282,6 +310,8 @@ export function ScanResultsPanel({
                     toast({ title: 'Marked as reviewed' });
                   }}
                   onSetRepresentative={(imgId) => onSetRepresentative(cluster.id, imgId)}
+                  actionDisabledReason={writeReason}
+                  deleteDisabledReason={deleteReason}
                 />
               ))
             )}
@@ -298,6 +328,7 @@ export function ScanResultsPanel({
           currentIndex={lightboxIndex}
           onIndexChange={setLightboxIndex}
           onSetRepresentative={(imgId) => onSetRepresentative(lightboxClusterData.id, imgId)}
+          setRepresentativeDisabledReason={writeReason}
         />
       )}
 

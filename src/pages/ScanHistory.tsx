@@ -1,4 +1,5 @@
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/ui/tooltip';
 import { Search, Plus } from 'lucide-react';
@@ -6,12 +7,42 @@ import { ScanStatsBar } from '@/components/similarity/ScanStatsBar';
 import { ScanListToolbar } from '@/components/similarity/ScanListToolbar';
 import { ScanRow } from '@/components/similarity/ScanRow';
 import { PaginationControls } from "@/components/ui/ui/pagination-control";
-import { useScans, useSimilarityStats } from '@/hooks/useSimilarity';
-import type { ScanHistoryStatus, HashAlgorithm } from '@/types/similarity';
+import { ScanConfigDrawer } from '@/components/similarity/ScanConfigDrawer';
+import { useScans, useSimilarityStats, useCreateScan } from '@/hooks/useSimilarity';
+import type { ScanHistoryStatus, HashAlgorithm, ScanConfig, ScanSummary } from '@/types/similarity';
+
+const NEW_SCAN_CONFIG: ScanConfig = { scope: 'datalake', threshold: 0.8, algorithm: 'ahash' };
 
 export default function ScanHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+
+  // Scan settings drawer: "New Scan" opens it for the datalake; "Re-run"
+  // opens it with that scan's settings and scope (project or datalake).
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerConfig, setDrawerConfig] = useState<ScanConfig>(NEW_SCAN_CONFIG);
+  const createScan = useCreateScan({ onSuccess: () => setDrawerOpen(false) });
+
+  const openNewScan = () => {
+    setDrawerConfig(NEW_SCAN_CONFIG);
+    setDrawerOpen(true);
+  };
+  const openRerun = (scan: ScanSummary) => {
+    setDrawerConfig({
+      scope: scan.scope,
+      dataset_id: scan.project_id ?? undefined,
+      threshold: scan.similarity_threshold,
+      algorithm: scan.algorithm,
+    });
+    setDrawerOpen(true);
+  };
+  const startScan = () => {
+    createScan.mutate({
+      scope: drawerConfig.scope,
+      project_id: drawerConfig.scope === 'project' ? drawerConfig.dataset_id : undefined,
+      algorithm: drawerConfig.algorithm,
+      similarity_threshold: drawerConfig.threshold,
+    });
+  };
 
   // Read filters from URL
   const activeStatus = (searchParams.get('status') ?? 'all') as ScanHistoryStatus | 'all';
@@ -69,7 +100,7 @@ export default function ScanHistoryPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <span>
-              <Button disabled={isRunning} onClick={() => navigate('/similarity')}>
+              <Button disabled={isRunning} onClick={openNewScan}>
                 <Plus className="mr-2 h-4 w-4" />
                 New Scan
               </Button>
@@ -109,7 +140,7 @@ export default function ScanHistoryPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Run your first similarity scan to detect duplicate images in your datalake.
               </p>
-              <Button className="mt-4" onClick={() => navigate('/similarity')}>
+              <Button className="mt-4" onClick={openNewScan}>
                 Run First Scan
               </Button>
             </>
@@ -136,6 +167,7 @@ export default function ScanHistoryPage() {
               key={scan.scan_id}
               scan={scan}
               autoExpand={scan.status === 'running'}
+              onRerun={openRerun}
             />
           ))}
         </div>
@@ -159,6 +191,18 @@ export default function ScanHistoryPage() {
           itemsPerPageOptions={[20, 50, 100]}
         />
       )}
+
+      <ScanConfigDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        config={drawerConfig}
+        onConfigChange={(cfg) => setDrawerConfig((prev) => ({ ...prev, ...cfg }))}
+        activeScan={null}
+        onStartScan={startScan}
+        onCancelScan={() => {}}
+        projectId={drawerConfig.scope === 'project' ? drawerConfig.dataset_id : undefined}
+        starting={createScan.isPending}
+      />
     </div>
   );
 }

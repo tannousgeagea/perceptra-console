@@ -6,9 +6,11 @@ import { Loader2 } from 'lucide-react';
 interface ScanProgressViewProps {
   scan: ScanJob;
   onCancel: () => void;
+  /** Set when the person may not cancel this scan; disables the button. */
+  cancelDisabledReason?: string;
 }
 
-export function ScanProgressView({ scan, onCancel }: ScanProgressViewProps) {
+export function ScanProgressView({ scan, onCancel, cancelDisabledReason }: ScanProgressViewProps) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center py-8 space-y-6">
       <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -36,7 +38,13 @@ export function ScanProgressView({ scan, onCancel }: ScanProgressViewProps) {
         </div>
       </div>
 
-      <Button variant="outline" size="sm" onClick={onCancel}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onCancel}
+        disabled={!!cancelDisabledReason}
+        title={cancelDisabledReason}
+      >
         Cancel scan
       </Button>
     </div>

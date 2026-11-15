@@ -56,6 +56,7 @@ import type {
 } from '@/types/similarity';
 import { HASH_ALGORITHMS } from '@/types/similarity';
 import { cn } from '@/lib/utils';
+import { useScanPermissions } from '@/hooks/useScanPermissions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Adapters
@@ -171,6 +172,8 @@ export default function ScanResultsPage() {
   // ── Mutations ──────────────────────────────────────────────────────────────
   const clusterAction = useClusterAction();
   const bulkAction = useBulkClusterAction();
+  // Editor where the scan looked (project or datalake); deleting needs an org admin.
+  const { writeReason, deleteReason } = useScanPermissions(scan?.project_id);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -416,7 +419,8 @@ export default function ScanResultsPage() {
                 variant="outline"
                 className="h-7 gap-1.5 text-xs"
                 onClick={() => handleBulkAction('mark_reviewed')}
-                disabled={bulkAction.isPending}
+                disabled={bulkAction.isPending || !!writeReason}
+                title={writeReason}
               >
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 Mark Reviewed
@@ -426,7 +430,8 @@ export default function ScanResultsPage() {
                 variant="outline"
                 className="h-7 gap-1.5 text-xs"
                 onClick={() => setConfirmBulk('archive_duplicates')}
-                disabled={bulkAction.isPending}
+                disabled={bulkAction.isPending || !!writeReason}
+                title={writeReason}
               >
                 <Archive className="h-3.5 w-3.5" />
                 Archive Duplicates
@@ -436,7 +441,8 @@ export default function ScanResultsPage() {
                 variant="outline"
                 className="h-7 gap-1.5 text-xs text-destructive hover:text-destructive"
                 onClick={() => setConfirmBulk('delete_duplicates')}
-                disabled={bulkAction.isPending}
+                disabled={bulkAction.isPending || !!deleteReason}
+                title={deleteReason}
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Delete Duplicates
@@ -531,6 +537,8 @@ export default function ScanResultsPage() {
                 onSetRepresentative={(imageId) =>
                   handleSetRepresentative(cluster.id, imageId)
                 }
+                actionDisabledReason={writeReason}
+                deleteDisabledReason={deleteReason}
               />
             ))}
 

@@ -13,6 +13,8 @@ interface ImageLightboxProps {
   currentIndex: number;
   onIndexChange: (index: number) => void;
   onSetRepresentative?: (imageId: string) => void;
+  /** Set when the person may not change the scan's results; disables the button. */
+  setRepresentativeDisabledReason?: string;
 }
 
 export function ImageLightbox({
@@ -22,6 +24,7 @@ export function ImageLightbox({
   currentIndex,
   onIndexChange,
   onSetRepresentative,
+  setRepresentativeDisabledReason,
 }: ImageLightboxProps) {
   const image = images[currentIndex];
 
@@ -141,6 +144,8 @@ export function ImageLightbox({
                   size="sm"
                   className="w-full gap-2 text-xs"
                   onClick={() => onSetRepresentative(image.id)}
+                  disabled={!!setRepresentativeDisabledReason}
+                  title={setRepresentativeDisabledReason}
                 >
                   <Star className="w-3.5 h-3.5" />
                   Set as representative

@@ -29,6 +29,10 @@ interface SimilarityClusterCardProps {
   onDeleteDuplicates?: () => void;
   onMarkReviewed?: () => void;
   onSetRepresentative?: (imageId: string) => void;
+  /** Set when the person may not act on this scan's results (archive, review). */
+  actionDisabledReason?: string;
+  /** Set when the person may not delete images (org admins only). */
+  deleteDisabledReason?: string;
 }
 
 export function SimilarityClusterCard({
@@ -47,6 +51,8 @@ export function SimilarityClusterCard({
   onDeleteDuplicates,
   onMarkReviewed,
   onSetRepresentative,
+  actionDisabledReason,
+  deleteDisabledReason,
 }: SimilarityClusterCardProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -105,6 +111,8 @@ export function SimilarityClusterCard({
           onArchiveDuplicates={onArchiveDuplicates}
           onDeleteDuplicates={onDeleteDuplicates}
           onMarkReviewed={onMarkReviewed}
+          actionDisabledReason={actionDisabledReason}
+          deleteDisabledReason={deleteDisabledReason}
         />
       </div>
 
@@ -214,13 +222,34 @@ export function SimilarityClusterCard({
             )}
             {context === 'datalake' && (
               <>
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onArchiveDuplicates}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={onArchiveDuplicates}
+                  disabled={!!actionDisabledReason}
+                  title={actionDisabledReason}
+                >
                   Archive duplicates
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onMarkReviewed}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={onMarkReviewed}
+                  disabled={!!actionDisabledReason}
+                  title={actionDisabledReason}
+                >
                   Mark as reviewed
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={onDeleteDuplicates}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs text-destructive hover:text-destructive"
+                  onClick={onDeleteDuplicates}
+                  disabled={!!deleteDisabledReason}
+                  title={deleteDisabledReason}
+                >
                   Delete duplicates
                 </Button>
               </>

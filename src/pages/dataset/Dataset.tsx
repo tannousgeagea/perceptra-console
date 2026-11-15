@@ -78,8 +78,9 @@ export default function ProjectDataset() {
   }, []);
 
   const handleStartScan = useCallback(() => {
-    scan.startScan(scan.scanConfig);
-  }, [scan]);
+    // On a project's dataset the scan covers that project, not the whole datalake.
+    scan.startScan({ ...scan.scanConfig, scope: 'project', dataset_id: projectId });
+  }, [scan, projectId]);
   
   const handleRerunScan = useCallback(() => {
     scan.setResultsOpen(false);
@@ -290,6 +291,7 @@ export default function ProjectDataset() {
               activeScan={scan.activeScan}
               onStartScan={handleStartScan}
               onCancelScan={scan.cancelScan}
+              projectId={projectId}
             />
             {/* Scan Results Panel */}
             {scan.activeScan?.status === 'completed' && (
@@ -315,6 +317,7 @@ export default function ProjectDataset() {
                 onSetRepresentative={scan.setRepresentative}
                 onBulkAction={scan.bulkAction}
                 onRerunScan={handleRerunScan}
+                projectId={projectId}
               />
             )}
 
