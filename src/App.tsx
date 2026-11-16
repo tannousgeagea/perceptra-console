@@ -24,7 +24,6 @@ const Projects = lazy(() => import('./pages/project/Projects'));
 const ProjectDataset = lazy(() => import('./pages/dataset/Dataset'));
 const DatasetVersions = lazy(() => import('./pages/versions/DatasetVersions'));
 const Index = lazy(() => import('./pages/annotate-tool/AnnotationTool'));
-const AnalysisPage = lazy(() => import('./pages/analysis/Index'));
 const JobAnnotation = lazy(() => import('./pages/annotate/JobAnnotation'));
 const UploadIndex = lazy(() => import('./pages/upload/Index'));
 const RegisterFromStorage = lazy(() => import('./pages/register/RegisterFromStorage'));
@@ -138,7 +137,6 @@ const App = () => {
                         <Route path='dataset' element={<ProjectDataset />} />
                         {/* <Route path='annotate' element={<Annotate />} /> */}
                         <Route path='versions' element={<DatasetVersions />} />
-                        <Route path="analysis" element={<AnalysisPage/>} />
                         <Route path='classes' element={<ClassesManagement/>} />
                         <Route path='analytics' element={<Analytics/>} />
                         <Route path='members' element={<ProjectMembersPage/>} />

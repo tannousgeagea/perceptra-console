@@ -1,7 +1,6 @@
 import {
   Activity,
   ActivitySquare,
-  BarChart,
   Brain,
   ChartCandlestick,
   Images,
@@ -34,7 +33,6 @@ export const projectNavItems = (projectId: string): ProjectNavItem[] => [
   { section: 'Data', label: 'Dataset', path: `/projects/${projectId}/dataset`, icon: Images, count: true, keywords: ['images', 'browse'] },
   { section: 'Data', label: 'Annotate', path: `/projects/${projectId}/annotate`, icon: Pencil, keywords: ['jobs', 'label'] },
   { section: 'Data', label: 'Auto Annotate', path: `/projects/${projectId}/auto-annotate`, icon: Sparkle, keywords: ['ai', 'model', 'predict'] },
-  { section: 'Insights', label: 'Analysis', path: `/projects/${projectId}/analysis`, icon: BarChart },
   { section: 'Insights', label: 'Analytics', path: `/projects/${projectId}/analytics`, icon: LineChart, keywords: ['stats', 'charts'] },
   { section: 'Insights', label: 'Activity', path: `/projects/${projectId}/activity`, icon: Activity, keywords: ['history', 'log'] },
   { section: 'Models', label: 'Versions', path: `/projects/${projectId}/versions`, icon: Layers, keywords: ['dataset versions', 'export', 'download'] },

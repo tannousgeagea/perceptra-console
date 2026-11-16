@@ -19,18 +19,22 @@ interface ColorPickerProps {
   color: string;
   onChange: (color: string) => void;
   className?: string;
+  /** Set when the colour may not be changed; disables the picker and explains why. */
+  disabledReason?: string;
 }
 
-const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, className }) => {
+const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, className, disabledReason }) => {
   const [open, setOpen] = useState(false);
-  
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button 
-          className={`w-6 h-6 rounded-full cursor-pointer border border-gray-300 ${className}`}
+        <button
+          className={`w-6 h-6 rounded-full border border-gray-300 ${disabledReason ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${className}`}
           style={{ backgroundColor: color }}
           aria-label="Select color"
+          disabled={!!disabledReason}
+          title={disabledReason}
         />
       </PopoverTrigger>
       <PopoverContent className="w-64 p-3">

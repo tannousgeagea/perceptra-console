@@ -19,14 +19,17 @@ interface ClassesTableProps {
   onDeleteClass: (id: string) => void;
   isLoading?: boolean;
   onRefresh?: () => void;
+  /** Set when the person may not change classes; disables row editing and deleting. */
+  lockedReason?: string;
 }
 
-const ClassesTable = ({ 
-  classes, 
-  onUpdateClass, 
+const ClassesTable = ({
+  classes,
+  onUpdateClass,
   onDeleteClass,
   isLoading = false,
-  onRefresh 
+  onRefresh,
+  lockedReason,
 }: ClassesTableProps) => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [sortBy, setSortBy] = useState<'name' | 'count' | 'classId'>('name');
@@ -135,6 +138,7 @@ const ClassesTable = ({
                 onUpdate={onUpdateClass} 
                 onDelete={onDeleteClass}
                 isEven={index % 2 === 0}
+                lockedReason={lockedReason}
               />
             ))
           )}
