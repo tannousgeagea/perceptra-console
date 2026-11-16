@@ -24,9 +24,11 @@ interface ClassRowProps {
   onUpdate: (id: string, updates: Partial<AnnotationClass>) => void;
   onDelete: (id: string) => void;
   isEven: boolean;
+  /** Set when the person may not change classes; disables editing and deleting. */
+  lockedReason?: string;
 }
 
-const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
+const ClassRow = ({ cls, onUpdate, onDelete, isEven, lockedReason }: ClassRowProps) => {
   const [editingName, setEditingName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
@@ -79,8 +81,9 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
     >
       <TableCell>
         <ColorPicker 
-          color={cls.color} 
+          color={cls.color}
           onChange={handleColorChange}
+          disabledReason={lockedReason}
         />
       </TableCell>
       <TableCell>
@@ -102,7 +105,14 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
         ) : (
           <div className="flex items-center gap-2">
             {cls.name}
-            <Button variant="ghost" size="icon" onClick={startEditing}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={startEditing}
+              disabled={!!lockedReason}
+              title={lockedReason ?? 'Rename class'}
+              aria-label="Rename class"
+            >
               <Edit className="h-4 w-4" />
             </Button>
           </div>
@@ -112,7 +122,14 @@ const ClassRow = ({ cls, onUpdate, onDelete, isEven }: ClassRowProps) => {
       <TableCell>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50/50">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50/50"
+              disabled={!!lockedReason}
+              title={lockedReason ?? 'Delete class'}
+              aria-label="Delete class"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>

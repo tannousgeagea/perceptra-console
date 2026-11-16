@@ -7,6 +7,8 @@ import AddClassForm from '@/components/classes/AddClassForm';
 import TagsPanel from '@/components/classes/TagsPanel';
 import { Loader2 } from 'lucide-react';
 import { ClassesProvider } from '@/contexts/ClassesContext';
+import { useParams } from 'react-router-dom';
+import { useProjectPermissions } from '@/hooks/usePermissions';
 
 const ClassesManagement = () => {
   const { 
@@ -19,6 +21,13 @@ const ClassesManagement = () => {
     isLoading,
     refreshClasses
   } = useClasses();
+
+  // Changing classes (the project's label set): the editor role or above (server rule).
+  const { projectId } = useParams<{ projectId: string }>();
+  const permissions = useProjectPermissions(projectId);
+  const lockedReason = !permissions.isLoading && !permissions.can('edit')
+    ? 'Changing classes needs the editor role in this project'
+    : undefined;
 
   const handleRefresh = () => {
     refreshClasses();
@@ -52,10 +61,12 @@ const ClassesManagement = () => {
               onDeleteClass={deleteClass}
               isLoading={isLoading}
               onRefresh={handleRefresh}
+              lockedReason={lockedReason}
             />
-            <AddClassForm 
+            <AddClassForm
               onAddClass={addClass}
               existingClasses={classes}
+              lockedReason={lockedReason}
             />
 
             {isLoading && (
