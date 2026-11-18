@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { samService } from '@/services/samService';
 import { useAuthHelpers, getAccessToken } from './useAuthHelpers';
@@ -26,6 +26,14 @@ export const useSAMSession = (projectId: string, imageId: string) => {
   const [suggestions, setSuggestions] = useState<SAMSuggestion[]>([]);
   const [points, setPoints] = useState<Point[]>([]);
   const [pointMode, setPointMode] = useState<1 | 0>(1); // 1 = positive, 0 = negative
+  // A session belongs to one image: accepting writes to that image. The
+  // annotator keeps this hook mounted while moving between images, so track
+  // which image the session is for and the image now on screen.
+  const [sessionImageId, setSessionImageId] = useState<string | null>(null);
+  const currentImageRef = useRef(imageId);
+  currentImageRef.current = imageId;
+  // Set for a session started automatically on an image change (no toast).
+  const silentStartRef = useRef(false);
   const { currentOrganization } = useCurrentOrganization();
   if (!currentOrganization) throw new Error("No organization selected");
 
@@ -35,23 +43,52 @@ export const useSAMSession = (projectId: string, imageId: string) => {
       const token = await getAccessToken();
       if (!token) throw new Error('Not authenticated');
       const configToUse = config || modelConfig;
-      return samService.createSession(
+      const forImageId = imageId;
+      const data = await samService.createSession(
         projectId,
         currentOrganization.id,
-        imageId,
+        forImageId,
         { config: configToUse },
         token
       );
+      return { ...data, forImageId };
     },
     onSuccess: (data) => {
+      const silent = silentStartRef.current;
+      silentStartRef.current = false;
+      // Started for an image the user has already left: drop it and start
+      // one for the image now on screen instead.
+      if (data.forImageId !== currentImageRef.current) {
+        if (currentImageRef.current) {
+          silentStartRef.current = true;
+          createSession.mutate(data.config);
+        }
+        return;
+      }
       setSessionId(data.session_id);
+      setSessionImageId(data.forImageId);
       setModelConfig(data.config);
-      toast.success(`AI Session started with ${data.config.model.toUpperCase()}`);
+      if (!silent) toast.success(`AI Session started with ${data.config.model.toUpperCase()}`);
     },
     onError: () => {
+      silentStartRef.current = false;
       toast.error('Failed to start AI session');
     },
   });
+
+  // Moved to another image with a session open: the old session's points and
+  // suggestions don't apply here, and accepting through it would write to the
+  // previous image. Start a fresh session for this image with the same model.
+  const startSession = createSession.mutate;
+  useEffect(() => {
+    if (!sessionId || !imageId || sessionImageId === imageId) return;
+    setSessionId(null);
+    setSessionImageId(null);
+    setSuggestions([]);
+    setPoints([]);
+    silentStartRef.current = true;
+    startSession(modelConfig);
+  }, [imageId, sessionId, sessionImageId, modelConfig, startSession]);
 
   // Get session status
   const { data: session, isLoading: isSessionLoading } = useQuery({
@@ -304,6 +341,7 @@ export const useSAMSession = (projectId: string, imageId: string) => {
     try {
       await samService.deleteSession(projectId, sessionId, currentOrganization.id, token);
       setSessionId(null);
+      setSessionImageId(null);
       setSuggestions([]);
       setPoints([]);
       toast.info('AI session ended');
