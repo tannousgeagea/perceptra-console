@@ -5,6 +5,8 @@ on:
     workflows: ["Auto Tag Version"]
     types:
       - completed
+  # Manual run: rebuilds the latest existing tag from main, no new tag.
+  workflow_dispatch:
 
 jobs:
   build:
