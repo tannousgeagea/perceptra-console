@@ -50,7 +50,6 @@ const ClassesManagement = () => {
             </TabsTrigger>
             <TabsTrigger value="tags" className="relative">
               Tags
-              <span className="ml-1 text-xs text-black dark:text-gray-200 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">0</span>
             </TabsTrigger>
           </TabsList>
         

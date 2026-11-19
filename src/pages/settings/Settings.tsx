@@ -6,6 +6,7 @@ import { StorageSettings } from '@/components/storage/StorageSettings';
 import { ComputeSettings } from '@/components/compute/ComputeSettings';
 import { UserManagement } from '@/components/users/UserManagement';
 import { APIKeysManagement } from '@/components/api-keys/APIKeysManagement';
+import { TagSettings } from '@/components/tags/TagSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
@@ -35,6 +36,7 @@ export default function Settings() {
                 <Routes>
                   <Route path="/" element={<Navigate to="/settings/account" replace />} />
                   <Route path="/account" element={<AccountSettings />} />
+                  <Route path="/tags" element={<TagSettings />} />
                   <Route 
                       path="/organization" 
                       element={

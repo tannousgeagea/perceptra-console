@@ -1,4 +1,4 @@
-import { Database, Users, Building2, User, Cpu, Key } from 'lucide-react';
+import { Database, Users, Building2, User, Cpu, Key, Tags } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useCurrentOrganization } from '@/hooks/useAuthHelpers';
@@ -15,6 +15,13 @@ const navigationItems = [
     url: '/settings/organization',
     icon: Building2,
     adminOnly: true,
+  },
+  {
+    // Every member can see the tags; editors can change them (the page says so).
+    title: 'Tags',
+    url: '/settings/tags',
+    icon: Tags,
+    adminOnly: false,
   },
   {
     title: 'Storage',
