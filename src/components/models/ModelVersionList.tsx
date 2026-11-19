@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, Check, TagIcon, Database, Activity, ExternalLink } from "lucide-react";
-import { VersionTag } from "@/types/models";
 import { ModelArtifact, ModelDetail, ModelVersion } from "@/types/models";
+import { VersionTagsCell } from "./VersionTagsCell";
 import { TrainingSession } from "@/types/training_session";
 import { apiFetch } from "@/services/apiClient";
 import { useProjectPermissions } from "@/hooks/usePermissions";
@@ -89,7 +89,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
   const tagMutation = useMutation({
     mutationFn: async ({ modelId, versionId, tag, value }: { modelId: string; versionId: string; tag: string; value: boolean }) => {
       const response = await apiFetch(
-        `/api/v1/models/${modelId}/versions/${encodeURIComponent(versionId)}/tags/${tag}`,
+        `/api/v1/models/${modelId}/versions/${encodeURIComponent(versionId)}/tags/${encodeURIComponent(tag)}`,
         { method: value ? "PUT" : "DELETE" }
       );
       if (!response.ok) {
@@ -100,7 +100,10 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
     },
     onSuccess: (_data, { tag, value }) => {
       queryClient.invalidateQueries({ queryKey: ["modelDetail"] });
-      toast.success(value ? `Marked as ${tag}` : `Removed ${tag} tag`);
+      // A new name is a new org tag; usage counts change either way.
+      queryClient.invalidateQueries({ queryKey: ["managed-tags"] });
+      if (tag === "baseline") toast.success(value ? "Marked as baseline" : "Removed baseline");
+      else toast.success(value ? `Added tag "${tag}"` : `Removed tag "${tag}"`);
     },
     onError: (error) => {
       toast.error("Failed to update version tag", {
@@ -132,7 +135,7 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
   };
 
   // Set version tag
-  const handleSetTag = (version: ModelVersion, tag: VersionTag, value: boolean) => {
+  const handleSetTag = (version: ModelVersion, tag: string, value: boolean) => {
     tagMutation.mutate({
       modelId: model.id,
       versionId: version.id,
@@ -247,13 +250,14 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
                     {version.created_by}
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {version?.tags?.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
+                    <VersionTagsCell
+                      versionId={version.id}
+                      tags={version.tags ?? []}
+                      canEdit={!permissions.isLoading && permissions.can('edit')}
+                      busy={tagMutation.isPending}
+                      onAdd={(tag) => handleSetTag(version, tag, true)}
+                      onRemove={(tag) => handleSetTag(version, tag, false)}
+                    />
                   </TableCell>
                   <TableCell>
                     {(() => {
