@@ -85,8 +85,10 @@ const ProjectSideBar: FC = () => {
               {section}
             </h3>
             <div className="flex flex-col gap-1">
-              {links.map(({ label, path, icon: Icon, count }) => {
-                const isActive = location.pathname.startsWith(path);
+              {links.map(({ label, path, icon: Icon, count, exact }) => {
+                const isActive = exact
+                  ? location.pathname.replace(/\/$/, "") === path
+                  : location.pathname.startsWith(path);
                 return (
                   <Link
                     key={path}

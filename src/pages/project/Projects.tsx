@@ -37,7 +37,8 @@ const sortValue = (p: Project, field: SortField): string | number => {
     }
 };
 
-const projectHref = (projectId: string) => `/projects/${projectId}/dataset`;
+// A project opens on its pipeline overview.
+const projectHref = (projectId: string) => `/projects/${projectId}`;
 
 const Projects: FC = () => {
     // The page has an Active / Inactive filter, so it needs both.

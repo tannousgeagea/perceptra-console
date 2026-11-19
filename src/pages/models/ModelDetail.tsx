@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ChevronRight,
@@ -91,6 +91,16 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, sub }) => (
 
 const ModelDetail: React.FC = () => {
   const { projectId, modelId } = useParams<{ projectId: string; modelId: string }>();
+  // The tab lives in the URL (?tab=deployment) so other pages can link straight to it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "training";
+  const setActiveTab = (tab: string) =>
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === "training") next.delete("tab");
+      else next.set("tab", tab);
+      return next;
+    }, { replace: true });
   const { data: model, isLoading, error } = useModelDetail(modelId!);
   // Training a new version: the editor role in the project (server rule).
   const permissions = useProjectPermissions(projectId);
@@ -279,7 +289,7 @@ const ModelDetail: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="training" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex flex-wrap gap-1 h-auto w-full">
           <TabsTrigger value="training" className="flex items-center gap-1.5 relative">
             <Activity className="h-4 w-4" />
