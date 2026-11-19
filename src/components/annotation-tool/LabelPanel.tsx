@@ -15,9 +15,13 @@ import {
 import { cn } from '@/lib/utils';
 import { FindObjectsDialog } from './FindObjectsDialog';
 import { useAnnotationCommands } from '@/contexts/AnnotationCommandsContext';
+import { ImageTagsPanel } from './ImageTagsPanel';
+import type { ProjectImageOut } from '@/types/image';
 
 interface LabelPanelProps {
   classes: AnnotationClass[];
+  /** The image on screen, for its tags. */
+  image?: ProjectImageOut;
 }
 
 const HotkeyHint = ({ hotkey }: { hotkey?: number }) =>
@@ -30,7 +34,7 @@ const HotkeyHint = ({ hotkey }: { hotkey?: number }) =>
     </kbd>
   ) : null;
 
-const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
+const LabelPanel: React.FC<LabelPanelProps> = ({ classes, image }) => {
   const { getBoxesArray } = useAnnotationGeometry();
   const { remove } = useAnnotationCommands();
   const { setSelectedBox, hoveredBoxId, setHoveredBoxId, setTool, selectedBox } = useAnnotationState();
@@ -223,21 +227,7 @@ const LabelPanel: React.FC<LabelPanelProps> = ({ classes }) => {
       </Tabs>
 
       {/* ── Tags: shrink-0 keeps it always visible at the bottom ── */}
-      <div className="shrink-0 border-t border-border px-4 py-3">
-        <h4 className="text-xs font-semibold text-foreground mb-2">Tags</h4>
-        <div className="flex flex-col items-center py-3 text-center">
-          <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center mb-2">
-            <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-              <line x1="7" y1="7" x2="7.01" y2="7" />
-            </svg>
-          </div>
-          <p className="text-xs font-medium text-foreground">No Tags Applied</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            Type and select tags below to add them to the image.
-          </p>
-        </div>
-      </div>
+      {image && <ImageTagsPanel image={image} />}
 
       <FindObjectsDialog
         open={findDialogOpen}

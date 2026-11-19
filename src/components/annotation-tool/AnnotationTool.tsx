@@ -341,6 +341,7 @@ const AnnotationTool = () => {
             <div className="flex-1 min-h-0">
               <LabelPanel
                 classes={classes || []}
+                image={image}
               />
             </div>
           </div>

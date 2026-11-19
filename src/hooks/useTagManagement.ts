@@ -81,6 +81,21 @@ export const useDeleteTag = (kind: TagKind) => {
   });
 };
 
+/** Put tags on one image (the image's `pk` from its details); new names become org tags. */
+export const useAddImageTags = () => {
+  const refresh = useRefreshTagViews();
+  return useMutation({
+    mutationFn: async ({ imagePk, tags }: { imagePk: number; tags: string[] }) => {
+      const res = await apiFetch(`/api/v1/images/${imagePk}/tags`, {
+        method: 'POST',
+        body: JSON.stringify(tags),
+      });
+      if (!res.ok) throw new Error(await errorMessage(res));
+    },
+    onSuccess: refresh,
+  });
+};
+
 /** Take one tag off one image (the image's `pk` from its details). */
 export const useRemoveImageTag = () => {
   const refresh = useRefreshTagViews();
