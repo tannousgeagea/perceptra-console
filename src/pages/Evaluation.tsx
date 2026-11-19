@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/ui/tabs";
 import { Button } from "@/components/ui/ui/button";
 import { Badge } from "@/components/ui/ui/badge";
@@ -20,7 +19,16 @@ import { cn } from "@/lib/utils";
 
 const Evaluation = () => {
   const { projectId } = useParams();
-  const [activeTab, setActiveTab] = useState("overview");
+  // The tab lives in the URL (?tab=alerts) so other pages can link straight to it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "overview";
+  const setActiveTab = (tab: string) =>
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === "overview") next.delete("tab");
+      else next.set("tab", tab);
+      return next;
+    }, { replace: true });
 
   const {
     isLoading,

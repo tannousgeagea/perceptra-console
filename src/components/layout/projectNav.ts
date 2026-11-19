@@ -8,6 +8,7 @@ import {
   LineChart,
   Link2,
   Pencil,
+  Workflow,
   Sparkle,
   Tags,
   Upload,
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export interface ProjectNavItem {
-  section: 'Data' | 'Insights' | 'Models' | 'Settings';
+  section: 'Project' | 'Data' | 'Insights' | 'Models' | 'Settings';
   label: string;
   path: string;
   icon: LucideIcon;
@@ -24,10 +25,13 @@ export interface ProjectNavItem {
   count?: boolean;
   /** Extra search words for the command palette. */
   keywords?: string[];
+  /** Active only on this exact path (the project root is a prefix of every page). */
+  exact?: boolean;
 }
 
 /** The pages of a project, shared by the project sidebar and the command palette. */
 export const projectNavItems = (projectId: string): ProjectNavItem[] => [
+  { section: 'Project', label: 'Overview', path: `/projects/${projectId}`, icon: Workflow, exact: true, keywords: ['pipeline', 'home', 'summary', 'status'] },
   { section: 'Data', label: 'Upload Data', path: `/projects/${projectId}/upload`, icon: Upload, keywords: ['import', 'files'] },
   { section: 'Data', label: 'Link Data', path: `/projects/${projectId}/link`, icon: Link2, keywords: ['storage', 'register', 's3', 'bucket'] },
   { section: 'Data', label: 'Dataset', path: `/projects/${projectId}/dataset`, icon: Images, count: true, keywords: ['images', 'browse'] },
