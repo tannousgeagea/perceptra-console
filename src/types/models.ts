@@ -17,8 +17,6 @@ export type ModelStatus =
 
 // Version tags the API accepts. Staging / production is a version's
 // deployment_status (set by Deploy), not a tag.
-export type VersionTag = 'baseline';
-
 export type ModelTask = 
   | 'classification' 
   | 'object-detection' 
@@ -212,7 +210,8 @@ export interface ModelVersion {
   config: Record<string, any>;
   dataset?: DatasetInfo;
   artifacts: ModelArtifact;
-  tags: VersionTag[];
+  /** Any org model tag; "baseline" is on at most one version per model. */
+  tags: string[];
   created_by?: string;
   created_at: string;
   deployed_at?: string;
