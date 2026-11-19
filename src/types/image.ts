@@ -49,6 +49,8 @@ export interface PaginatedResponse<T> {
 export interface ImageRecord {
   id: string;
   image_id: string;
+  /** The image's key in /api/v1/images/{pk}/… (removing a tag). Only in image details. */
+  pk?: number;
   name: string;
   original_filename: string;
   file_format: string;

@@ -1,12 +1,10 @@
+import { useParams } from 'react-router-dom';
+import { TagManager } from '@/components/tags/TagManager';
 
-import React from 'react';
-
+/** Classes → Tags: the organization's tags as used in this project. */
 const TagsPanel = () => {
-  return (
-    <div className="p-8 text-center text-gray-500">
-      <p>Tag management functionality will be implemented in a future update.</p>
-    </div>
-  );
+  const { projectId } = useParams<{ projectId: string }>();
+  return <TagManager projectId={projectId} />;
 };
 
 export default TagsPanel;

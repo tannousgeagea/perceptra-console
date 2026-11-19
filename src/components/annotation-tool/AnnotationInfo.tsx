@@ -7,9 +7,14 @@ import {
     CalendarClock,
     CheckCircle,
     User,
-    Layers3
+    Layers3,
+    X
 } from "lucide-react"
+import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { ProjectImageOut } from "@/types/image";
+import { useImageEditPermission } from "@/hooks/useImageEditPermission";
+import { useRemoveImageTag } from "@/hooks/useTagManagement";
 import { useAnnotationGeometry } from "@/contexts/AnnotationGeometryContext";
 import { CopyableId } from "@/components/ui/ui/copyable-id";
 import { ReviewHistory } from "./components/ReviewFeedback";
@@ -37,6 +42,21 @@ const InfoRow: React.FC<{ icon: React.ReactNode; label: string; value?: React.Re
 export const AnnotationInfo: React.FC<AnnotationInfpProps>  = ({ image }) => {
     const { getBoxesArray } = useAnnotationGeometry();
     const boxes = getBoxesArray();
+    // Org editors, or editors of this project, may take a tag off the image.
+    const { projectId } = useParams<{ projectId: string }>();
+    const { canTag } = useImageEditPermission(projectId);
+    const removeTag = useRemoveImageTag();
+    const imagePk = image.image.pk;
+    const onRemoveTag = (tag: string) => {
+      if (imagePk == null) return;
+      removeTag.mutate(
+        { imagePk, tag },
+        {
+          onSuccess: () => toast.success(`Removed "${tag}" from this image`),
+          onError: (e) => toast.error(e instanceof Error ? e.message : "Could not remove the tag"),
+        },
+      );
+    };
 
     return (
       <div className="flex-1 overflow-y-auto p-5 space-y-3 text-sm scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
@@ -74,12 +94,24 @@ export const AnnotationInfo: React.FC<AnnotationInfpProps>  = ({ image }) => {
               <span className="font-medium">Tags</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {image.image.tags.map((tag, idx) => (
+              {image.image.tags.map((tag) => (
                 <span
-                  key={idx}
-                  className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30"
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30"
                 >
                   {tag}
+                  {canTag && imagePk != null && (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveTag(tag)}
+                      disabled={removeTag.isPending}
+                      aria-label={`Remove tag ${tag} from this image`}
+                      title="Remove from this image"
+                      className="-mr-1 rounded-full p-0.5 text-indigo-300/70 hover:bg-indigo-400/20 hover:text-white disabled:opacity-50"
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
                 </span>
               ))}
             </div>
