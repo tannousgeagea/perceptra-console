@@ -15,6 +15,7 @@ import {
   Bell,
   PanelLeft,
   CreditCard,
+  House,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMobileNavStore } from '@/stores/mobileNavStore';
@@ -68,6 +69,8 @@ const Navbar: FC = () => {
   const currentUser = getCurrentUser();
 
   const items: NavbarItem[] = [
+    // Every project's pipeline, alerts, running and deployed models at a glance.
+    { item: "Home", ref: "/", icon: <House size={20} /> },
     { item: "Projects", ref: "/projects", icon: <Folder size={20} /> },
     { item: "Datalake", ref: "/datalake", icon: <Database size={20} /> },
     { item: "Similarity", ref: "/similarity", icon: <ScanEye size={20} /> },
@@ -91,7 +94,8 @@ const Navbar: FC = () => {
   };
 
   const isActive = (path: string) => {
-    return location.pathname.startsWith(path);
+    // "/" (Home) is a prefix of every page: match it exactly.
+    return path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
   };
 
   return (

@@ -21,6 +21,7 @@ import { PageFallback } from './components/layout/PageFallback';
 // Pages load on first visit, so signing in doesn't download the annotation
 // tool, charts, billing PDFs and so on. Layouts and guards above stay eager.
 const Projects = lazy(() => import('./pages/project/Projects'));
+const OrganizationHome = lazy(() => import('./pages/home/OrganizationHome'));
 const ProjectOverview = lazy(() => import('./pages/project/ProjectOverview'));
 const ProjectDataset = lazy(() => import('./pages/dataset/Dataset'));
 const DatasetVersions = lazy(() => import('./pages/versions/DatasetVersions'));
@@ -103,7 +104,7 @@ const App = () => {
                   <Route path="/invite/:token" element={<InvitePage />} />
                   <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<Layout />}>
-                      <Route index element={<Navigate to="/projects" replace />} />
+                      <Route index element={<OrganizationHome />} />
                       <Route path="/no-permission" element={<NoPermissionPage />} />
                       <Route path='/organizations/:orgId' element={<OrganizationPage />} />
                       <Route path="/organizations/:orgId/members" element={<OrganizationMembersPage />} />

@@ -30,6 +30,7 @@ import {
   Upload,
   User,
   Users,
+  House,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -131,6 +132,7 @@ const PaletteBody = ({ close }: { close: () => void }) => {
 
   const orgId = currentOrganization?.id;
   const pages: { label: string; to: string; icon: LucideIcon; keywords?: string[] }[] = [
+    { label: 'Home', to: '/', icon: House, keywords: ['overview', 'dashboard', 'alerts', 'pipeline'] },
     { label: 'Projects', to: '/projects', icon: Folder },
     { label: 'New project', to: '/projects/add', icon: FolderPlus, keywords: ['create', 'add'] },
     { label: 'Datalake', to: '/datalake', icon: Database, keywords: ['images', 'all images'] },
