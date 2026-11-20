@@ -46,6 +46,17 @@ const pct = (value: number | null | undefined) =>
   value == null ? '—' : value <= 1 ? value.toFixed(2) : value.toFixed(1);
 const signed = (value: number) => `${value >= 0 ? '+' : '−'}${Math.abs(value).toFixed(2)}`;
 
+/** The candidate against its model's production version, or the candidate's own page when nothing of that model is in production. */
+function compareTo(o: ProjectOverview, base: string): string | null {
+  const c = o.models.candidate;
+  if (!c) return null;
+  const prod = o.deployment.production.find((p) => p.model_id === c.model_id && p.version_id !== c.version_id);
+  const model = `${base}/models/${c.model_id}`;
+  return prod
+    ? `${model}/compare?a=${encodeURIComponent(prod.version_id)}&b=${encodeURIComponent(c.version_id)}`
+    : `${model}/versions/${encodeURIComponent(c.version_id)}`;
+}
+
 function eta(seconds: number | null): string | null {
   if (seconds == null) return null;
   if (seconds < 90) return 'under 2 min left';
@@ -144,7 +155,7 @@ export function buildStages(o: ProjectOverview, base: string): Stage[] {
         : candidate ? [`${candidate.version_name} is ready to deploy`]
         : [models.trained_versions ? plural(models.trained_versions, 'trained version') : 'Metrics appear after training'],
       action: candidate
-        ? { label: 'Compare', to: `${base}/models/${candidate.model_id}?tab=evaluations` }
+        ? { label: 'Compare', to: compareTo(o, base)! }
         : { label: 'Evaluation', to: `${base}/evaluation` },
     },
     {
@@ -214,7 +225,7 @@ export function buildAttention(o: ProjectOverview, base: string): AttentionItem[
       key: 'candidate',
       level: 'waiting',
       text: `${c.model_name} ${c.version_name} beats production ${c.production_version_name} on ${c.metric_name} (${signed(c.delta)})`,
-      action: { label: `Promote ${c.version_name}`, to: `${base}/models/${c.model_id}?tab=deployment`, needs: 'manage', viewLabel: 'Compare' },
+      action: { label: `Promote ${c.version_name}`, to: `${base}/models/${c.model_id}?tab=deployment`, needs: 'manage', viewLabel: 'Compare', viewTo: compareTo(o, base)! },
     });
   } else if (c && !deployment.production.length) {
     items.push({

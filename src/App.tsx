@@ -44,6 +44,8 @@ const Login = lazy(() => import('./pages/Login'));
 const InvitePage = lazy(() => import('./pages/invite/InvitePage'));
 const ModelsList = lazy(() => import('./pages/models/ModelsList'));
 const ModelDetail = lazy(() => import('./pages/models/ModelDetail'));
+const ModelVersionDetail = lazy(() => import('./pages/models/ModelVersionDetail'));
+const ModelCompare = lazy(() => import('./pages/models/ModelCompare'));
 const ModelTraining = lazy(() => import('./pages/models/ModelTraining'));
 const CreateModel = lazy(() => import('./pages/models/CreateModel'));
 const SessionsPage = lazy(() => import('./pages/training_sessions/TrainingSession'));
@@ -149,6 +151,8 @@ const App = () => {
                         <Route path="models/new" element={<CreateModel />} />
                         <Route path="models/:modelId" element={<ModelDetail />} />
                         <Route path="models/:modelId/train" element={<ModelTraining />} />
+                        <Route path="models/:modelId/versions/:versionId" element={<ModelVersionDetail />} />
+                        <Route path="models/:modelId/compare" element={<ModelCompare />} />
                         <Route path="evaluation" element={<Evaluation />} />
                         <Route path="auto-annotate" element={<AutoAnnotate />} />
                         <Route path="sessions" element={<SessionsPage />} />

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, Check, TagIcon, Database, Activity, ExternalLink } from "lucide-react";
 import { ModelArtifact, ModelDetail, ModelVersion } from "@/types/models";
@@ -42,7 +42,9 @@ interface ModelVersionsListProps {
 
 const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId, sessions = [] }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
+  const versionBase = `/projects/${projectId}/models/${model.id}`;
   // Tagging a version is editing the model: the editor role in the project (server rule).
   const permissions = useProjectPermissions(projectId);
   const cannotTag = !permissions.isLoading && !permissions.can('edit');
@@ -112,13 +114,23 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
     },
   });
 
-  // Toggle version selection
+  // Toggle version selection: at most two, a third tick replaces the oldest pick.
   const toggleVersionSelection = (versionId: string) => {
     setSelectedVersions((prev) =>
       prev.includes(versionId)
         ? prev.filter((id) => id !== versionId)
-        : [...prev, versionId]
+        : [...prev, versionId].slice(-2)
     );
+  };
+
+  // The older of the two is the reference (A), the newer the candidate (B).
+  const openComparison = () => {
+    const [x, y] = selectedVersions
+      .map((id) => model.versions.find((v) => v.id === id))
+      .filter((v): v is ModelVersion => !!v)
+      .sort((p, q) => p.version_number - q.version_number);
+    if (!x || !y) return;
+    navigate(`${versionBase}/compare?a=${encodeURIComponent(x.id)}&b=${encodeURIComponent(y.id)}`);
   };
 
   // Are we comparing versions
@@ -149,16 +161,17 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
       {isComparing && (
         <div className="bg-muted p-3 rounded-lg flex justify-between items-center">
           <div>
-            <span className="font-medium">Compare Mode:</span>{" "}
+            <span className="font-medium">Compare:</span>{" "}
             <span className="text-muted-foreground">
-              {selectedVersions.length} versions selected
+              {selectedVersions.length === 2 ? "2 versions selected" : "pick one more version"}
             </span>
           </div>
           <div className="space-x-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               disabled={selectedVersions.length !== 2}
+              onClick={openComparison}
             >
               Compare Versions
             </Button>
@@ -198,12 +211,18 @@ const ModelVersionsList: React.FC<ModelVersionsListProps> = ({ model, projectId,
                       type="checkbox"
                       checked={selectedVersions.includes(version.id)}
                       onChange={() => toggleVersionSelection(version.id)}
+                      aria-label={`Select v${version.version_number} to compare`}
                       className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-900"
                     />
                   </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <span>v{version.version_number}</span>
+                      <Link
+                        to={`${versionBase}/versions/${encodeURIComponent(version.id)}`}
+                        className="text-[var(--mtx-primary)] underline-offset-4 hover:underline dark:text-violet-400"
+                      >
+                        v{version.version_number}
+                      </Link>
                       {version.model_size && (
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 capitalize">
                           {version.model_size}
