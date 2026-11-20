@@ -65,7 +65,8 @@ export interface RetrainingPolicy {
   policy_id: string;
   model_id: string;
   is_active: boolean;
-  trigger_type: 'annotation_count' | 'correction_rate' | 'time_elapsed' | 'combined';
+  /** "alert": an unacknowledged critical monitoring alert on the model since the last run. */
+  trigger_type: 'annotation_count' | 'correction_rate' | 'time_elapsed' | 'combined' | 'alert';
   min_new_annotations: number;
   min_correction_rate: number | null;
   max_days_since_training: number | null;

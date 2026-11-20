@@ -8,7 +8,6 @@ import type {
   TemporalTrend,
   Anomaly,
   Alert,
-  AlertThreshold,
   PriorityImage,
   SamplingStrategy,
 } from "@/types/evaluation";
@@ -29,7 +28,8 @@ const CLASS_COLORS = [
 export const useEvaluationData = (projectId?: string) => {
   const queryClient = useQueryClient();
   const [trendDays, setTrendDays] = useState(30);
-  const [priorityStrategy, setPriorityStrategy] = useState<SamplingStrategy>("uncertainty");
+  // Same default as the Active Learning tab's selector, so the first list matches what it shows.
+  const [priorityStrategy, setPriorityStrategy] = useState<SamplingStrategy>("hybrid");
   const [priorityLimit, setPriorityLimit] = useState(20);
 
   // ── Summary ──────────────────────────────────────────────────────────────
@@ -150,30 +150,7 @@ export const useEvaluationData = (projectId?: string) => {
     [acknowledgeAlertMutation]
   );
 
-  // ── Thresholds ───────────────────────────────────────────────────────────
-  const thresholdsQuery = useQuery<AlertThreshold[]>({
-    queryKey: ["evaluation-thresholds", projectId],
-    queryFn: async () => {
-      const res = await apiFetch(`/api/v1/temporal/projects/${projectId}/thresholds`);
-      if (!res.ok) throw new Error("Failed to fetch thresholds");
-      const data: any[] = await res.json();
-      return data.map((t) => ({
-        metric: t.metric,
-        warning_threshold: t.warning_threshold,
-        critical_threshold: t.critical_threshold,
-        slack_enabled: false,
-        email_enabled: true,
-        condition: t.condition ?? (t.higher_is_better ? "lt" : "gt"),
-      }));
-    },
-    enabled: !!projectId,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const updateThresholds = useCallback((_newThresholds: AlertThreshold[]) => {
-    // Threshold persistence requires a backend PUT endpoint (Phase 2+).
-    // Local-only update is intentionally omitted.
-  }, []);
+  // Alert thresholds: their own hook (useAlertThresholds), used by AlertThresholdsCard.
 
   // ── Priority images (active learning) ───────────────────────────────────
   const priorityQuery = useQuery<PriorityImage[]>({
@@ -184,14 +161,7 @@ export const useEvaluationData = (projectId?: string) => {
         `/api/v1/active-learning/projects/${projectId}/suggest?strategy=${strategyParam}&limit=${priorityLimit}`
       );
       if (!res.ok) throw new Error("Failed to fetch priority images");
-      const data: any[] = await res.json();
-      return data.map((img) => ({
-        image_id: img.image_id,
-        image_name: img.image_name,
-        priority_score: img.priority_score ?? 0,
-        reasons: img.reasons ?? [],
-        thumbnail_url: "",
-      }));
+      return res.json();
     },
     enabled: !!projectId,
     staleTime: 2 * 60 * 1000,
@@ -236,11 +206,12 @@ export const useEvaluationData = (projectId?: string) => {
     trends: trendsQuery.data ?? [],
     anomalies: [] as Anomaly[],
     alerts: alertsQuery.data ?? [],
-    thresholds: thresholdsQuery.data ?? [],
     priorityImages: priorityQuery.data ?? [],
+    priorityLoading: priorityQuery.isFetching,
+    priorityStrategy,
+    priorityLimit,
     fetchTrends,
     acknowledgeAlert,
-    updateThresholds,
     generatePriorityQueue,
   };
 };

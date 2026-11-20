@@ -2,31 +2,24 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/ui/card";
 import { Button } from "@/components/ui/ui/button";
 import { Badge } from "@/components/ui/ui/badge";
-import { Input } from "@/components/ui/ui/input";
-import { Checkbox } from "@/components/ui/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/ui/collapsible";
-import { AlertCircle, AlertTriangle, Check, ChevronDown, Save } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast";
-import type { Alert, AlertThreshold } from "@/types/evaluation";
+import type { Alert } from "@/types/evaluation";
 import { useParams } from "react-router-dom";
 import { useProjectPermissions } from "@/hooks/usePermissions";
+import { AlertThresholdsCard } from "./AlertThresholdsCard";
 
 interface AlertsManagementProps {
   alerts: Alert[];
-  thresholds: AlertThreshold[];
   onAcknowledge: (alertId: number) => void;
-  onUpdateThresholds: (thresholds: AlertThreshold[]) => void;
 }
 
 export const AlertsManagement = ({
   alerts,
-  thresholds,
   onAcknowledge,
-  onUpdateThresholds,
 }: AlertsManagementProps) => {
   const [showAcknowledged, setShowAcknowledged] = useState(false);
-  const [editedThresholds, setEditedThresholds] = useState<AlertThreshold[]>(thresholds);
   // Acknowledging an alert: the reviewer role or above in the project (server rule).
   const { projectId } = useParams<{ projectId: string }>();
   const permissions = useProjectPermissions(projectId);
@@ -34,34 +27,6 @@ export const AlertsManagement = ({
 
   const activeAlerts = alerts.filter((a) => !a.is_acknowledged);
   const acknowledgedAlerts = alerts.filter((a) => a.is_acknowledged);
-
-  const handleThresholdChange = (
-    index: number,
-    field: keyof AlertThreshold,
-    value: string | boolean
-  ) => {
-    setEditedThresholds((prev) =>
-      prev.map((t, i) =>
-        i === index
-          ? {
-              ...t,
-              [field]:
-                field === "warning_threshold" || field === "critical_threshold"
-                  ? parseFloat(value as string) / 100
-                  : value,
-            }
-          : t
-      )
-    );
-  };
-
-  const handleSaveThresholds = () => {
-    onUpdateThresholds(editedThresholds);
-    toast({
-      title: "Thresholds saved",
-      description: "Alert thresholds have been updated successfully.",
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -197,94 +162,7 @@ export const AlertsManagement = ({
         </Card>
       </Collapsible>
 
-      {/* Alert Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Alert Thresholds</CardTitle>
-          <CardDescription>Configure when to trigger alerts</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-2 font-medium">Metric</th>
-                  <th className="text-center py-3 px-2 font-medium">Warning</th>
-                  <th className="text-center py-3 px-2 font-medium">Critical</th>
-                  <th className="text-center py-3 px-2 font-medium">Slack</th>
-                  <th className="text-center py-3 px-2 font-medium">Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {editedThresholds.map((threshold, index) => (
-                  <tr key={threshold.metric} className="border-b">
-                    <td className="py-3 px-2">
-                      <span className="font-medium">{threshold.metric}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        ({threshold.condition === "lt" ? "<" : ">"})
-                      </span>
-                    </td>
-                    <td className="py-3 px-2">
-                      <div className="flex justify-center">
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          className="w-20 text-center"
-                          value={(threshold.warning_threshold * 100).toFixed(0)}
-                          onChange={(e) =>
-                            handleThresholdChange(index, "warning_threshold", e.target.value)
-                          }
-                        />
-                      </div>
-                    </td>
-                    <td className="py-3 px-2">
-                      <div className="flex justify-center">
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          className="w-20 text-center"
-                          value={(threshold.critical_threshold * 100).toFixed(0)}
-                          onChange={(e) =>
-                            handleThresholdChange(index, "critical_threshold", e.target.value)
-                          }
-                        />
-                      </div>
-                    </td>
-                    <td className="py-3 px-2">
-                      <div className="flex justify-center">
-                        <Checkbox
-                          checked={threshold.slack_enabled}
-                          onCheckedChange={(checked) =>
-                            handleThresholdChange(index, "slack_enabled", checked as boolean)
-                          }
-                        />
-                      </div>
-                    </td>
-                    <td className="py-3 px-2">
-                      <div className="flex justify-center">
-                        <Checkbox
-                          checked={threshold.email_enabled}
-                          onCheckedChange={(checked) =>
-                            handleThresholdChange(index, "email_enabled", checked as boolean)
-                          }
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex justify-end mt-4">
-            <Button onClick={handleSaveThresholds}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <AlertThresholdsCard projectId={projectId} />
     </div>
   );
 };

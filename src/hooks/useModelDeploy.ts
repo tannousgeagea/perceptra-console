@@ -54,6 +54,8 @@ export const useDeployVersion = () => {
       deployModelVersion(currentOrganization!.id, versionId, targetEnv),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["modelDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["model-deployments"] });
+      queryClient.invalidateQueries({ queryKey: ["project-overview"] });
       toast.success("Model deployed successfully");
     },
     onError: (err: Error) => toast.error(err.message || "Deploy failed"),
@@ -68,6 +70,8 @@ export const useUndeployVersion = () => {
       undeployModelVersion(currentOrganization!.id, versionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["modelDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["model-deployments"] });
+      queryClient.invalidateQueries({ queryKey: ["project-overview"] });
       toast.success("Model undeployed");
     },
     onError: (err: Error) => toast.error(err.message || "Undeploy failed"),

@@ -31,7 +31,6 @@ const Evaluation = () => {
     }, { replace: true });
 
   const {
-    isLoading,
     isFetching,
     refresh,
     summary,
@@ -40,11 +39,10 @@ const Evaluation = () => {
     trends,
     anomalies,
     alerts,
-    thresholds,
     priorityImages,
+    priorityLoading,
     fetchTrends,
     acknowledgeAlert,
-    updateThresholds,
     generatePriorityQueue,
   } = useEvaluationData(projectId);
 
@@ -117,16 +115,14 @@ const Evaluation = () => {
           <TabsContent value="alerts" className="space-y-6">
             <AlertsManagement
               alerts={alerts}
-              thresholds={thresholds}
               onAcknowledge={acknowledgeAlert}
-              onUpdateThresholds={updateThresholds}
             />
           </TabsContent>
 
           <TabsContent value="active-learning" className="space-y-6">
             <ActiveLearning
               priorityImages={priorityImages}
-              isLoading={isLoading}
+              isLoading={priorityLoading}
               onGenerateQueue={generatePriorityQueue}
             />
           </TabsContent>

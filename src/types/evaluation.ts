@@ -67,21 +67,47 @@ export interface Alert {
   is_acknowledged: boolean;
 }
 
+/** One metric's alert thresholds (rates 0-1) for a project. */
 export interface AlertThreshold {
   metric: string;
   warning_threshold: number;
   critical_threshold: number;
-  slack_enabled: boolean;
-  email_enabled: boolean;
-  condition: 'lt' | 'gt'; // less than or greater than
+  higher_is_better: boolean;
+  condition: 'lt' | 'gt'; // alert when below (lt) or above (gt)
+  default_warning: number;
+  default_critical: number;
+}
+
+/** GET/PUT /temporal/projects/{id}/thresholds */
+export interface ThresholdSettings {
+  thresholds: AlertThreshold[];
+  /** Server-wide notification channels (not per project). */
+  notify_slack: boolean;
+  notify_email: boolean;
+}
+
+export interface PriorityScores {
+  uncertainty: number;
+  rarity: number;
+  error_prone: number;
+  density: number;
 }
 
 export interface PriorityImage {
   image_id: string;
   image_name: string;
+  /** What "create job from images" takes. */
+  project_image_id: number;
   priority_score: number;
+  priority_rank: number;
   reasons: string[];
-  thumbnail_url: string;
+  thumbnail_url: string | null;
+  num_predictions: number;
+  lowest_confidence: number | null;
+  classes: string[];
+  scores: PriorityScores | null;
+  /** Name of the open job it's already in; it can't go into another one. */
+  in_open_job: string | null;
 }
 
 export type SamplingStrategy = 'uncertainty' | 'diversity' | 'error-prone' | 'hybrid';
