@@ -31,6 +31,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   correction_rate: "Correction rate",
   time_elapsed: "Time elapsed",
   combined: "Combined",
+  alert: "Monitoring alert",
 };
 
 function formatDateTime(dt: string | null) {
@@ -80,7 +81,13 @@ const PolicyCard: React.FC<{
     </CardHeader>
     <CardContent className="pt-0 space-y-3">
       <div className="grid grid-cols-2 gap-3 text-sm">
-        {policy.trigger_type !== "time_elapsed" && (
+        {policy.trigger_type === "alert" && (
+          <div className="col-span-2">
+            <span className="text-muted-foreground">Fires on</span>
+            <p className="font-medium">A critical monitoring alert nobody has acknowledged</p>
+          </div>
+        )}
+        {(policy.trigger_type === "annotation_count" || policy.trigger_type === "combined") && (
           <div>
             <span className="text-muted-foreground">Min new annotations</span>
             <p className="font-medium">{policy.min_new_annotations}</p>
@@ -189,9 +196,36 @@ const CreatePolicyDialog: React.FC<{ modelId: string; lockedReason?: string }> =
                 <SelectItem value="correction_rate">Prediction correction rate</SelectItem>
                 <SelectItem value="time_elapsed">Time since last training</SelectItem>
                 <SelectItem value="combined">Combined conditions</SelectItem>
+                <SelectItem value="alert">Monitoring alert</SelectItem>
               </SelectContent>
             </Select>
+            {form.trigger_type === "alert" && (
+              <p className="text-xs text-muted-foreground">
+                Retrains when the daily metric check raises a critical alert for this model that nobody has
+                acknowledged. Acknowledge an alert to mean "seen, don't retrain". Thresholds are under
+                Evaluation, then Alerts.
+              </p>
+            )}
           </div>
+
+          {(form.trigger_type === "correction_rate" || form.trigger_type === "combined") && (
+            <div className="space-y-1.5">
+              <Label htmlFor="policy-correction-rate">Correction rate at least (%)</Label>
+              <Input
+                id="policy-correction-rate"
+                type="number"
+                min={1}
+                max={100}
+                value={form.min_correction_rate != null ? Math.round(form.min_correction_rate * 100) : ""}
+                onChange={(e) =>
+                  set("min_correction_rate", e.target.value ? Number(e.target.value) / 100 : null)
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Share of the model's predictions that reviewers had to fix within the lookback window.
+              </p>
+            </div>
+          )}
 
           {(form.trigger_type === "annotation_count" || form.trigger_type === "combined") && (
             <div className="space-y-1.5">
