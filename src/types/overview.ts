@@ -15,7 +15,8 @@ export interface DeployedVersion extends VersionRef {
 }
 
 export interface ProjectOverview {
-  project: { project_id: string; name: string };
+  /** last_activity_at: only in the organization home. */
+  project: { project_id: string; name: string; last_activity_at?: string | null };
   generated_at: string;
   data: { total_images: number; added_7d: number; last_added_at: string | null };
   annotation: {
@@ -85,4 +86,30 @@ export interface ProjectOverview {
     last_snapshot_at: string | null;
     active_retraining_policies: number;
   };
+}
+
+// GET /api/v1/organizations/home: every project the caller can open.
+export interface RunningSession {
+  id: number;
+  status: string;
+  progress: number;
+  current_epoch: number;
+  total_epochs: number;
+  eta_seconds: number | null;
+  model_id: string;
+  model_name: string;
+  version_name: string;
+  project_id: string;
+  project_name: string;
+}
+
+export interface OrganizationHome {
+  organization: { org_id: string; name: string };
+  generated_at: string;
+  /** All projects the caller can open; `projects` holds the most recently active `project_limit`. */
+  project_count: number;
+  project_limit: number;
+  projects: ProjectOverview[];
+  running: RunningSession[];
+  production: (DeployedVersion & { project_id: string; project_name: string })[];
 }
