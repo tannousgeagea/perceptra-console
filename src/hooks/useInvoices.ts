@@ -8,6 +8,31 @@ import { useCurrentOrganization } from "@/hooks/useAuthHelpers";
 import { toast } from "sonner";
 import { Invoice, InvoiceGenerateRequest, InvoiceFilters } from "@/types/billing";
 
+// What the API sends differs from the Invoice type the pages use:
+// - money fields are Decimals, serialized as strings ("1250.00");
+// - action_breakdown is {action_type: {count, total_amount, avg_rate}}
+//   (billing_invoice.py), the pages list {action_type, quantity, unit_rate, total_amount}.
+type RawBreakdown = Record<string, { count?: number; total_amount?: number; avg_rate?: number }>;
+
+function normalizeInvoice(raw: Invoice & { action_breakdown: unknown }): Invoice {
+  const breakdown = raw.action_breakdown;
+  return {
+    ...raw,
+    subtotal: Number(raw.subtotal ?? 0),
+    tax_rate: Number(raw.tax_rate ?? 0),
+    tax_amount: Number(raw.tax_amount ?? 0),
+    total_amount: Number(raw.total_amount ?? 0),
+    action_breakdown: Array.isArray(breakdown)
+      ? breakdown
+      : Object.entries((breakdown ?? {}) as RawBreakdown).map(([action_type, v]) => ({
+          action_type,
+          quantity: Number(v?.count ?? 0),
+          unit_rate: Number(v?.avg_rate ?? 0),
+          total_amount: Number(v?.total_amount ?? 0),
+        })),
+  };
+}
+
 // ============================================
 // API FUNCTIONS
 // ============================================
@@ -37,7 +62,7 @@ export const generateInvoice = async (
     throw new Error(error.detail || 'Failed to generate invoice');
   }
 
-  return response.json();
+  return normalizeInvoice(await response.json());
 };
 
 export const listInvoices = async (
@@ -73,7 +98,7 @@ export const listInvoices = async (
     throw new Error(error.detail || 'Failed to fetch invoices');
   }
 
-  return response.json();
+  return (await response.json()).map(normalizeInvoice);
 };
 
 export const getInvoice = async (
@@ -98,7 +123,7 @@ export const getInvoice = async (
     throw new Error(error.detail || 'Failed to fetch invoice');
   }
 
-  return response.json();
+  return normalizeInvoice(await response.json());
 };
 
 export const issueInvoice = async (
@@ -124,7 +149,7 @@ export const issueInvoice = async (
     throw new Error(error.detail || 'Failed to issue invoice');
   }
 
-  return response.json();
+  return normalizeInvoice(await response.json());
 };
 
 export const markInvoicePaid = async (
@@ -156,7 +181,7 @@ export const markInvoicePaid = async (
     throw new Error(error.detail || 'Failed to mark invoice as paid');
   }
 
-  return response.json();
+  return normalizeInvoice(await response.json());
 };
 
 export const cancelInvoice = async (

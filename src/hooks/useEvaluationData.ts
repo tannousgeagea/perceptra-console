@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/services/apiClient";
 import type {
@@ -18,6 +18,20 @@ const EMPTY_SUMMARY: MetricsSummary = {
   precision_change: 0, recall_change: 0, f1_change: 0,
   edit_rate_change: 0, hallucination_change: 0, miss_rate_change: 0,
 };
+
+/** GET /temporal/projects/{id}/alerts, as the API sends it. */
+interface RawAlert {
+  id: number;
+  severity: string;
+  metric_name: string;
+  message: string;
+  current_value: number;
+  previous_value: number | null;
+  threshold_value: number | null;
+  change_percent: number | null;
+  is_acknowledged: boolean;
+  alert_date: string;
+}
 
 const CLASS_COLORS = [
   "#10b981", "#3b82f6", "#f59e0b", "#8b5cf6",
@@ -109,26 +123,66 @@ export const useEvaluationData = (projectId?: string) => {
     setTrendDays(days);
   }, []);
 
-  // ── Alerts ───────────────────────────────────────────────────────────────
-  const alertsQuery = useQuery<Alert[]>({
+  // ── Alerts (and anomalies: alerts that record a jump from the previous snapshot) ──
+  const alertsQuery = useQuery<RawAlert[]>({
     queryKey: ["evaluation-alerts", projectId],
     queryFn: async () => {
       const res = await apiFetch(`/api/v1/temporal/projects/${projectId}/alerts`);
       if (!res.ok) throw new Error("Failed to fetch alerts");
-      const data: any[] = await res.json();
-      return data.map((a) => ({
+      return res.json();
+    },
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  });
+
+  const alerts = useMemo<Alert[]>(
+    () =>
+      (alertsQuery.data ?? []).map((a) => ({
         id: a.id,
-        severity: a.severity,
+        severity: a.severity as Alert["severity"],
         metric_name: a.metric_name,
         message: a.message,
         current_value: a.current_value ?? 0,
         threshold: a.threshold_value ?? 0,
         created_at: a.alert_date,
         is_acknowledged: a.is_acknowledged ?? false,
+      })),
+    [alertsQuery.data],
+  );
+
+  // A jump between two daily snapshots, within the trend chart's range.
+  const anomalies = useMemo<Anomaly[]>(() => {
+    const since = Date.now() - trendDays * 86_400_000;
+    return (alertsQuery.data ?? [])
+      .filter(
+        (a) =>
+          a.change_percent != null &&
+          a.previous_value != null &&
+          (a.severity === "critical" || a.severity === "warning") &&
+          new Date(a.alert_date).getTime() >= since,
+      )
+      .map((a) => ({
+        id: String(a.id),
+        date: a.alert_date.split("T")[0],
+        severity: a.severity as Anomaly["severity"],
+        metric_name: a.metric_name,
+        message: a.message,
+        previous_value: a.previous_value as number,
+        current_value: a.current_value,
+        change_percentage: a.change_percent as number,
       }));
+  }, [alertsQuery.data, trendDays]);
+
+  // ── How reviewers changed predictions ────────────────────────────────────
+  const editTypesQuery = useQuery<EditTypeDistribution[]>({
+    queryKey: ["evaluation-edit-types", projectId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/v1/evaluation/projects/${projectId}/edit-types`);
+      if (!res.ok) throw new Error("Failed to fetch edit types");
+      return res.json();
     },
     enabled: !!projectId,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const acknowledgeAlertMutation = useMutation({
@@ -202,10 +256,10 @@ export const useEvaluationData = (projectId?: string) => {
     refresh,
     summary: summaryQuery.data ?? EMPTY_SUMMARY,
     classMetrics: classMetricsQuery.data ?? [],
-    editDistribution: [] as EditTypeDistribution[],
+    editDistribution: editTypesQuery.data ?? [],
     trends: trendsQuery.data ?? [],
-    anomalies: [] as Anomaly[],
-    alerts: alertsQuery.data ?? [],
+    anomalies,
+    alerts,
     priorityImages: priorityQuery.data ?? [],
     priorityLoading: priorityQuery.isFetching,
     priorityStrategy,

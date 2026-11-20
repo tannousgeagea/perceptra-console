@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/ui/switch';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
 import { AgentManagement } from '@/components/agents/AgentManagement';
-import { api } from './api';
+import { testProviderConnection } from '@/hooks/useCompute';
 import { ComputeProvider, ComputeStrategy, ComputeCredentials, CredentialField, ComputeProfile, ComputeProfileUpdateRequest } from '@/types/compute';
 import { Cpu, Cloud, Server, Zap, CheckCircle2, XCircle, Loader2, Eye, EyeOff, Key } from 'lucide-react';
 import { ComputeProfileCard } from './ComputeProfileCard';
@@ -139,14 +139,20 @@ export function ComputeSettings() {
     if (!selectedProvider) return;
     setTesting(true);
     try {
-      const result = await api.testComputeConnection(selectedProvider.id);
-      if (result.success) {
+      // A real test with the credentials typed above; nothing is saved.
+      const result = await testProviderConnection(
+        selectedProvider.id,
+        credentials as Record<string, string>,
+      );
+      if (!result.tested) {
+        toast.info(result.message);
+      } else if (result.valid) {
         toast.success(result.message, { icon: <CheckCircle2 className="h-4 w-4" /> });
       } else {
         toast.error(result.message, { icon: <XCircle className="h-4 w-4" /> });
       }
-    } catch {
-      toast.error('Connection test failed');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Connection test failed');
     } finally {
       setTesting(false);
     }
@@ -468,7 +474,8 @@ export function ComputeSettings() {
               )}
 
               <div className="flex gap-3 pt-4">
-                {selectedProvider?.requires_user_credentials && (
+                {(selectedProvider?.requires_user_credentials ||
+                  selectedProvider?.provider_type === 'on-premise-agent') && (
                   <Button variant="outline" onClick={handleTestConnection} disabled={testing}>
                     {testing ? (
                       <>

@@ -78,6 +78,8 @@ export function CredentialsSection({ providerType, hasCredentials, onSave }: Cre
       await onSave(values);
       setValues({});
       setIsOpen(false);
+    } catch {
+      // The caller showed the error; keep the form open with what was typed.
     } finally {
       setIsSaving(false);
     }

@@ -9,7 +9,6 @@ import { actionTypeLabels } from "@/components/billing/mockBillingData";
 import { InvoiceStatus } from "@/types/billing";
 import { useInvoice, useIssueInvoice, useMarkInvoicePaid, useCancelInvoice } from "@/hooks/useInvoices";
 import QueryState from "@/components/common/QueryState";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,14 +78,23 @@ export default function InvoiceDetails() {
 
   const sc = statusConfig[invoice.status];
 
+  // The browser's print dialog saves to PDF on every OS; index.css prints only
+  // #invoice-print. The document title becomes the suggested file name.
+  const printInvoice = () => {
+    const previousTitle = document.title;
+    document.title = `Invoice ${invoice.invoice_number}`;
+    window.print();
+    document.title = previousTitle;
+  };
+
   return (
-    <div className="min-h-screen w-full bg-background">
+    <div id="invoice-print" className="min-h-screen w-full bg-background">
       <div className="px-4 py-8">
         <div className="flex flex-col gap-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/billing/invoices">
+              <Link to="/billing/invoices" className="print:hidden">
                 <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
               </Link>
               <div>
@@ -96,7 +104,7 @@ export default function InvoiceDetails() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 print:hidden">
               {invoice.status === "draft" && (
                 <Button disabled={isActionPending} onClick={() => setConfirmAction("issue")}>
                   {issuingInvoice ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
@@ -115,8 +123,8 @@ export default function InvoiceDetails() {
                   Cancel
                 </Button>
               )}
-              <Button variant="outline" onClick={() => toast.info("PDF download coming soon")}>
-                <Download className="h-4 w-4 mr-1" />Download PDF
+              <Button variant="outline" onClick={printInvoice}>
+                <Download className="h-4 w-4 mr-1" />Print or save as PDF
               </Button>
             </div>
           </div>
