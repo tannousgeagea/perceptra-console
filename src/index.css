@@ -286,3 +286,32 @@ html {
 [class*="animate-"] {
   transition-property: none;
 }
+
+/* Printing an invoice (InvoiceDetails "Print or save as PDF"): only the
+   invoice, on white A4, without the app's navigation or buttons. */
+@media print {
+  @page { size: A4; margin: 16mm; }
+  body:has(#invoice-print) * { visibility: hidden; }
+  /* Same body:has() prefix: the rule above counts the id inside :has(), so a
+     plain "#invoice-print *" would lose to it and print a blank page. */
+  body:has(#invoice-print) #invoice-print,
+  body:has(#invoice-print) #invoice-print * { visibility: visible; }
+  /* Print the light theme even from dark mode. */
+  #invoice-print {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    min-height: 0;
+    background: #fff;
+    color: #000;
+  }
+  #invoice-print .shadow, #invoice-print [class*="shadow-"] { box-shadow: none !important; }
+  #invoice-print * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

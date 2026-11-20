@@ -144,6 +144,8 @@ export interface FallbackProviderRequest {
 }
 
 export interface CredentialValidationResponse {
+  /** False when there was nothing to test (platform workers) or nothing to test with. */
+  tested?: boolean;
   valid: boolean;
   message: string;
   error?: string;

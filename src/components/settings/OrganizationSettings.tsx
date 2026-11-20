@@ -45,36 +45,6 @@ export function OrganizationSettings() {
     }
   }, [orgDetails]);
 
-  // const handleSave = async () => {
-  //   setSaving(true);
-    
-  //   try {
-  //     // TODO: Create useUpdateOrganization hook
-  //     // await updateOrganization({
-  //     //   name: organization.name,
-  //     //   description: organization.description,
-  //     //   website: organization.website,
-  //     // });
-
-  //     // Mock for now
-  //     await new Promise(resolve => setTimeout(resolve, 500));
-
-  //     toast({
-  //       title: 'Success',
-  //       description: 'Organization settings updated successfully',
-  //     });
-  //   } catch (error) {
-  //     toast({
-  //       title: 'Error',
-  //       description: 'Failed to update organization settings',
-  //       variant: 'destructive',
-  //     });
-  //   } finally {
-  //     setSaving(false);
-  //   }
-  // };
-
-
   const handleSave = () => {
     // Only send changed fields
     const changes: UpdateOrganizationSettingsPayload = {};
@@ -371,38 +341,3 @@ export function OrganizationSettings() {
     </div>
   );
 }
-
-// ============================================
-// TODO: Missing API Endpoints
-// ============================================
-
-/*
-✅ IMPLEMENTED:
-- GET /api/v1/organizations/details
-
-❌ NEEDED (Create these hooks):
-
-1. useUpdateOrganization - Update organization details
-   curl -X 'PUT' \
-     'http://localhost:29085/api/v1/organizations/{org_id}' \
-     -H 'Content-Type: application/json' \
-     -d '{
-       "name": "string",
-       "description": "string",
-       "website": "string"
-     }'
-
-2. useUploadOrganizationLogo - Upload logo
-   curl -X 'POST' \
-     'http://localhost:29085/api/v1/organizations/logo' \
-     -H 'Content-Type: multipart/form-data' \
-     -F 'file=@logo.png'
-
-3. useDeleteOrganization - Delete organization (owner only)
-   curl -X 'DELETE' \
-     'http://localhost:29085/api/v1/organizations/{org_id}'
-
-4. Billing/Subscription endpoints (if applicable)
-   - GET /api/v1/organizations/subscription
-   - POST /api/v1/organizations/upgrade
-*/

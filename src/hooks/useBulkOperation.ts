@@ -1,12 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
 import {
-  BulkReviewPayload,
   BulkReviewResponse,
-  BulkDeleteProjectImagesPayload,
   BulkDeleteProjectImagesResponse,
-  BulkTagImagesPayload,
   BulkTagImagesResponse,
-  BulkDeleteImagesPayload,
   BulkDeleteImagesResponse,
 } from '@/types/bulk-operation';
 
@@ -99,47 +95,6 @@ function useSimulatedProgress() {
 }
 
 
-// Mock API helpers — simulate a backend call with a delay
-async function mockBulkReview(payload: BulkReviewPayload): Promise<BulkReviewResponse> {
-  await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
-  return {
-    message: `${payload.image_ids.length} images reviewed`,
-    total_requested: payload.image_ids.length,
-    processed: payload.image_ids.length,
-    skipped: 0,
-    failed: 0,
-    final_status: 'reviewed',
-  };
-}
-async function mockBulkDeleteProject(payload: BulkDeleteProjectImagesPayload): Promise<BulkDeleteProjectImagesResponse> {
-  await new Promise((r) => setTimeout(r, 1000 + Math.random() * 1000));
-  return {
-    message: `${payload.image_ids.length} images deleted`,
-    total_requested: payload.image_ids.length,
-    processed: payload.image_ids.length,
-    deleted: payload.image_ids.length,
-    mode: payload.hard_delete ? 'hard_delete' : 'soft_delete',
-  };
-}
-async function mockBulkTag(payload: BulkTagImagesPayload): Promise<BulkTagImagesResponse> {
-  await new Promise((r) => setTimeout(r, 800 + Math.random() * 600));
-  return {
-    message: `Tags applied to ${payload.image_ids.length} images`,
-    total_images: payload.image_ids.length,
-    total_tags_requested: payload.tag_names.length,
-    relations_created: payload.image_ids.length * payload.tag_names.length,
-  };
-}
-async function mockBulkDeleteImages(payload: BulkDeleteImagesPayload): Promise<BulkDeleteImagesResponse> {
-  await new Promise((r) => setTimeout(r, 1000 + Math.random() * 1000));
-  return {
-    message: `${payload.image_ids.length} images deleted`,
-    total_requested: payload.image_ids.length,
-    deleted_from_db: payload.image_ids.length,
-    storage_deleted: payload.image_ids.length,
-    storage_failed: 0,
-  };
-}
 /**
  * Unified hook for bulk operations with simulated progress.
  * Fires a single API call to the backend, while animating progress on the frontend.

@@ -11,6 +11,8 @@ import { ComputeProfile, ComputeStrategy } from '@/types/compute';
 import { Cpu, Trash2, Star, Zap, DollarSign, Clock, Loader2, Pencil, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { CredentialsSection } from './CredentialsSection';
+import { useQueryClient } from '@tanstack/react-query';
+import { updateComputeProfile, validateProfileCredentials } from '@/hooks/useCompute';
 
 import {
   AlertDialog,
@@ -82,12 +84,39 @@ export function ComputeProfileCard({ profile, onDelete, onSetDefault, onCredenti
   const [confirmText, setConfirmText] = useState("");
   const isConfirmed = confirmText.trim() === profile.name;
 
+  const queryClient = useQueryClient();
   const handleSaveCredentials = async (credentials: Record<string, string>) => {
-    // Mock API call - simulate saving credentials
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('Credentials saved successfully');
-    onCredentialsUpdate?.(profile.id, true);
+    // Stored encrypted on the server (org admins only).
+    try {
+      await updateComputeProfile(profile.id, { user_credentials: credentials });
+      queryClient.invalidateQueries({ queryKey: ['computeProfiles'] });
+      toast.success('Credentials saved');
+      onCredentialsUpdate?.(profile.id, true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not save credentials');
+      throw e;
+    }
   };
+
+  // A real connection test with the saved credentials (or, for on-premise
+  // agents, whether any agent is online). Shows "nothing to test" for platform workers.
+  const [testing, setTesting] = useState(false);
+  const handleTestConnection = async () => {
+    setTesting(true);
+    try {
+      const result = await validateProfileCredentials(profile.id);
+      if (!result.tested) toast.info(result.message);
+      else if (result.valid) toast.success(result.message);
+      else toast.error(result.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Connection test failed');
+    } finally {
+      setTesting(false);
+    }
+  };
+  const canTest =
+    profile.provider.provider_type === 'on-premise-agent' ||
+    (profile.provider.requires_user_credentials && profile.has_credentials);
 
   // ✅ Set as default handler
   const handleSetDefault = async () => {
@@ -472,6 +501,15 @@ export function ComputeProfileCard({ profile, onDelete, onSetDefault, onCredenti
             hasCredentials={profile.has_credentials}
             onSave={handleSaveCredentials}
           />
+        )}
+
+        {canTest && (
+          <div className="mt-3 flex justify-end">
+            <Button variant="outline" size="sm" onClick={handleTestConnection} disabled={testing}>
+              {testing ? <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+              Test connection
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -95,7 +95,26 @@ export const validateProfileCredentials = async (
   profileId: string
 ): Promise<CredentialValidationResponse> => {
   const response = await apiFetch(`/api/v1/compute/profiles/${profileId}/validate`);
-  if (!response.ok) throw new Error("Failed to validate credentials");
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(typeof body.detail === "string" ? body.detail : "Failed to validate credentials");
+  }
+  return response.json();
+};
+
+/** Test credentials for a provider before a profile exists (org admins; nothing is stored). */
+export const testProviderConnection = async (
+  providerId: number,
+  credentials: Record<string, string>
+): Promise<CredentialValidationResponse> => {
+  const response = await apiFetch(`/api/v1/compute/providers/${providerId}/validate`, {
+    method: "POST",
+    body: JSON.stringify({ credentials }),
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(typeof body.detail === "string" ? body.detail : "Connection test failed");
+  }
   return response.json();
 };
 
