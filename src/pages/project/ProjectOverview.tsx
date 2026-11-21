@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useProjectOverview } from '@/hooks/useProjectOverview';
 import { useProjectPermissions } from '@/hooks/usePermissions';
+import { useRealtimeEvent } from '@/contexts/RealtimeContext';
 import {
   STATE_LABEL,
   ago,
@@ -122,6 +123,10 @@ function RailSkeleton() {
 export default function ProjectOverview() {
   const { projectId } = useParams<{ projectId: string }>();
   const { data, isLoading, error, refetch, isFetching, dataUpdatedAt } = useProjectOverview(projectId);
+  // A finished epoch or a run starting/ending moves the train stage: refresh now.
+  useRealtimeEvent((event) => {
+    if (event.type === 'training.epoch' || event.type === 'training.status') refetch();
+  });
   const permissions = useProjectPermissions(projectId);
   const can: Can = (p) => !permissions.isLoading && permissions.can(p);
 
