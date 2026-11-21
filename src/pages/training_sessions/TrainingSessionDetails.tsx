@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertTriangle, BarChart2, Activity, ImageIcon, FileText } from 'lucide-react';
 import { useTrainingSessionDetail } from '@/hooks/useTrainingSessionDetail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/ui/tabs';
-import SessionHeader from '@/components/training_sessions/SessionHeader';
+import LiveRunHeader from '@/components/training_sessions/LiveRunHeader';
 import SessionDetail from '@/components/training_sessions/SessionDetails';
 import ConfigurationLogs from '@/components/training_sessions/ConfigurationLogs';
 import ValidationImages from '@/components/validation/ValidationImages';
@@ -72,8 +72,8 @@ const SessionDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6 mx-auto">
-      <SessionHeader session={session} projectId={projectId ?? ''} />
+    <div className="mx-auto w-full max-w-[1800px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
+      <LiveRunHeader session={session} projectId={projectId ?? ''} />
 
       <Tabs defaultValue="metrics" className="space-y-5">
         <TabsList className="grid w-full grid-cols-4 h-auto">

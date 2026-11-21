@@ -45,6 +45,19 @@ export interface TrainingSession {
   errorMessage?: string;
   errorTraceback?: string;
   epochMetrics?: EpochMetric[];
+  /** Live view (null when not running or not known). */
+  etaSeconds?: number | null;
+  secondsPerEpoch?: number | null;
+  lastEpochAt?: string | null;
+  /** Set while running when no epoch arrived for unusually long. */
+  stalledSeconds?: number | null;
+  /** Best epoch on the headline metric (mAP if present, else a loss). */
+  bestEpoch?: { epoch: number; metric: string; value: number } | null;
+  projectId?: string | null;
+  modelId?: string | null;
+  versionStatus?: string | null;
+  productionVersionId?: string | null;
+  productionVersionName?: string | null;
   // Backward compat for hooks that use model_version.id
   model_version: ModelVersion;
 }
