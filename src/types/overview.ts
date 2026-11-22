@@ -52,6 +52,8 @@ export interface ProjectOverview {
       current_epoch: number;
       total_epochs: number;
       eta_seconds: number | null;
+      /** Running but no epoch for unusually long. */
+      stalled_seconds?: number | null;
       created_at: string;
       started_at: string | null;
       completed_at: string | null;
