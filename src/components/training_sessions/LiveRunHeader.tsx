@@ -7,6 +7,8 @@ import { AlertTriangle, ChevronRight, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/ui/button';
 import { cn } from '@/lib/utils';
 import type { TrainingSession } from '@/types/training_session';
+import { useProjectPermissions } from '@/hooks/usePermissions';
+import StopRunButton from './StopRunButton';
 import { fmtDateTime, fmtDuration, fmtMetric, keyLabel } from '@/components/lineage/format';
 
 const ACTIVE = new Set(['pending', 'queued', 'initializing', 'running']);
@@ -45,6 +47,10 @@ export default function LiveRunHeader({ session, projectId }: { session: Trainin
   const status = STATUS[s.status] ?? { label: s.status, tone: 'text-muted-foreground' };
   const active = ACTIVE.has(s.status);
   const running = s.status === 'running';
+  // Whoever may start a run may stop it (editor role, server rule).
+  const permissions = useProjectPermissions(projectId);
+  const canStop = active && !permissions.isLoading && permissions.can('edit');
+  const stalled = running && s.stalledSeconds != null;
   const pct = Math.max(0, Math.min(100, s.progress || 0));
   const best = s.bestEpoch;
   const bestText = best ? `${keyLabel(best.metric)} ${fmtMetric(best.metric, best.value)} at epoch ${best.epoch}` : null;
@@ -78,13 +84,16 @@ export default function LiveRunHeader({ session, projectId }: { session: Trainin
       {/* The one live region: screen readers hear each new epoch. */}
       <section aria-live="polite" className="space-y-4 rounded-lg border p-5">
         {active && !running ? (
-          <p className="text-sm text-muted-foreground">{WAITING[s.status]}</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">{WAITING[s.status]}</p>
+            {canStop && <StopRunButton session={s} />}
+          </div>
         ) : (
           <>
             <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
               <div>
                 <p className="text-xs text-muted-foreground">
-                  {running ? 'Epoch' : s.status === 'completed' ? 'Finished' : `Stopped at epoch`}
+                  {running ? 'Epoch' : s.status === 'completed' ? 'Finished' : s.status === 'failed' ? 'Failed at epoch' : 'Stopped at epoch'}
                 </p>
                 <p className="text-4xl font-semibold tabular-nums tracking-tight">
                   {s.status === 'completed' && took != null ? (
@@ -111,6 +120,8 @@ export default function LiveRunHeader({ session, projectId }: { session: Trainin
                 )}
                 {bestText && <Fact label={running ? 'Best so far' : 'Best epoch'}>{bestText}</Fact>}
               </dl>
+              {/* Prominent when stalled: that's when stopping is most likely what you want. */}
+              {canStop && <StopRunButton session={s} prominent={stalled} />}
             </div>
 
             <div
@@ -135,13 +146,17 @@ export default function LiveRunHeader({ session, projectId }: { session: Trainin
               </div>
             </div>
 
-            {running && s.stalledSeconds != null && (
+            {s.status === 'cancelled' && s.errorMessage && (
+              <p className="text-sm text-muted-foreground">{s.errorMessage}</p>
+            )}
+
+            {stalled && (
               <div className="flex gap-3 rounded-md border border-amber-300/70 bg-amber-50 px-3 py-2.5 text-sm dark:border-amber-900 dark:bg-amber-950/30">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
                 <p className="text-amber-900 dark:text-amber-200">
                   No new epoch for {fmtDuration(s.stalledSeconds)}
                   {s.secondsPerEpoch != null ? `; epochs usually take ${fmtDuration(s.secondsPerEpoch)}` : ''}. The run may be stuck:
-                  check the compute resource{s.computeResource ? ` (${s.computeResource})` : ''}.
+                  check the compute resource{s.computeResource ? ` (${s.computeResource})` : ''}{canStop ? ', or stop the run' : ''}.
                 </p>
               </div>
             )}

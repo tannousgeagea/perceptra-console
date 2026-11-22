@@ -57,6 +57,12 @@ function compareTo(o: ProjectOverview, base: string): string | null {
     : `${model}/versions/${encodeURIComponent(c.version_id)}`;
 }
 
+/** "12 min", "2 h 5 min". */
+function minutes(seconds: number): string {
+  const m = Math.round(seconds / 60);
+  return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
+}
+
 function eta(seconds: number | null): string | null {
   if (seconds == null) return null;
   if (seconds < 90) return 'under 2 min left';
@@ -71,7 +77,10 @@ export function buildStages(o: ProjectOverview, base: string): Stage[] {
   const latestRun = training.latest;
   const candidate = models.candidate;
 
-  const trainState: StageState = training.running > 0
+  const stalled = latestRun?.stalled_seconds != null;
+  const trainState: StageState = stalled
+    ? 'attention'
+    : training.running > 0
     ? 'running'
     : latestRun?.status === 'failed' ? 'attention'
     : latestRun ? 'done' : 'idle';
@@ -130,17 +139,19 @@ export function buildStages(o: ProjectOverview, base: string): Stage[] {
       name: 'Train',
       state: trainState,
       value: !latestRun ? '—'
+        : stalled ? 'Stalled'
         : trainState === 'running' ? `${Math.round(latestRun.progress)}%`
         : latestRun.status === 'failed' ? 'Failed' : latestRun.version_name,
       unit: !latestRun ? 'no runs yet'
-        : trainState === 'running' ? `epoch ${latestRun.current_epoch} of ${latestRun.total_epochs}`
+        : trainState === 'running' || stalled ? `epoch ${latestRun.current_epoch} of ${latestRun.total_epochs}`
         : latestRun.status === 'failed' ? latestRun.version_name : latestRun.model_name,
       detail: !latestRun ? ['Train a model on a dataset version'] : [
-        trainState === 'running' ? (eta(latestRun.eta_seconds) ?? latestRun.model_name) : `Last run ${latestRun.status}`,
+        stalled ? `No new epoch for ${minutes(latestRun.stalled_seconds!)}`
+          : trainState === 'running' ? (eta(latestRun.eta_seconds) ?? latestRun.model_name) : `Last run ${latestRun.status}`,
         ...(training.running > 1 ? [`${n(training.running)} runs active`] : []),
       ],
       action: latestRun
-        ? { label: trainState === 'running' ? 'Watch run' : 'Open run', to: `${base}/sessions/${latestRun.id}` }
+        ? { label: trainState === 'running' || stalled ? 'Watch run' : 'Open run', to: `${base}/sessions/${latestRun.id}` }
         : { label: 'Train a model', to: `${base}/models`, needs: 'edit', viewLabel: 'View models' },
     },
     {
@@ -209,6 +220,14 @@ export function buildAttention(o: ProjectOverview, base: string): AttentionItem[
       level: 'attention',
       text: `Training ${training.latest.model_name} ${training.latest.version_name} failed${training.latest.error ? `: ${training.latest.error}` : ''}`,
       action: { label: 'Open run', to: `${base}/sessions/${training.latest.id}` },
+    });
+  }
+  if (training.latest?.stalled_seconds != null) {
+    items.push({
+      key: 'stalled-run',
+      level: 'attention',
+      text: `Training ${training.latest.model_name} ${training.latest.version_name} has had no new epoch for ${minutes(training.latest.stalled_seconds)}; it may be stuck`,
+      action: { label: 'Check run', to: `${base}/sessions/${training.latest.id}` },
     });
   }
   if (deployment.production.length && !monitoring.last_snapshot_at) {
