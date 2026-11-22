@@ -83,7 +83,10 @@ export function buildStages(o: ProjectOverview, base: string): Stage[] {
     : training.running > 0
     ? 'running'
     : latestRun?.status === 'failed' ? 'attention'
+    // A stopped run produced nothing: not "up to date", a new run is due.
+    : latestRun?.status === 'cancelled' ? 'waiting'
     : latestRun ? 'done' : 'idle';
+  const stopped = trainState === 'waiting';
 
   const neverMeasured = !!production && !monitoring.last_snapshot_at;
 
@@ -141,13 +144,16 @@ export function buildStages(o: ProjectOverview, base: string): Stage[] {
       value: !latestRun ? '—'
         : stalled ? 'Stalled'
         : trainState === 'running' ? `${Math.round(latestRun.progress)}%`
-        : latestRun.status === 'failed' ? 'Failed' : latestRun.version_name,
+        : latestRun.status === 'failed' ? 'Failed'
+        : stopped ? 'Stopped' : latestRun.version_name,
       unit: !latestRun ? 'no runs yet'
         : trainState === 'running' || stalled ? `epoch ${latestRun.current_epoch} of ${latestRun.total_epochs}`
-        : latestRun.status === 'failed' ? latestRun.version_name : latestRun.model_name,
+        : latestRun.status === 'failed' || stopped ? latestRun.version_name : latestRun.model_name,
       detail: !latestRun ? ['Train a model on a dataset version'] : [
         stalled ? `No new epoch for ${minutes(latestRun.stalled_seconds!)}`
-          : trainState === 'running' ? (eta(latestRun.eta_seconds) ?? latestRun.model_name) : `Last run ${latestRun.status}`,
+          : trainState === 'running' ? (eta(latestRun.eta_seconds) ?? latestRun.model_name)
+          : stopped ? `Stopped at epoch ${latestRun.current_epoch} of ${latestRun.total_epochs}`
+          : `Last run ${latestRun.status}`,
         ...(training.running > 1 ? [`${n(training.running)} runs active`] : []),
       ],
       action: latestRun
