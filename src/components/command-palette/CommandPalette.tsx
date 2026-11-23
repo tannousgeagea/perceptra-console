@@ -22,6 +22,7 @@ import {
   Moon,
   Pencil,
   PlayCircle,
+  Router,
   Scan,
   ScanEye,
   Server,
@@ -140,6 +141,7 @@ const PaletteBody = ({ close }: { close: () => void }) => {
     { label: 'Link from storage', to: '/link', icon: Link2, keywords: ['register', 's3', 'bucket'] },
     { label: 'Similarity scans', to: '/similarity/scans', icon: ScanEye, keywords: ['duplicates'] },
     { label: 'Inference', to: '/inference', icon: Scan, keywords: ['predict', 'test model'] },
+    { label: 'Fleet', to: '/fleet', icon: Router, keywords: ['devices', 'edge', 'rollouts', 'sites', 'deploy'] },
     { label: 'Activity', to: '/activity', icon: Activity, keywords: ['history', 'log'] },
     ...(orgId
       ? [

@@ -3,7 +3,7 @@
 // overview), what is training and what is in production.
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, FolderPlus, Search } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FolderPlus, Search } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/ui/button';
 import { Input } from '@/components/ui/ui/input';
@@ -43,6 +43,14 @@ function summary(home: Home): string {
   if (alerts) parts.push(`${n(alerts)} open alert${alerts === 1 ? '' : 's'}`);
   if (home.running.length) parts.push(`${n(home.running.length)} training run${home.running.length === 1 ? '' : 's'} active`);
   return parts.join(', ') + '.';
+}
+
+function fleetLine(f: Home['fleet']): string {
+  const parts = [`${n(f.online)} online`];
+  if (f.stale) parts.push(`${n(f.stale)} missed heartbeats`);
+  if (f.offline) parts.push(`${n(f.offline)} offline`);
+  if (f.pending) parts.push(`${n(f.pending)} waiting to enroll`);
+  return `${n(f.total)} device${f.total === 1 ? '' : 's'}: ${parts.join(', ')}`;
 }
 
 function oneLine(o: ProjectOverview): string {
@@ -284,6 +292,25 @@ export default function OrganizationHome() {
                   ))}
                 </ul>
               )}
+            </section>
+
+            <section aria-labelledby="home-fleet" className="space-y-3">
+              <h2 id="home-fleet" className="text-lg font-semibold">Edge fleet</h2>
+              <Link to="/fleet" className="block rounded-lg border px-4 py-3 hover:bg-muted/50">
+                {data.fleet.total === 0 ? (
+                  <p className="text-sm text-muted-foreground">No edge devices yet. Add one to run models at your sites.</p>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium">{fleetLine(data.fleet)}</p>
+                    {data.fleet.offline + data.fleet.stale > 0 && (
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" aria-hidden />
+                        {n(data.fleet.offline + data.fleet.stale)} not checking in
+                      </p>
+                    )}
+                  </>
+                )}
+              </Link>
             </section>
           </aside>
         </div>

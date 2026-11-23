@@ -10,6 +10,7 @@ import { useDeployVersion, useUndeployVersion } from "@/hooks/useModelDeploy";
 import { useParams } from "react-router-dom";
 import { useProjectPermissions } from "@/hooks/usePermissions";
 import { DeploymentHistory } from "./DeploymentHistory";
+import { ModelFleetPanel } from "@/components/fleet/ModelFleetPanel";
 import { Layers, Settings, ArrowUpRight, ArrowDownLeft, Copy } from "lucide-react";
 
 const deploymentBadge = (status: string) => {
@@ -215,6 +216,8 @@ const ModelDeploymentView: React.FC<{ model: ModelDetail }> = ({ model }) => {
           )}
         </CardContent>
       </Card>
+
+      <ModelFleetPanel model={model} canManage={canManage} />
 
       <DeploymentHistory modelId={model.id} />
     </div>
