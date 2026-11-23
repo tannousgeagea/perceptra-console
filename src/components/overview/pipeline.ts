@@ -71,7 +71,8 @@ function eta(seconds: number | null): string | null {
 }
 
 export function buildStages(o: ProjectOverview, base: string): Stage[] {
-  const { data, annotation, review, dataset, training, models, deployment, monitoring } = o;
+  const { data, annotation, review, dataset, training, models, deployment, monitoring, fleet } = o;
+  const rollout = fleet.rollout;
   const hasImages = data.total_images > 0;
   const production = deployment.production[0];
   const latestRun = training.latest;
@@ -178,17 +179,28 @@ export function buildStages(o: ProjectOverview, base: string): Stage[] {
     {
       key: 'deploy',
       name: 'Deploy',
-      state: production ? (candidate?.delta != null && candidate.delta > 0 ? 'waiting' : 'done') : candidate ? 'waiting' : 'idle',
+      state: fleet.paused_rollouts > 0 ? 'attention'
+        : rollout ? 'running'
+        : production ? (candidate?.delta != null && candidate.delta > 0 ? 'waiting' : 'done') : candidate ? 'waiting' : 'idle',
       value: production ? production.version_name : '—',
       unit: production ? `${production.model_name} in production` : 'nothing in production',
-      detail: deployment.staging.length
-        ? [`Staging: ${deployment.staging.map((v) => v.version_name).join(', ')}`]
-        : [production ? 'Nothing in staging' : 'Deploy a trained version'],
-      action: candidate
-        ? { label: `Promote ${candidate.version_name}`, to: `${base}/models/${candidate.model_id}?tab=deployment`, needs: 'manage', viewLabel: 'View deployment' }
-        : production
-          ? { label: 'View deployment', to: `${base}/models/${production.model_id}?tab=deployment` }
-          : { label: 'Models', to: `${base}/models` },
+      detail: [
+        deployment.staging.length
+          ? `Staging: ${deployment.staging.map((v) => v.version_name).join(', ')}`
+          : production ? 'Nothing in staging' : 'Deploy a trained version',
+        ...(rollout
+          ? [`${rollout.status === 'paused' ? 'Paused: ' : ''}${rollout.version_name} on ${rollout.progress.updated} of ${plural(rollout.progress.total, 'device')}`]
+          : fleet.devices
+            ? [`${n(fleet.in_sync)} of ${plural(fleet.devices, 'edge device')} up to date`]
+            : []),
+      ],
+      action: rollout
+        ? { label: rollout.status === 'paused' ? 'Open rollout' : 'Watch rollout', to: `${base}/rollouts/${rollout.rollout_id}` }
+        : candidate
+          ? { label: `Promote ${candidate.version_name}`, to: `${base}/models/${candidate.model_id}?tab=deployment`, needs: 'manage', viewLabel: 'View deployment' }
+          : production
+            ? { label: 'View deployment', to: `${base}/models/${production.model_id}?tab=deployment` }
+            : { label: 'Models', to: `${base}/models` },
     },
     {
       key: 'monitor',
@@ -234,6 +246,25 @@ export function buildAttention(o: ProjectOverview, base: string): AttentionItem[
       level: 'attention',
       text: `Training ${training.latest.model_name} ${training.latest.version_name} has had no new epoch for ${minutes(training.latest.stalled_seconds)}; it may be stuck`,
       action: { label: 'Check run', to: `${base}/sessions/${training.latest.id}` },
+    });
+  }
+  const rollout = o.fleet.rollout;
+  if (rollout?.status === 'paused') {
+    items.push({
+      key: 'paused-rollout',
+      level: 'attention',
+      // The reason itself starts with "Paused:"; don't say it twice.
+      text: `Rollout of ${rollout.model_name} ${rollout.version_name} to devices is paused${rollout.status_reason ? `. ${rollout.status_reason.replace(/^Paused:\s*/i, '')}` : ''}`,
+      action: { label: 'Open rollout', to: `${base}/rollouts/${rollout.rollout_id}` },
+    });
+  }
+  const behind = o.fleet.devices - o.fleet.in_sync;
+  if (!rollout && behind > 0) {
+    items.push({
+      key: 'devices-behind',
+      level: 'waiting',
+      text: `${plural(behind, 'edge device')} ${behind === 1 ? "doesn't" : "don't"} run the version asked of ${behind === 1 ? 'it' : 'them'} yet`,
+      action: { label: 'Open Fleet', to: '/fleet' },
     });
   }
   if (deployment.production.length && !monitoring.last_snapshot_at) {

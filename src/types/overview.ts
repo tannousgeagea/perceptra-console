@@ -1,4 +1,5 @@
 // GET /api/v1/projects/{id}/overview: one project's pipeline, stage by stage.
+import type { FleetCounts, ProjectFleet } from './fleet';
 
 export interface VersionRef {
   model_id: string;
@@ -73,6 +74,8 @@ export interface ProjectOverview {
     }) | null;
   };
   deployment: { production: DeployedVersion[]; staging: DeployedVersion[] };
+  /** Edge devices that run this project's models. */
+  fleet: ProjectFleet;
   monitoring: {
     open_alerts: number;
     alerts_by_severity: Record<string, number>;
@@ -114,4 +117,5 @@ export interface OrganizationHome {
   projects: ProjectOverview[];
   running: RunningSession[];
   production: (DeployedVersion & { project_id: string; project_name: string })[];
+  fleet: FleetCounts;
 }

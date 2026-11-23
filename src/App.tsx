@@ -68,6 +68,9 @@ const Evaluation = lazy(() => import('./pages/Evaluation'));
 const AutoAnnotate = lazy(() => import('./pages/AutoAnnotate'));
 const ScanHistory = lazy(() => import('./pages/ScanHistory'));
 const ScanResults = lazy(() => import('./pages/ScanResults'));
+const Fleet = lazy(() => import('./pages/fleet/Fleet'));
+const DeviceDetail = lazy(() => import('./pages/fleet/DeviceDetail'));
+const RolloutDetail = lazy(() => import('./pages/fleet/RolloutDetail'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -119,6 +122,8 @@ const App = () => {
                       <Route path='/projects' element={<Projects />} />
                       <Route path='/projects/add' element={<CreateProject />} />
                       <Route path='/inference' element={<Inference />} />
+                      <Route path='/fleet' element={<Fleet />} />
+                      <Route path='/fleet/devices/:deviceId' element={<DeviceDetail />} />
                       <Route path='/activity' element={<OrgActivityPage />} />
                       <Route path="/billing" element={<Billing />} />
                       <Route path="/billing/report" element={<BillingReport />} />
@@ -153,6 +158,7 @@ const App = () => {
                         <Route path="models/:modelId/train" element={<ModelTraining />} />
                         <Route path="models/:modelId/versions/:versionId" element={<ModelVersionDetail />} />
                         <Route path="models/:modelId/compare" element={<ModelCompare />} />
+                        <Route path="rollouts/:rolloutId" element={<RolloutDetail />} />
                         <Route path="evaluation" element={<Evaluation />} />
                         <Route path="auto-annotate" element={<AutoAnnotate />} />
                         <Route path="sessions" element={<SessionsPage />} />

@@ -16,6 +16,7 @@ import {
   PanelLeft,
   CreditCard,
   House,
+  Router,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMobileNavStore } from '@/stores/mobileNavStore';
@@ -77,8 +78,9 @@ const Navbar: FC = () => {
     // Shown to everyone; the Upload page tells viewers they can't upload.
     { item: "Upload", ref: "/upload", icon: <Upload size={20} /> },
     { item: "Inference", ref: "/inference", icon: <Scan size={20} /> },
-    // Models and deployment live inside each project (project menu → Models,
-    // and a model's Deployment tab); there's no organization-wide page for them.
+    // Edge devices of the whole organization. Models live inside each project;
+    // deploying a version to devices starts from a model's Deployment tab.
+    { item: "Fleet", ref: "/fleet", icon: <Router size={20} /> },
     // Team progress and analytics are org-admin only (the API enforces it too).
     ...(hasAdminPermission ? [{ item: "Team", ref: "/team", icon: <Users size={20} /> }] : []),
     // Rates, invoices and contractor billing: org admins only, like Team.

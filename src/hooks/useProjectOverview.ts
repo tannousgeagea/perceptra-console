@@ -22,7 +22,7 @@ export const useOrganizationHome = () => {
   });
 };
 
-/** The project's whole pipeline in one request; refreshes every 30 s while a training run is active. */
+/** The project's whole pipeline in one request; refreshes every 30 s while a training run or a rollout is active. */
 export const useProjectOverview = (projectId?: string) => {
   const orgId = useAuth().getCurrentOrganization()?.id;
   return useQuery({
@@ -36,6 +36,9 @@ export const useProjectOverview = (projectId?: string) => {
       return res.json();
     },
     enabled: !!projectId && !!orgId,
-    refetchInterval: (query) => ((query.state.data?.training.running ?? 0) > 0 ? 30_000 : false),
+    refetchInterval: (query) => {
+      const d = query.state.data;
+      return (d?.training.running ?? 0) > 0 || (d?.fleet?.active_rollouts ?? 0) > 0 ? 30_000 : false;
+    },
   });
 };
