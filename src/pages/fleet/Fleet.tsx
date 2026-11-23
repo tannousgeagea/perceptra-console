@@ -71,7 +71,7 @@ function RolloutRow({ r }: { r: Rollout }) {
       >
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
-            {r.is_rollback ? 'Back to ' : ''}{r.model_name} {versionLabel(r.version)}
+            {r.is_rollback ? `Rollback of ${r.model_name} ${versionLabel(r.previous_version)}` : `${r.model_name} ${versionLabel(r.version)}`}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {r.created_by ? `${r.created_by}, ` : ''}{ago(r.created_at)}

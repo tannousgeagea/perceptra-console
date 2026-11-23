@@ -11,6 +11,9 @@ import {
   ago,
   canaryMinutesLeft,
   dateTime,
+  listNames,
+  replacedVersions,
+  rollbackGroups,
   plural,
   progressSentence,
   versionLabel,
@@ -47,9 +50,11 @@ function useTargeting(r: Rollout | undefined): string {
   return parts.length ? `Sent to ${parts.join(', plus ')}.` : '';
 }
 
+const TARGET_GRID = 'md:grid-cols-[minmax(0,1.2fr)_10rem_8rem_9rem_minmax(0,1.4fr)]';
+
 function TargetRow({ t, canary }: { t: RolloutTarget; canary: boolean }) {
   return (
-    <li className="grid gap-1 px-4 py-3 text-sm md:grid-cols-[minmax(0,1.2fr)_10rem_9rem_minmax(0,1.4fr)] md:items-start md:gap-6">
+    <li className={cn('grid gap-1 px-4 py-3 text-sm md:items-start md:gap-6', TARGET_GRID)}>
       <div className="min-w-0">
         <Link to={`/fleet/devices/${t.device_id}`} className="truncate font-medium hover:underline">{t.device_name}</Link>
         <p className="truncate text-xs text-muted-foreground">
@@ -57,6 +62,9 @@ function TargetRow({ t, canary }: { t: RolloutTarget; canary: boolean }) {
         </p>
       </div>
       <DeviceStatusMark status={t.device_status} />
+      <span className="tabular-nums" title={t.from_version ? undefined : 'Nothing of this model ran on the device before'}>
+        {t.from_version || t.assigned_at ? `${t.from_version ? versionLabel(t.from_version) : 'none'} → ${versionLabel(t.version)}` : `→ ${versionLabel(t.version)}`}
+      </span>
       <span className={cn(
         t.state === 'failed' && 'font-medium text-rose-600 dark:text-rose-400',
         t.state === 'updated' && 'text-emerald-700 dark:text-emerald-400',
@@ -103,11 +111,15 @@ export default function RolloutDetail() {
     );
   }
 
-  const name = `${r.model_name} ${versionLabel(r.version)}`;
+  // A rollback sends devices to different versions: name it after what it undoes.
+  const name = r.is_rollback ? `rollback of ${r.model_name} ${versionLabel(r.previous_version)}` : `${r.model_name} ${versionLabel(r.version)}`;
   const left = canaryMinutesLeft(r);
   const targets = r.targets ?? [];
-  const reached = r.progress.updated + r.progress.assigned + r.progress.failed;
-  const canRollBack = !!r.previous_version && reached > 0 && r.status !== 'superseded';
+  const groups = rollbackGroups(r);
+  const backTotal = groups.reduce((n, g) => n + g.devices.length, 0);
+  const canRollBack = backTotal > 0 && r.status !== 'superseded';
+  const backLabel = groups.length === 1 ? `Roll back to ${versionLabel(groups[0].version)}` : 'Roll back';
+  const replaced = replacedVersions(r);
   const hint = canManage ? undefined : 'Needs the admin role in this project';
 
   return (
@@ -115,8 +127,9 @@ export default function RolloutDetail() {
       <div className="space-y-3">
         {back(`/projects/${r.project_id}/models/${r.model_id}?tab=deployment`, `${r.model_name} deployment`)}
         <PageHeader
-          title={r.is_rollback ? `Back to ${name}` : `${name} to devices`}
-          description={`Started ${dateTime(r.created_at)}${r.created_by ? ` by ${r.created_by}` : ''}${r.previous_version ? `, replacing ${versionLabel(r.previous_version)}` : ''}.`}
+          title={r.is_rollback ? `Rollback of ${r.model_name} ${versionLabel(r.previous_version)}` : `${name} to devices`}
+          description={`Started ${dateTime(r.created_at)}${r.created_by ? ` by ${r.created_by}` : ''}${
+            r.is_rollback ? ', each device back to the version it ran before' : replaced ? `, replacing ${replaced}` : ''}.`}
           actions={
             <>
               {(r.status === 'canary' || r.status === 'rolling') && (
@@ -157,15 +170,22 @@ export default function RolloutDetail() {
               )}
               {canRollBack && (
                 <ConfirmAction
-                  trigger={<><Undo2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />Roll back to {versionLabel(r.previous_version)}</>}
+                  trigger={<><Undo2 className="mr-1.5 h-3.5 w-3.5" aria-hidden />{backLabel}</>}
                   disabled={!canManage}
                   triggerTitle={hint}
-                  title={`Roll back to ${versionLabel(r.previous_version)}?`}
+                  title={`Roll back ${r.is_rollback ? 'this rollback' : name}?`}
                   description={<>
                     <p>
-                      A new rollout puts the {plural(reached, 'device')} this one reached back on {r.model_name} {versionLabel(r.previous_version)},
-                      all at once.{isActiveRollout(r) ? ' This rollout stops.' : ''}
+                      A new rollout puts {plural(backTotal, 'device')} back on the version {backTotal === 1 ? 'it' : 'each'} ran
+                      before, all at once.{isActiveRollout(r) ? ' This rollout stops.' : ''}
                     </p>
+                    <ul className="list-disc space-y-0.5 pl-5">
+                      {groups.map((g) => (
+                        <li key={g.version.version_id}>
+                          {listNames(g.devices)} {g.devices.length === 1 ? 'goes' : 'go'} back to {versionLabel(g.version)}
+                        </li>
+                      ))}
+                    </ul>
                     <p>Devices go back from the copy they kept, so it works even with a slow connection.</p>
                   </>}
                   confirmLabel="Roll back"
@@ -209,8 +229,8 @@ export default function RolloutDetail() {
           <p className="text-sm text-muted-foreground">No device left in this rollout.</p>
         ) : (
           <ul className="divide-y rounded-lg border">
-            <li className="hidden gap-6 px-4 py-2 text-xs font-medium text-muted-foreground md:grid md:grid-cols-[minmax(0,1.2fr)_10rem_9rem_minmax(0,1.4fr)]" aria-hidden>
-              <span>Device</span><span>Connection</span><span>Update</span><span>Details</span>
+            <li className={cn('hidden gap-6 px-4 py-2 text-xs font-medium text-muted-foreground md:grid', TARGET_GRID)} aria-hidden>
+              <span>Device</span><span>Connection</span><span>Change</span><span>Update</span><span>Details</span>
             </li>
             {targets.map((t) => <TargetRow key={t.device_id} t={t} canary={r.strategy === 'canary'} />)}
           </ul>

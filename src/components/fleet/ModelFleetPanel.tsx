@@ -48,7 +48,7 @@ export function ModelFleetPanel({ model, canManage }: { model: ModelDetail; canM
                     <Link to={`/projects/${r.project_id}/rollouts/${r.rollout_id}`}
                           className="grid gap-2 px-3 py-2.5 hover:bg-muted/50 md:grid-cols-[minmax(0,1fr)_11rem_minmax(0,1fr)] md:items-center md:gap-4">
                       <span className="min-w-0 truncate text-sm">
-                        <span className="font-medium">{r.is_rollback ? 'Back to ' : ''}{versionLabel(r.version)}</span>
+                        <span className="font-medium">{r.is_rollback ? `Rollback of ${versionLabel(r.previous_version)}` : versionLabel(r.version)}</span>
                         <span className="text-muted-foreground">, {ago(r.created_at)}</span>
                       </span>
                       <RolloutStatusMark status={r.status} />

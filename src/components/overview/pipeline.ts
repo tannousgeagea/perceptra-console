@@ -189,7 +189,7 @@ export function buildStages(o: ProjectOverview, base: string): Stage[] {
           ? `Staging: ${deployment.staging.map((v) => v.version_name).join(', ')}`
           : production ? 'Nothing in staging' : 'Deploy a trained version',
         ...(rollout
-          ? [`${rollout.status === 'paused' ? 'Paused: ' : ''}${rollout.version_name} on ${rollout.progress.updated} of ${plural(rollout.progress.total, 'device')}`]
+          ? [`${rollout.status === 'paused' ? 'Paused: ' : ''}${rollout.is_rollback ? `rollback of ${rollout.version_name}` : rollout.version_name} on ${rollout.progress.updated} of ${plural(rollout.progress.total, 'device')}`]
           : fleet.devices
             ? [`${n(fleet.in_sync)} of ${plural(fleet.devices, 'edge device')} up to date`]
             : []),
@@ -254,7 +254,7 @@ export function buildAttention(o: ProjectOverview, base: string): AttentionItem[
       key: 'paused-rollout',
       level: 'attention',
       // The reason itself starts with "Paused:"; don't say it twice.
-      text: `Rollout of ${rollout.model_name} ${rollout.version_name} to devices is paused${rollout.status_reason ? `. ${rollout.status_reason.replace(/^Paused:\s*/i, '')}` : ''}`,
+      text: `${rollout.is_rollback ? 'Rollback of' : 'Rollout of'} ${rollout.model_name} ${rollout.version_name} to devices is paused${rollout.status_reason ? `. ${rollout.status_reason.replace(/^Paused:\s*/i, '')}` : ''}`,
       action: { label: 'Open rollout', to: `${base}/rollouts/${rollout.rollout_id}` },
     });
   }

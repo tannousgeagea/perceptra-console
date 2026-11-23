@@ -74,7 +74,9 @@ export interface DeviceRolloutEntry {
   rollout_id: string;
   model_name: string;
   project_id: string;
+  /** The version this device was asked to run. */
   version: FleetVersionRef | null;
+  from_version: FleetVersionRef | null;
   is_rollback: boolean;
   rollout_status: RolloutStatus;
   state: TargetState;
@@ -126,6 +128,10 @@ export interface RolloutTarget {
   error: string | null;
   assigned_at: string | null;
   finished_at: string | null;
+  /** What this device ran when the rollout asked it to update; a rollback sends it back there. */
+  from_version: FleetVersionRef | null;
+  /** What this device was asked to run (rollbacks send devices to different versions). */
+  version: FleetVersionRef | null;
 }
 
 export interface Rollout {

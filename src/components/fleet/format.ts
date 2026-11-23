@@ -85,6 +85,34 @@ export function deviceModelSentence(dm: DeviceModel): string {
   return dm.reported ? `${running}, should run ${versionLabel(dm.desired)}` : `Should run ${versionLabel(dm.desired)}`;
 }
 
+/**
+ * Where a rollback of this rollout sends each device, grouped by version (the server's rule):
+ * every reached device back to the version it ran when asked, unless it ran nothing before,
+ * was already on this rollout's version, or is revoked.
+ */
+export function rollbackGroups(r: Rollout): { version: FleetVersionRef; devices: string[] }[] {
+  const groups = new Map<string, { version: FleetVersionRef; devices: string[] }>();
+  for (const t of r.targets ?? []) {
+    if (!['assigned', 'updated', 'failed'].includes(t.state) || t.device_status === 'revoked') continue;
+    if (!t.from_version || t.from_version.version_id === t.version?.version_id) continue;
+    const g = groups.get(t.from_version.version_id) ?? { version: t.from_version, devices: [] };
+    g.devices.push(t.device_name);
+    groups.set(t.from_version.version_id, g);
+  }
+  return [...groups.values()].sort((a, b) => b.devices.length - a.devices.length);
+}
+
+/** "v3" or "v2 and v3": the versions a rollout replaced, from what each device ran when asked. */
+export function replacedVersions(r: Rollout): string {
+  const names = [...new Set((r.targets ?? []).map((t) => t.from_version && versionLabel(t.from_version)).filter(Boolean))] as string[];
+  if (names.length === 0) return r.previous_version ? versionLabel(r.previous_version) : '';
+  return listNames(names);
+}
+
+/** "a, b and c". */
+export const listNames = (names: string[]) =>
+  names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+
 /** The canary's countdown: minutes left before the rest of the fleet follows, or null. */
 export function canaryMinutesLeft(r: Rollout, now = Date.now()): number | null {
   if (r.status !== 'canary' || !r.canary_healthy_since) return null;
