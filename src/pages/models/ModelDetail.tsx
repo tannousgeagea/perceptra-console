@@ -18,6 +18,7 @@ import {
   User,
   GitBranch,
   Cpu,
+  Radar,
 } from "lucide-react";
 import { Badge } from "@/components/ui/ui/badge";
 import { Button } from "@/components/ui/ui/button";
@@ -33,6 +34,7 @@ import ModelTrainingSessions from "@/components/models/ModelTrainingSessions";
 import { useModelDetail } from "@/hooks/useModels";
 import { useTrainingSessions } from "@/hooks/useTrainingSessions";
 import { useProjectPermissions } from "@/hooks/usePermissions";
+import { ModelFieldView } from "@/components/fleet/field/ModelFieldView";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -312,6 +314,9 @@ const ModelDetail: React.FC = () => {
           <TabsTrigger value="deployment" className="flex items-center gap-1.5">
             <Settings className="h-4 w-4" /> Deployment
           </TabsTrigger>
+          <TabsTrigger value="field" className="flex items-center gap-1.5">
+            <Radar className="h-4 w-4" /> Field
+          </TabsTrigger>
           <TabsTrigger value="evaluations" className="flex items-center gap-1.5">
             <Trophy className="h-4 w-4" /> Evaluations
           </TabsTrigger>
@@ -351,6 +356,11 @@ const ModelDetail: React.FC = () => {
         {/* Deployment */}
         <TabsContent value="deployment" className="mt-6">
           <ModelDeploymentView model={model} />
+        </TabsContent>
+
+        {/* Field: how it does at each site, and the samples devices send back */}
+        <TabsContent value="field" className="mt-6">
+          <ModelFieldView modelId={modelId!} projectId={projectId!} canManage={permissions.can('manage')} />
         </TabsContent>
 
         {/* Evaluations */}

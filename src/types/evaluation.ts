@@ -65,6 +65,9 @@ export interface Alert {
   threshold: number;
   created_at: string;
   is_acknowledged: boolean;
+  /** Field alerts (edge devices): where it happened; empty for project-wide alerts. */
+  site?: { site_id: string; name: string } | null;
+  device?: { device_id: string; name: string } | null;
 }
 
 /** One metric's alert thresholds (rates 0-1) for a project. */

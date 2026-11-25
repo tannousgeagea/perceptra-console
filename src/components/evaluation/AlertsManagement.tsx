@@ -6,7 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { AlertCircle, AlertTriangle, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Alert } from "@/types/evaluation";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useProjectPermissions } from "@/hooks/usePermissions";
 import { AlertThresholdsCard } from "./AlertThresholdsCard";
 
@@ -86,9 +86,23 @@ export const AlertsManagement = ({
                       </span>
                     </div>
                     <p className="mt-1 font-medium">{alert.message}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Threshold: {(alert.threshold * 100).toFixed(0)}%
-                    </p>
+                    {alert.site || alert.device ? (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        From the field{alert.site ? `, ${alert.site.name}` : ""}
+                        {alert.device && (
+                          <>
+                            {", "}
+                            <Link to={`/fleet/devices/${alert.device.device_id}`} className="underline-offset-4 hover:underline">
+                              {alert.device.name}
+                            </Link>
+                          </>
+                        )}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Threshold: {(alert.threshold * 100).toFixed(0)}%
+                      </p>
+                    )}
                   </div>
                   <Button
                     variant="outline"

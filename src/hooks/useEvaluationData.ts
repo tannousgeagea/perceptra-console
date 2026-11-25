@@ -31,6 +31,9 @@ interface RawAlert {
   change_percent: number | null;
   is_acknowledged: boolean;
   alert_date: string;
+  /** Field alerts (edge devices): where it happened. */
+  site?: { site_id: string; name: string } | null;
+  device?: { device_id: string; name: string } | null;
 }
 
 const CLASS_COLORS = [
@@ -146,6 +149,8 @@ export const useEvaluationData = (projectId?: string) => {
         threshold: a.threshold_value ?? 0,
         created_at: a.alert_date,
         is_acknowledged: a.is_acknowledged ?? false,
+        site: a.site ?? null,
+        device: a.device ?? null,
       })),
     [alertsQuery.data],
   );
@@ -156,6 +161,8 @@ export const useEvaluationData = (projectId?: string) => {
     return (alertsQuery.data ?? [])
       .filter(
         (a) =>
+          // Field alerts (edge devices) aren't jumps of the project's daily metrics.
+          !a.metric_name.startsWith("field_") &&
           a.change_percent != null &&
           a.previous_value != null &&
           (a.severity === "critical" || a.severity === "warning") &&

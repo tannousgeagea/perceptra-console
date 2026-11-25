@@ -25,6 +25,8 @@ export interface Site {
   name: string;
   location: string;
   timezone: string;
+  /** Off: devices here send no images, only prediction summaries. */
+  allow_images: boolean;
   created_at: string;
   devices?: SiteCounts;
 }
@@ -187,6 +189,77 @@ export interface ProjectFleet {
     version_name: string;
     progress: RolloutProgress;
   } | null;
+}
+
+// ── Field (phase 2) ──────────────────────────────────────────────────────────
+
+export interface FieldSummary {
+  inferences: number;
+  objects: number;
+  objects_per_inference: number | null;
+  mean_confidence: number | null;
+  low_confidence_share: number | null;
+  confidence_hist: number[];
+  class_share: Record<string, number>;
+  class_objects: number;
+}
+
+export type Severity = 'warning' | 'critical' | null;
+
+/** A site (its devices together) or a device without a site, against its own baseline. */
+export interface FieldPlace {
+  kind: 'site' | 'device';
+  site: { site_id: string; name: string } | null;
+  device: { device_id: string; name: string } | null;
+  devices: string[];
+  version: { version_id: string; version_name: string } | null;
+  recent: FieldSummary;
+  baseline: FieldSummary | null;
+  baseline_from: string | null;
+  baseline_to: string | null;
+  confidence_drop: number | null;
+  low_confidence_rise: number | null;
+  class_mix_shift: number | null;
+  signals: { confidence: Severity; low_confidence: Severity; class_mix: Severity };
+  daily: { date: string; inferences: number; mean_confidence: number | null; low_confidence_share: number | null; objects_per_inference: number | null }[];
+}
+
+export interface ModelField {
+  model_id: string;
+  model_name: string;
+  days: number;
+  recent_hours: number;
+  baseline_hours: number;
+  min_inferences: number;
+  places: FieldPlace[];
+}
+
+export interface SamplingPolicy {
+  enabled: boolean;
+  low_confidence_below: number;
+  classes: string[];
+  random_per_hour: number;
+  max_per_hour: number;
+}
+
+export type SampleReason = 'low_confidence' | 'class' | 'random';
+
+export interface FieldSample {
+  sample_id: string;
+  reason: SampleReason;
+  status: string;
+  error: string | null;
+  captured_at: string;
+  camera: string | null;
+  device: { device_id: string; name: string };
+  site: { site_id: string; name: string } | null;
+  version_name: string | null;
+  predictions: { class: string | null; confidence: number | null; bbox_xyxyn: number[] | null }[];
+  lowest_confidence: number | null;
+  image_id: string | null;
+  project_image_id: number | null;
+  reviewed: boolean;
+  thumbnail_url: string | null;
 }
 
 /** In the organization home: devices by status, revoked ones left out. */

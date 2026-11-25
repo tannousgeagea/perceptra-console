@@ -293,6 +293,7 @@ export default function Fleet() {
                     <span className="block truncate text-xs text-muted-foreground">
                       {s.devices ? `${plural(s.devices.total - s.devices.revoked, 'device')}, ${s.devices.online} online` : ''}
                       {s.location ? `${s.devices ? ', ' : ''}${s.location}` : ''}
+                      {!s.allow_images && (s.devices || s.location ? ', no images' : 'No images')}
                     </span>
                   </button>
                   {isAdmin && (
