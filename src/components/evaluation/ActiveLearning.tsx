@@ -267,7 +267,8 @@ export const ActiveLearning = ({ priorityImages, isLoading, onGenerateQueue }: A
   );
 };
 
-function CreateJobDialog({
+/** Name a new review job for the chosen project images (also used for field samples). */
+export function CreateJobDialog({
   projectId,
   orgId,
   imageIds,

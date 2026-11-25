@@ -9,9 +9,12 @@ import type {
   DeviceDetail,
   DeviceStatus,
   Enrollment,
+  FieldSample,
   HealthPoint,
+  ModelField,
   Rollout,
   RolloutCreate,
+  SamplingPolicy,
   Site,
 } from '@/types/fleet';
 
@@ -137,12 +140,65 @@ export const useModelDevices = (modelId?: string) => {
   });
 };
 
+// ── Field (what models see at each site) ─────────────────────────────────────
+
+export const useModelField = (modelId: string | undefined, days: number) => {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ['fleet', 'field', orgId, modelId, days],
+    queryFn: () => call<ModelField>(withQuery(`/api/v1/fleet/models/${modelId}/field`, { days })),
+    enabled: !!orgId && !!modelId,
+    refetchInterval: 5 * 60_000,
+  });
+};
+
+export const useSamplingPolicy = (modelId?: string) => {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ['fleet', 'sampling', orgId, modelId],
+    queryFn: () => call<SamplingPolicy>(`/api/v1/fleet/models/${modelId}/sampling`),
+    enabled: !!orgId && !!modelId,
+  });
+};
+
+export const useSaveSamplingPolicy = (modelId: string) => {
+  const invalidate = useInvalidateFleet();
+  return useMutation({
+    mutationFn: (data: SamplingPolicy) => send<SamplingPolicy>(`/api/v1/fleet/models/${modelId}/sampling`, 'PUT', data),
+    onSuccess: (p) => {
+      invalidate();
+      toast.success(p.enabled ? 'Field samples on. Devices get the change on their next heartbeat.' : 'Field samples off');
+    },
+    onError: fail,
+  });
+};
+
+export interface SampleFilters {
+  site_id?: string;
+  device_id?: string;
+  reason?: string;
+  limit?: number;
+}
+
+export const useFieldSamples = (modelId: string | undefined, filters: SampleFilters = {}) => {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ['fleet', 'samples', orgId, modelId, filters],
+    queryFn: () => call<{ total: number; retention_days: number; samples: FieldSample[] }>(
+      withQuery(`/api/v1/fleet/models/${modelId}/samples`, filters as QueryParams)),
+    enabled: !!orgId && !!modelId,
+    refetchInterval: 60_000,
+  });
+};
+
 // ── Sites ────────────────────────────────────────────────────────────────────
 
 export interface SiteInput {
   name: string;
   location?: string;
   timezone?: string;
+  /** Editing only: off means devices here send no images. */
+  allow_images?: boolean;
 }
 
 export const useSaveSite = () => {
