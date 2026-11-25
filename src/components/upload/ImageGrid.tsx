@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useUploadContext } from '@/contexts/UploadContext';
 import { ImageCard } from './ImageCard';
 import { Button } from '@/components/ui/ui/button';
@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 
 interface ImageGridProps {
   tags?: string[];
-  pendingCount?: number;
 }
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
@@ -17,7 +16,8 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
     className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
     style={{ animationDelay: `${(index % 10) * 40}ms` }}
   >
-    <div className="aspect-square bg-gray-100 dark:bg-gray-700 animate-pulse" />
+    {/* Same shape as ImageCard, so a card replaces it without the grid moving. */}
+    <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-700 animate-pulse" />
     <div className="p-3 space-y-2">
       <div className="h-2.5 w-3/4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
       <div className="h-2 w-1/2 rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
@@ -26,8 +26,8 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
 );
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [], pendingCount = 0 }) => {
-  const { removeImage, uploadedImages, submitUpload, isUploading, isProcessing } = useUploadContext();
+export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [] }) => {
+  const { removeImage, uploadedImages, submitUpload, isUploading, isProcessing, pendingCount } = useUploadContext();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId?: string }>();
   const isInProject = Boolean(projectId);
@@ -46,17 +46,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [], pendingCount = 
     });
   };
 
-  if (isProcessing) {
-    return (
-      <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-12 text-center">
-        <Upload className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3 animate-spin" />
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing images...</h3>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-          Preparing your images for upload. This may take a moment.
-        </p>
-      </div>
-    );
-  }
+  const failed = uploadedImages.filter((img) => img.status === 'error').length;
+  const uploaded = uploadedImages.filter((img) => img.status === 'success').length;
+  const toSend = imageCount - uploaded;
 
   // ── Empty state ──────────────────────────────────────────────────────────────
   if (imageCount === 0 && skeletonCount === 0) {
@@ -75,17 +67,13 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [], pendingCount = 
     <div className="space-y-5">
       {/* ── Grid ──────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-        {uploadedImages.map((image, i) => (
+        {uploadedImages.map((image) => (
           <div
             key={image.id}
             className={cn(
-              'transition-all duration-300',
+              'transition-all duration-300 motion-safe:animate-[fadeInUp_0.25s_ease-out_both]',
               image.status === 'success' && 'ring-2 ring-green-400/60 rounded-lg'
             )}
-            style={{
-              animation: 'fadeInUp 0.2s ease both',
-              animationDelay: `${Math.min(i, 20) * 20}ms`,
-            }}
           >
             <ImageCard key={image.id} file={image} onRemove={removeImage} />
           </div>
@@ -100,19 +88,20 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [], pendingCount = 
       {/* ── Footer row ────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
             {imageCount} {imageCount === 1 ? 'image' : 'images'}
             {skeletonCount > 0 && (
-              <span className="text-gray-400 dark:text-gray-500">
-                {' '}· processing {skeletonCount} more…
-              </span>
+              <span className="text-gray-400 dark:text-gray-500">, {skeletonCount} more on the way</span>
             )}
+            {uploaded > 0 && <span>, {uploaded} uploaded</span>}
+            {failed > 0 && <span className="text-destructive">, {failed} failed</span>}
           </span>
         </div>
 
         <Button
           onClick={handleUpload}
-          disabled={isUploading || imageCount === 0}
+          disabled={isUploading || isProcessing || toSend === 0}
+          title={isProcessing ? 'Wait for the previews to finish' : undefined}
           size="sm"
           className="relative overflow-hidden"
         >
@@ -124,7 +113,9 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [], pendingCount = 
           ) : (
             <>
               <Upload className="w-3.5 h-3.5 mr-1.5" />
-              Upload to Project
+              {failed > 0 && failed === toSend
+                ? `Retry ${failed} failed`
+                : `Upload ${toSend} ${toSend === 1 ? 'image' : 'images'}`}
             </>
           )}
         </Button>

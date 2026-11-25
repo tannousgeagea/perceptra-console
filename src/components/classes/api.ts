@@ -3,6 +3,17 @@ import { AnnotationClass } from "@/contexts/ClassesContext";
 import { authStorage } from "@/services/authService";
 import { AUTH_STORAGE_KEYS } from "@/types/auth";
 
+export type DeleteClassChoice =
+  | { annotations: 'move'; moveTo: number }
+  | { annotations: 'delete' };
+
+export interface DeleteClassResult {
+  success: boolean;
+  message: string;
+  moved: number;
+  deleted: number;
+}
+
 // API error class
 export class ApiError extends Error {
   status: number;
@@ -36,10 +47,10 @@ const fetchApi = async <T>(
     });
     
     if (!response.ok) {
-      throw new ApiError(
-        `API error: ${response.statusText}`,
-        response.status
-      );
+      // The API's own sentence ("'pallet' is used by 12 annotations…") beats the status text.
+      const body = await response.json().catch(() => null);
+      const detail = typeof body?.detail === 'string' ? body.detail : `API error: ${response.statusText}`;
+      throw new ApiError(detail, response.status);
     }
     
     return await response.json();
@@ -97,15 +108,21 @@ export const classesApi = {
     });
   },
   
-  // Delete a class
+  // Delete a class. A class in use needs a choice: move its annotations to
+  // another class (moveTo = that class's classId) or delete them with it.
   deleteClass: async (
-    organizationId: string, 
-    projectId: string,  
+    organizationId: string,
+    projectId: string,
     class_id: string,
-    hard_delete: boolean = false
-  ): Promise<void> => {
-    const queryParam = hard_delete ? "?hard=true" : "";
-    return fetchApi<void>(`/api/v1/projects/${projectId}/classes/${class_id}${queryParam}`, {
+    choice?: DeleteClassChoice
+  ): Promise<DeleteClassResult> => {
+    const params = new URLSearchParams();
+    if (choice) {
+      params.set('annotations', choice.annotations);
+      if (choice.annotations === 'move') params.set('move_to', String(choice.moveTo));
+    }
+    const query = params.toString() ? `?${params}` : '';
+    return fetchApi<DeleteClassResult>(`/api/v1/projects/${projectId}/classes/${class_id}${query}`, {
       method: "DELETE",
       headers: {
         "X-Organization-ID": organizationId,

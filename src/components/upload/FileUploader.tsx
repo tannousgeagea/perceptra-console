@@ -7,6 +7,7 @@ import { useUploadContext } from '@/contexts/UploadContext';
 import UploadProgress from './UploadProgress/UploadProgress';
 import { useSimilarityAnalysis } from '@/hooks/useSimilarityAnalysis';
 import { SimilarityReviewModal } from '@/components/similarity/SimilarityReviewModal';
+import { makeThumbnail, runPool, splitImages } from './thumbnails';
 
 declare module 'react' {
   interface InputHTMLAttributes<T> extends HTMLAttributes<T> {
@@ -15,39 +16,9 @@ declare module 'react' {
 }
 
 // ─── constants ──────────────────────────────────────────────────────────────
-const ACCEPTED_TYPES = /\.(jpg|jpeg|png|gif|webp)$/i;
-const CHUNK_SIZE = 50; // files processed per animation frame
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
-function filterImageFiles(files: File[]): File[] {
-  // return files.filter(
-  //   (f) => f.type.startsWith('image/') || ACCEPTED_TYPES.test(f.name)
-  // );
-  return files;
-}
-
-/**
- * Chunk a large file array and yield control back to the browser between
- * chunks so the UI never freezes. Calls onChunk with each batch and
- * onProgress with 0-100 as chunks complete.
- */
-async function processInChunks(
-  files: File[],
-  onChunk: (chunk: File[]) => void,
-  onProgress: (pct: number) => void
-): Promise<void> {
-  const total = files.length;
-  let processed = 0;
-
-  for (let i = 0; i < total; i += CHUNK_SIZE) {
-    const chunk = files.slice(i, i + CHUNK_SIZE);
-    onChunk(chunk);
-    processed += chunk.length;
-    onProgress(Math.round((processed / total) * 100));
-    // Yield to browser between chunks
-    await new Promise<void>((r) => requestAnimationFrame(() => r()));
-  }
-}
+// Previews made at once. Each card joins the grid as soon as its preview is
+// ready (flushed once per frame), so a big selection fills in steadily.
+const PREVIEW_CONCURRENCY = 4;
 
 // ─── component ───────────────────────────────────────────────────────────────
 export const FileUploader: React.FC = () => {
@@ -57,7 +28,6 @@ export const FileUploader: React.FC = () => {
   const similarity = useSimilarityAnalysis();
 
   const [isDragActive, setIsDragActive] = useState(false);
-  const [processingProgress, setProcessingProgress] = useState(0);
   const [processingCount, setProcessingCount] = useState({ total: 0, done: 0 });
   const [showReviewModal, setShowReviewModal] = useState(false);
 
@@ -72,60 +42,73 @@ export const FileUploader: React.FC = () => {
     stagedFilesRef.current = uploadedImages.map((img) => img.file);
   }, [uploadedImages]);
 
-  // ── Run similarity analysis whenever uploaded files change ─────────────────
+  // ── Similarity analysis: once the selection is in (not per card as it fills) ──
   useEffect(() => {
+    if (isProcessing) return;
     if (uploadedImages.length < 2) {
       similarity.reset();
       return;
     }
     similarity.analyzeFiles(uploadedImages.map((img) => img.file));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadedImages.length]);
+  }, [uploadedImages.length, isProcessing]);
 
   // ── Core file ingestion ────────────────────────────────────────────────────
   const ingestFiles = useCallback(
     async (raw: File[]) => {
-      const imageFiles = filterImageFiles(raw);
-      
+      const { images: imageFiles, skipped } = splitImages(raw);
+      const skippedNote = skipped.length > 0
+        ? `Skipped ${skipped.length} file${skipped.length === 1 ? '' : 's'} that ${skipped.length === 1 ? "isn't an image" : "aren't images"} (${skipped.slice(0, 3).map((f) => f.name).join(', ')}${skipped.length > 3 ? ', …' : ''}).`
+        : undefined;
+
       if (imageFiles.length === 0) {
         toast({
-          title: 'No valid images',
-          description: 'Select JPG, PNG, GIF or WEBP files.',
+          title: 'No images to add',
+          description: skippedNote ?? 'Select JPG, PNG, GIF, WEBP or BMP files.',
           variant: 'destructive',
         });
         return;
       }
 
-      // ↓ Set these SYNCHRONOUSLY before any await so ImageGrid renders
-      //   skeleton cards on the very next paint — zero perceived blank gap.
+      // Placeholders for the whole selection right away; each turns into a card
+      // when its preview is ready.
       setIsProcessing(true);
-      setProcessingProgress(0);
       setProcessingCount({ total: imageFiles.length, done: 0 });
       setPendingCount(uploadedImages.length + imageFiles.length);
 
-      const batchId = `batch-${Date.now()}`; // for potential future use in grouped uploads
-      await processInChunks(
-        imageFiles,
-        (chunk) => {
-          addImages(chunk, batchId);
-          setProcessingCount((prev) => ({ ...prev, done: prev.done + chunk.length }));
-        },
-        setProcessingProgress
-      );
+      const batchId = `batch-${Date.now()}`;
+      // previews[i] is set when file i's preview is ready. Each frame adds the
+      // unbroken run of ready ones from `shown` on, so cards join in file order.
+      const previews: (string | undefined)[] = new Array(imageFiles.length);
+      let shown = 0;
+      let frame = 0;
+      const flush = () => {
+        frame = 0;
+        let end = shown;
+        while (end < imageFiles.length && previews[end] !== undefined) end++;
+        if (end === shown) return;
+        addImages(imageFiles.slice(shown, end), batchId, previews.slice(shown, end) as string[]);
+        const added = end - shown;
+        shown = end;
+        setProcessingCount((prev) => ({ ...prev, done: prev.done + added }));
+      };
+
+      await runPool(imageFiles, PREVIEW_CONCURRENCY, async (file, i) => {
+        previews[i] = await makeThumbnail(file);
+        if (!frame) frame = requestAnimationFrame(flush);
+      });
+      if (frame) cancelAnimationFrame(frame);
+      flush();
 
       setIsProcessing(false);
-      setProcessingProgress(0);
       setPendingCount(0);
 
       toast({
         title: `${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added`,
-        description:
-          imageFiles.length > 1
-            ? 'Similarity analysis running in the background.'
-            : undefined,
+        description: skippedNote,
       });
     },
-    [addImages]
+    [addImages, uploadedImages.length, setIsProcessing, setPendingCount]
   );
 
   // ── Input handlers ─────────────────────────────────────────────────────────
@@ -230,10 +213,7 @@ export const FileUploader: React.FC = () => {
             <Button
               variant="default"
               size="sm"
-              onClick={() => {
-                setIsProcessing(true); // 🔥 show instantly
-                fileInputRef.current?.click();
-              }}
+              onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
               <FileUp className="mr-1.5 h-3.5 w-3.5" />
@@ -258,13 +238,16 @@ export const FileUploader: React.FC = () => {
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1.5">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Processing files…
+              Preparing previews…
             </span>
-            <span>
+            <span className="tabular-nums">
               {processingCount.done} / {processingCount.total}
             </span>
           </div>
-          <Progress value={processingProgress} className="h-1.5" />
+          <Progress
+            value={processingCount.total ? Math.round((processingCount.done / processingCount.total) * 100) : 0}
+            className="h-1.5"
+          />
         </div>
       )}
 
