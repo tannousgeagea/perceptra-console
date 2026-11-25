@@ -3,17 +3,18 @@ import { useClassesApi } from '@/hooks/useClasses';
 import { toast } from '@/hooks/use-toast';
 import { useProject } from './ProjectContext';
 import { AnnotationClass } from '@/types/classes';
+import type { DeleteClassChoice } from '@/components/classes/api';
 export type { AnnotationClass };
 
 interface ClassesContextType {
   classes: AnnotationClass[];
   addClass: (className: string, color?: string) => void;
-  updateClass: (id: string, updates: Partial<AnnotationClass>) => void;
-  deleteClass: (id: string) => void;
+  /** Resolves once the server saved it; rejects (after a toast) otherwise. */
+  updateClass: (id: string, updates: Partial<AnnotationClass>) => Promise<void>;
+  /** Resolves once the server deleted it; rejects (after a toast) otherwise. */
+  deleteClass: (id: string, choice?: DeleteClassChoice) => Promise<void>;
   getClassById: (id: string) => AnnotationClass | undefined;
   getClassByName: (name: string) => AnnotationClass | undefined;
-  classesLocked: boolean;
-  setClassesLocked: (locked: boolean) => void;
   isLoading: boolean;
   error: Error | null;
   refreshClasses: () => Promise<void>;
@@ -36,7 +37,6 @@ const DEFAULT_COLORS = [
 export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { projectId } = useProject();
   const [classes, setClasses] = useState<AnnotationClass[]>([]);
-  const [classesLocked, setClassesLocked] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   
   const { 
@@ -102,15 +102,6 @@ export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ child
   
   // Add a new class
   const addClass = async (className: string, color: string = getNextColor()) => {
-    if (classesLocked) {
-      toast({
-        title: "Classes are locked",
-        description: "Unlock classes to make changes.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
       const newClass = await createClass(projectId, className, color);
       if (newClass) {
@@ -130,15 +121,6 @@ export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ child
   
   // Update an existing class
   const updateClass = async (id: string, updates: Partial<AnnotationClass>) => {
-    if (classesLocked) {
-      toast({
-        title: "Classes are locked",
-        description: "Unlock classes to make changes.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
       const updatedClass = await apiUpdateClass(
         projectId,
@@ -154,51 +136,37 @@ export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ child
         localStorage.setItem('annotationClasses', JSON.stringify(updatedClasses));
       }
     } catch (error) {
-      console.error("Error updating class:", error);
       toast({
-        title: "Error updating class",
+        title: "Couldn't update the class",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive"
       });
+      throw error;
     }
   };
   
   // Delete a class
-  const deleteClass = async (id: string, hard_delete: boolean = false) => {
-    if (classesLocked) {
-      toast({
-        title: "Classes are locked",
-        description: "Unlock classes to make changes.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+  const deleteClass = async (id: string, choice?: DeleteClassChoice) => {
     const classToDelete = classes.find(c => String(c.classId) === id);
     if (!classToDelete) return;
-    
+
     try {
-      await apiDeleteClass(
-        projectId,
-        id,
-        hard_delete
-      );
+      const result = await apiDeleteClass(projectId, id, choice);
       const updatedClasses = classes.filter(c => String(c.classId) !== id);
       setClasses(updatedClasses);
-      // Update localStorage
       localStorage.setItem('annotationClasses', JSON.stringify(updatedClasses));
-      
-      toast({
-        title: "Class deleted",
-        description: `${classToDelete.name} has been removed`,
-      });
+      toast({ title: "Class deleted", description: result.message });
+      // Moved annotations change the receiving class's count: reload from the server.
+      if (result.moved > 0) {
+        setIsInitialized(false);
+      }
     } catch (error) {
-      console.error("Error deleting class:", error);
       toast({
-        title: "Error deleting class",
+        title: `Couldn't delete ${classToDelete.name}`,
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive"
       });
+      throw error;
     }
   };
   
@@ -221,8 +189,6 @@ export const ClassesProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteClass,
         getClassById,
         getClassByName,
-        classesLocked,
-        setClassesLocked,
         isLoading,
         error,
         refreshClasses

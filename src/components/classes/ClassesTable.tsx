@@ -9,14 +9,15 @@ import {
   TableRow 
 } from '@/components/ui/ui/table';
 import ClassRow from './ClassRow';
+import type { DeleteClassChoice } from './api';
 import { ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/ui/button';
 import { Skeleton } from '@/components/ui/ui/skeleton';
 
 interface ClassesTableProps {
   classes: AnnotationClass[];
-  onUpdateClass: (id: string, updates: Partial<AnnotationClass>) => void;
-  onDeleteClass: (id: string) => void;
+  onUpdateClass: (id: string, updates: Partial<AnnotationClass>) => Promise<void>;
+  onDeleteClass: (id: string, choice?: DeleteClassChoice) => Promise<void>;
   isLoading?: boolean;
   onRefresh?: () => void;
   /** Set when the person may not change classes; disables row editing and deleting. */
@@ -134,8 +135,9 @@ const ClassesTable = ({
             sortedClasses.map((cls, index) => (
               <ClassRow 
                 key={cls.id} 
-                cls={cls} 
-                onUpdate={onUpdateClass} 
+                cls={cls}
+                others={classes.filter((o) => o.id !== cls.id)}
+                onUpdate={onUpdateClass}
                 onDelete={onDeleteClass}
                 isEven={index % 2 === 0}
                 lockedReason={lockedReason}

@@ -45,6 +45,8 @@ const AddClassForm = ({ onAddClass, existingClasses, lockedReason }: AddClassFor
     <div className="mt-4 space-y-1.5">
       <div className="flex items-center gap-2">
         <Input
+          id="new-class-name"
+          aria-label="New class name"
           className='bg-white dark:bg-gray-900 border-gray dark:border-gray-600 p-2 text-black dark:text-gray-100'
           placeholder="Enter new class name"
           value={newClassName}

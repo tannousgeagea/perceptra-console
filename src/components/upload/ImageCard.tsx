@@ -26,11 +26,12 @@ export const ImageCard: React.FC<ImageCardProps> = ({ file, onRemove }) => {
     <div className="group rounded-lg shadow-sm bg-white dark:bg-gray-800 transition hover:-translate-y-1 hover:shadow-lg">
 
       {/* Preview */}
-      <div className="relative bg-slate-100 dark:bg-slate-800 overflow-hidden aspect-3/4">
+      <div className="relative bg-slate-100 dark:bg-slate-800 overflow-hidden aspect-[3/4]">
 
         <img
           src={file.previewUrl}
           alt={file.file.name}
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
 

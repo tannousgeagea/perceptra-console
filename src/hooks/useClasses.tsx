@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { classesApi } from '@/components/classes/api';
+import { classesApi, type DeleteClassChoice, type DeleteClassResult } from '@/components/classes/api';
 import { useCurrentOrganization } from './useAuthHelpers';
 import { AnnotationClass } from '@/types/classes';
 
@@ -48,7 +48,7 @@ export const useClassesApi = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create class';
       setError(new Error(errorMessage));
-      return null;
+      throw err;   // the caller says what went wrong
     } finally {
       setIsLoading(false);
     }
@@ -75,29 +75,23 @@ export const useClassesApi = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update class';
       setError(new Error(errorMessage));
-      return null;
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const deleteClass = async (projectId: string, id: string, hard_delete:boolean=false): Promise<boolean> => {
+  const deleteClass = async (projectId: string, id: string, choice?: DeleteClassChoice): Promise<DeleteClassResult> => {
     setIsLoading(true);
     setError(null);
     if (!currentOrganization) throw new Error("No organization selected");
 
     try {
-      await classesApi.deleteClass(
-        currentOrganization?.id,
-        projectId,
-        id,
-        hard_delete,
-      );
-      return true;
+      return await classesApi.deleteClass(currentOrganization.id, projectId, id, choice);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete class';
       setError(new Error(errorMessage));
-      return false;
+      throw err;   // never report a delete that didn't happen
     } finally {
       setIsLoading(false);
     }

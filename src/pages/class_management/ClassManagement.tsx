@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useClasses } from '@/contexts/ClassesContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/ui/tabs';
 import ClassesHeader from '@/components/classes/ClassesHeader';
@@ -6,7 +5,6 @@ import ClassesTable from '@/components/classes/ClassesTable';
 import AddClassForm from '@/components/classes/AddClassForm';
 import TagsPanel from '@/components/classes/TagsPanel';
 import { Loader2 } from 'lucide-react';
-import { ClassesProvider } from '@/contexts/ClassesContext';
 import { useParams } from 'react-router-dom';
 import { useProjectPermissions } from '@/hooks/usePermissions';
 
@@ -15,9 +13,7 @@ const ClassesManagement = () => {
     classes, 
     addClass, 
     updateClass, 
-    deleteClass, 
-    classesLocked, 
-    setClassesLocked,
+    deleteClass,
     isLoading,
     refreshClasses
   } = useClasses();
@@ -34,13 +30,10 @@ const ClassesManagement = () => {
   };
 
 
+  // The project layout already provides the classes (one list for the page and the table).
   return (
-    <ClassesProvider>
       <div className="container mx-auto py-12 w-full">
-        <ClassesHeader 
-          classesLocked={classesLocked}
-          onToggleLock={setClassesLocked}
-        />
+        <ClassesHeader lockedReason={lockedReason} />
 
         <Tabs defaultValue="classes">
           <TabsList className="mb-4">
@@ -82,7 +75,6 @@ const ClassesManagement = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </ClassesProvider>
   );
 };
 
