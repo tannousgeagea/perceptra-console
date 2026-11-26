@@ -17,6 +17,8 @@ import { RealtimeProvider } from './contexts/RealtimeContext';
 import { SentBackWatcher } from './components/review/SentBackWatcher';
 import { NotificationSidebar } from './components/jobs/NotificationSidebar';
 import { PageFallback } from './components/layout/PageFallback';
+import { UploadProvider } from './contexts/UploadContext';
+import { UploadTray } from './components/upload/UploadTray';
 
 // Pages load on first visit, so signing in doesn't download the annotation
 // tool, charts, billing PDFs and so on. Layouts and guards above stay eager.
@@ -92,6 +94,8 @@ const App = () => {
           <AuthProvider>
               <TooltipProvider delayDuration={100}>
                 <RealtimeProvider>
+                {/* App-wide: a selection and its uploads survive moving to another page. */}
+                <UploadProvider>
                 <Suspense fallback={<PageFallback fullScreen />}>
                 <Routes>
                   <Route element={<PublicRoute />}>
@@ -174,6 +178,8 @@ const App = () => {
                   </Route>
                 </Routes>
                 </Suspense>
+                <UploadTray />
+                </UploadProvider>
                 <SentBackWatcher />
                 <NotificationSidebar />
                 </RealtimeProvider>

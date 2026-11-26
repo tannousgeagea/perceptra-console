@@ -4,10 +4,10 @@ import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/ui/progress';
 import { Button } from '@/components/ui/ui/button';
 import { useUploadContext } from '@/contexts/UploadContext';
-import UploadProgress from './UploadProgress/UploadProgress';
 import { useSimilarityAnalysis } from '@/hooks/useSimilarityAnalysis';
 import { SimilarityReviewModal } from '@/components/similarity/SimilarityReviewModal';
-import { makeThumbnail, runPool, splitImages } from './thumbnails';
+import { makePreviews, splitImages } from './thumbnails';
+import type { UploadTarget } from '@/types/upload';
 
 declare module 'react' {
   interface InputHTMLAttributes<T> extends HTMLAttributes<T> {
@@ -16,19 +16,17 @@ declare module 'react' {
 }
 
 // ─── constants ──────────────────────────────────────────────────────────────
-// Previews made at once. Each card joins the grid as soon as its preview is
-// ready (flushed once per frame), so a big selection fills in steadily.
-const PREVIEW_CONCURRENCY = 4;
+// The formats the server accepts (it refuses GIF).
+const ACCEPT = '.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff';
 
 // ─── component ───────────────────────────────────────────────────────────────
-export const FileUploader: React.FC = () => {
-  const { uploadedImages, addImages, uploadProgress, isUploading, isProcessing, setIsProcessing, clearAllImages, setPendingCount } =
-    useUploadContext();
+export const FileUploader: React.FC<{ target: UploadTarget }> = ({ target }) => {
+  const { uploadedImages, addImages, uploadProgress, isUploading, isProcessing, setIsProcessing, clearAllImages,
+    pendingCount, setPendingCount, setTarget } = useUploadContext();
 
   const similarity = useSimilarityAnalysis();
 
   const [isDragActive, setIsDragActive] = useState(false);
-  const [processingCount, setProcessingCount] = useState({ total: 0, done: 0 });
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,17 +62,21 @@ export const FileUploader: React.FC = () => {
       if (imageFiles.length === 0) {
         toast({
           title: 'No images to add',
-          description: skippedNote ?? 'Select JPG, PNG, GIF, WEBP or BMP files.',
+          description: skippedNote ?? 'Select JPG, PNG, WEBP, BMP or TIFF files.',
           variant: 'destructive',
         });
         return;
       }
 
+      // A finished batch (all uploaded) makes way for the new one.
+      const startFresh = uploadedImages.length > 0 && uploadedImages.every((img) => img.status === 'success');
+      if (startFresh) clearAllImages();
+      setTarget(target);
+
       // Placeholders for the whole selection right away; each turns into a card
       // when its preview is ready.
       setIsProcessing(true);
-      setProcessingCount({ total: imageFiles.length, done: 0 });
-      setPendingCount(uploadedImages.length + imageFiles.length);
+      setPendingCount((startFresh ? 0 : uploadedImages.length) + imageFiles.length);
 
       const batchId = `batch-${Date.now()}`;
       // previews[i] is set when file i's preview is ready. Each frame adds the
@@ -88,13 +90,11 @@ export const FileUploader: React.FC = () => {
         while (end < imageFiles.length && previews[end] !== undefined) end++;
         if (end === shown) return;
         addImages(imageFiles.slice(shown, end), batchId, previews.slice(shown, end) as string[]);
-        const added = end - shown;
         shown = end;
-        setProcessingCount((prev) => ({ ...prev, done: prev.done + added }));
       };
 
-      await runPool(imageFiles, PREVIEW_CONCURRENCY, async (file, i) => {
-        previews[i] = await makeThumbnail(file);
+      await makePreviews(imageFiles, (i, info) => {
+        previews[i] = info.url;
         if (!frame) frame = requestAnimationFrame(flush);
       });
       if (frame) cancelAnimationFrame(frame);
@@ -108,7 +108,7 @@ export const FileUploader: React.FC = () => {
         description: skippedNote,
       });
     },
-    [addImages, uploadedImages.length, setIsProcessing, setPendingCount]
+    [addImages, uploadedImages, setIsProcessing, setPendingCount, clearAllImages, setTarget, target]
   );
 
   // ── Input handlers ─────────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ export const FileUploader: React.FC = () => {
           type="file"
           ref={fileInputRef}
           onChange={(handleFileChange)}
-          accept=".png,.jpg,.jpeg,.gif,.webp"
+          accept={ACCEPT}
           multiple
           className="hidden"
           disabled={isUploading}
@@ -183,7 +183,7 @@ export const FileUploader: React.FC = () => {
           type="file"
           ref={folderInputRef}
           onChange={handleFileChange}
-          accept=".png,.jpg,.jpeg,.gif,.webp"
+          accept={ACCEPT}
           multiple
           webkitdirectory=""
           className="hidden"
@@ -205,7 +205,7 @@ export const FileUploader: React.FC = () => {
               {isDragActive ? 'Drop images here' : 'Drag & drop images'}
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              JPG · PNG · GIF · WEBP
+              JPG, PNG, WEBP, BMP or TIFF
             </p>
           </div>
 
@@ -241,11 +241,11 @@ export const FileUploader: React.FC = () => {
               Preparing previews…
             </span>
             <span className="tabular-nums">
-              {processingCount.done} / {processingCount.total}
+              {Math.min(uploadedImages.length, pendingCount)} / {pendingCount}
             </span>
           </div>
           <Progress
-            value={processingCount.total ? Math.round((processingCount.done / processingCount.total) * 100) : 0}
+            value={pendingCount ? Math.round((Math.min(uploadedImages.length, pendingCount) / pendingCount) * 100) : 0}
             className="h-1.5"
           />
         </div>
@@ -321,7 +321,6 @@ export const FileUploader: React.FC = () => {
       )}
 
       {/* ── Per-file upload progress overlay ─────────────────────────────────── */}
-      <UploadProgress files={uploadedImages} visible={isUploading} />
 
       {/* ── Similarity review modal ───────────────────────────────────────────── */}
       <SimilarityReviewModal
