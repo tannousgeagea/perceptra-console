@@ -19,6 +19,7 @@
 import { useCallback, useRef } from 'react';
 import { useSimilarityStore } from '@/stores/similarityStore';
 import type { SimilarityCluster, SimilarityImage } from '@/types/similarity';
+import { previewInfo } from '@/components/upload/thumbnails';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 const HASH_SIZE = 8;          // 8×8 grid → 64-bit hash
@@ -196,15 +197,18 @@ export function useSimilarityAnalysis() {
 
           const results = await Promise.allSettled(
             chunk.map(async (file, offset) => {
-              const [a, d] = await Promise.all([aHash(file), dHash(file)]);
+              // The upload grid's preview workers already hashed most files (and
+              // made a small preview): no second full-size decode on this thread.
+              const known = previewInfo.get(file);
+              const [a, d] = known?.ahash !== undefined && known.dhash !== undefined
+                ? [known.ahash, known.dhash]
+                : await Promise.all([aHash(file), dHash(file)]);
               return {
                 index: i + offset,
                 file,
                 ahash: a,
                 dhash: d,
-                // We create ONE object URL per file here and reuse it in the
-                // cluster card — avoids double-URL leaks vs. the previous mock.
-                objectUrl: URL.createObjectURL(file),
+                objectUrl: known?.url ?? URL.createObjectURL(file),
               } satisfies HashedFile;
             })
           );

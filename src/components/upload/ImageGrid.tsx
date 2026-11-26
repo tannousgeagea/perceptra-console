@@ -4,26 +4,23 @@ import { ImageCard } from './ImageCard';
 import { Button } from '@/components/ui/ui/button';
 import { Upload, AlertTriangle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 
 interface ImageGridProps {
   tags?: string[];
 }
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
+// Same shape as ImageCard, so a card replaces it without the grid moving.
 const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
   <div
-    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
-    style={{ animationDelay: `${(index % 10) * 40}ms` }}
-  >
-    {/* Same shape as ImageCard, so a card replaces it without the grid moving. */}
-    <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-700 animate-pulse" />
-    <div className="p-3 space-y-2">
-      <div className="h-2.5 w-3/4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-      <div className="h-2 w-1/2 rounded bg-gray-100 dark:bg-gray-700 animate-pulse" />
-    </div>
-  </div>
+    className="aspect-square rounded-lg bg-muted motion-safe:animate-pulse"
+    style={{ animationDelay: `${(index % 8) * 60}ms` }}
+    aria-hidden
+  />
 );
+
+// Drawing thousands of placeholders costs more than it says; the rest is a count.
+const MAX_SKELETONS = 48;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [] }) => {
@@ -66,21 +63,15 @@ export const ImageGrid: React.FC<ImageGridProps> = ({ tags = [] }) => {
   return (
     <div className="space-y-5">
       {/* ── Grid ──────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2">
         {uploadedImages.map((image) => (
-          <div
-            key={image.id}
-            className={cn(
-              'transition-all duration-300 motion-safe:animate-[fadeInUp_0.25s_ease-out_both]',
-              image.status === 'success' && 'ring-2 ring-green-400/60 rounded-lg'
-            )}
-          >
-            <ImageCard key={image.id} file={image} onRemove={removeImage} />
+          <div key={image.id} className="motion-safe:animate-[fadeInUp_0.25s_ease-out_both]">
+            <ImageCard file={image} onRemove={removeImage} />
           </div>
         ))}
 
-        {/* Skeleton placeholders for files still being processed */}
-        {Array.from({ length: skeletonCount }).map((_, i) => (
+        {/* Placeholders for files whose previews are still being made */}
+        {Array.from({ length: Math.min(skeletonCount, MAX_SKELETONS) }).map((_, i) => (
           <SkeletonCard key={`skel-${i}`} index={i} />
         ))}
       </div>
