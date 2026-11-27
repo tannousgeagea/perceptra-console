@@ -71,6 +71,9 @@ export const useProjectVersions = (
     },
     enabled: !!currentOrganization && !!projectId,
     staleTime: 60_000, // 1 minute caching
+    // While an export runs, check every few seconds so it shows as done without a refresh
+    refetchInterval: (query) =>
+      query.state.data?.versions.some((v) => v.export_status === "processing") ? 3000 : false,
   });
 };
 
@@ -390,6 +393,13 @@ export const useAddImagesToVersion = (projectId: string, versionId: string) => {
       queryClient.invalidateQueries({
         queryKey: ["projectVersions", currentOrganization?.id, projectId]
       });
+      // The version's statistics, and the "add images" picker (it hides images already in)
+      queryClient.invalidateQueries({
+        queryKey: ["versionStatistics", currentOrganization?.id, projectId, versionId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["projectImages", currentOrganization?.id, projectId]
+      });
     },
   });
 };
@@ -457,6 +467,12 @@ export const useRemoveImagesFromVersion = (projectId: string, versionId: string)
       // Invalidate version details to update counts
       queryClient.invalidateQueries({
         queryKey: ["projectVersions", currentOrganization?.id, projectId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["versionStatistics", currentOrganization?.id, projectId, versionId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["projectImages", currentOrganization?.id, projectId]
       });
     },
   });
@@ -574,7 +590,8 @@ export const useExportDataset = (projectId: string, options?: {
       return exportDataset(currentOrganization.id, projectId, versionId, config);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['versions', projectId] });
+      // The list then polls until the export finishes (see useProjectVersions)
+      queryClient.invalidateQueries({ queryKey: ["projectVersions", currentOrganization?.id, projectId] });
       if (showToast) toast.success(data.message);
       onSuccess?.(data);
     },

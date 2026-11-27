@@ -11,6 +11,8 @@ interface ProjectImagesParams {
   limit?: number;
   q?: string;
   status?: string;
+  /** Leave out images already in this dataset version (version_id) */
+  excludeVersion?: string;
 }
 
 export const fetchProjectImages = async (
@@ -21,7 +23,7 @@ export const fetchProjectImages = async (
   const token = authStorage.get(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   if (!token) throw new Error("No authentication token found");
 
-  const { skip = 0, limit = 100, q, status } = params;
+  const { skip = 0, limit = 100, q, status, excludeVersion } = params;
 
   const queryParams = new URLSearchParams({
     skip: skip.toString(),
@@ -33,6 +35,7 @@ export const fetchProjectImages = async (
   } else {
     if (status) queryParams.append("status", status);
   }
+  if (excludeVersion) queryParams.append("exclude_version", excludeVersion);
 
   const response = await apiFetch(
     `/api/v1/projects/${projectId}/images?${queryParams}`,

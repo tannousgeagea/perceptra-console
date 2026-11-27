@@ -42,13 +42,16 @@ const TrainingForm: React.FC<TrainingFormProps> = ({ model, projectId }) => {
     }
   }, [training]);
 
+  // Start from the settings saved on the model (chosen when it was created);
+  // the server also fills optimizer and scheduler from them.
+  const saved = model.config ?? {};
   const form = useForm({
     defaultValues: {
       baseVersion: model.versions.length > 0 ? model.versions[0].id : "",
       datasetId: datasets.length > 0 ? datasets[0].id : "",
-      epochs: 10,
-      batchSize: 32,
-      learningRate: 0.001,
+      epochs: saved.epochs ?? 10,
+      batchSize: saved.batch_size ?? 32,
+      learningRate: saved.learning_rate ?? 0.001,
       advancedConfig: false,
       computeProfileId: "",
       agentId: "",

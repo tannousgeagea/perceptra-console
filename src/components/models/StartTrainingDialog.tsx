@@ -60,6 +60,7 @@ const schedulerOptions = [
   { value: "cosine", label: "Cosine Annealing" },
   { value: "step", label: "Step Decay" },
   { value: "exponential", label: "Exponential" },
+  { value: "plateau", label: "Reduce on Plateau" },
   { value: "none", label: "None" },
 ];
 
@@ -97,7 +98,15 @@ const StartTrainingDialog: React.FC<StartTrainingDialogProps> = ({
 
   useEffect(() => {
     if (open && model) {
-      setConfig(defaultConfig);
+      // Start from the settings saved on the model, where it has them
+      const saved = model.config ?? {};
+      setConfig({
+        batchSize: saved.batch_size ?? defaultConfig.batchSize,
+        learningRate: saved.learning_rate ?? defaultConfig.learningRate,
+        epochs: saved.epochs ?? defaultConfig.epochs,
+        optimizer: saved.optimizer ?? defaultConfig.optimizer,
+        scheduler: saved.scheduler ?? defaultConfig.scheduler,
+      });
       setSelectedDataset("");
       setVersionName("");
       setSelectedComputeProfile("");

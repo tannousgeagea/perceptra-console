@@ -196,6 +196,8 @@ export interface Model {
   productionVersion?: ModelVersion;
   currentProductionVersion?: string;
   tags: string[];
+  /** Saved training settings, from GET /models/{id} */
+  config?: ModelTrainingDefaults;
 }
 
 export interface ModelVersion {
@@ -233,6 +235,19 @@ export interface ModelDetail {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  /** Saved training settings (snake_case: epochs, batch_size, learning_rate, optimizer, scheduler, model_size) */
+  config?: ModelTrainingDefaults;
+}
+
+/** A model's saved training settings, as the API returns them. */
+export interface ModelTrainingDefaults {
+  epochs?: number;
+  batch_size?: number;
+  learning_rate?: number;
+  optimizer?: string;
+  scheduler?: string;
+  model_size?: string;
+  [key: string]: unknown;
 }
 
 export interface ModelListItem {
