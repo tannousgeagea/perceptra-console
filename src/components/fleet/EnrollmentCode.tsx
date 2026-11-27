@@ -39,7 +39,7 @@ export function EnrollmentCode({ enrollment, deviceName }: { enrollment: Enrollm
     '  -v malumetrix-data:/var/lib/malumetrix \\',
     `  -e MALUMETRIX_URL=${url} \\`,
     `  -e MALUMETRIX_ENROLL_CODE=${enrollment.code} \\`,
-    '  malumetrix-edge-agent',
+    `  ${enrollment.agent_image ?? 'malumetrix-edge-agent'}`,
   ].join('\n');
   const sdk = [
     'from malumetrix_edge import EdgeClient',
@@ -76,7 +76,10 @@ export function EnrollmentCode({ enrollment, deviceName }: { enrollment: Enrollm
           <TabsContent value="docker" className="space-y-2">
             <Snippet text={docker} label="Docker command" />
             <p className="text-xs text-muted-foreground">
-              Build the image from <code>edge-agent/</code> first. Your inference container mounts the same volume and loads{' '}
+              {enrollment.agent_image
+                ? 'Docker pulls the agent image, the same release as this platform. '
+                : <>Build the image from <code>edge-agent/</code> first. </>}
+              Your inference container mounts the same volume and loads{' '}
               <code>models/&lt;model_id&gt;/current/</code>.
             </p>
           </TabsContent>
