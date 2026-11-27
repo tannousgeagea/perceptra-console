@@ -102,6 +102,8 @@ export interface DeviceDetail extends Device {
 export interface Enrollment {
   code: string;
   expires_at: string;
+  /** The published edge-agent image for this hub's release (older hubs don't send it). */
+  agent_image?: string;
 }
 
 export interface HealthPoint {
