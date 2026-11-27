@@ -45,6 +45,7 @@ export function AddImagesToVersionDialog({
     q: _query,
     skip: (page - 1) * pageSize,
     limit: pageSize,
+    excludeVersion: versionId, // only images not in this version yet
   });
   const { mutate: addImages, isPending: isAdding } = useAddImagesToVersion(projectId, versionId);
 

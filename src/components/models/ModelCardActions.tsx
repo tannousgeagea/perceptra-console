@@ -47,10 +47,10 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem
-          onClick={(e) => {
-            e.preventDefault();
-            onEdit();
-          }}
+          // No preventDefault here: in Radix that cancels the selection and leaves
+          // the menu open on top of the dialog the item opens. (The menu renders in
+          // a portal, outside the card's link, so there's no navigation to stop.)
+          onClick={() => onEdit()}
           disabled={!canEdit}
           title={canEdit ? undefined : EDIT_HINT}
           className="cursor-pointer"
@@ -59,10 +59,7 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
           Edit Model
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={(e) => {
-            e.preventDefault();
-            onDuplicate();
-          }}
+          onClick={() => onDuplicate()}
           disabled={!canEdit}
           title={canEdit ? undefined : EDIT_HINT}
           className="cursor-pointer"
@@ -71,10 +68,7 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
           Duplicate
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={(e) => {
-            e.preventDefault();
-            onTrain();
-          }}
+          onClick={() => onTrain()}
           disabled={!canEdit}
           title={canEdit ? undefined : EDIT_HINT}
           className="cursor-pointer"
@@ -84,10 +78,7 @@ const ModelCardActions: React.FC<ModelCardActionsProps> = ({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={(e) => {
-            e.preventDefault();
-            onDelete();
-          }}
+          onClick={() => onDelete()}
           disabled={!canManage}
           title={canManage ? undefined : MANAGE_HINT}
           className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"

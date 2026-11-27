@@ -167,7 +167,8 @@ export default function DatasetVersions() {
       <VersionDetailSheet
         open={detailSheetOpen}
         onOpenChange={setDetailSheetOpen}
-        version={detailVersion}
+        // The list's current copy, so counts and status follow adds and exports
+        version={data?.versions.find((v) => v.version_id === detailVersion?.version_id) ?? detailVersion}
         projectId={projectId!}
         onDownload={handleDownload}
       />
